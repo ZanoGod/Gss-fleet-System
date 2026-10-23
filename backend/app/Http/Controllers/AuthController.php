@@ -17,9 +17,9 @@ class AuthController extends Controller
         $identifier = trim($input['login']);
         $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
-        if (! Auth::attempt([$field => $identifier, 'password' => $input['password']])) {
+        if (! Auth::guard('web')->attempt([$field => $identifier, 'password' => $input['password']])) {
             throw ValidationException::withMessages([
-                'login' => ['Invalid username/email or password.'],
+                'login' => ['Incorrect username or password.'],
             ]);
         }
 
@@ -28,18 +28,18 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'user' => $request->user(),
+            'user' => $request->user()->only(['id', 'name', 'username', 'email']),
         ]);
     }
 
     public function user(Request $request)
     {
-        return response()->json(['success' => true, 'user' => $request->user()]);
+        return response()->json(['success' => true, 'user' => $request->user()->only(['id', 'name', 'username', 'email'])])->header('Cache-Control', 'no-store');
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

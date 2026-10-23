@@ -22,6 +22,7 @@ function getSavedCollapsedState(): boolean {
 const collapsed = ref(getSavedCollapsedState())
 const mobileOpen = ref(false)
 const signingOut = ref(false)
+const logoutError = ref('')
 const mobileMenuButton = ref<HTMLButtonElement | null>(null)
 const mobileCloseButton = ref<HTMLButtonElement | null>(null)
 const sidebarElement = ref<HTMLElement | null>(null)
@@ -113,13 +114,14 @@ async function signOut(): Promise<void> {
   if (signingOut.value) return
   signingOut.value = true
   try {
+    logoutError.value = ''
     await auth.logout()
-  } catch {
-    // Existing auth store clears local authentication state as a fallback.
-  } finally {
-    signingOut.value = false
     closeMobileMenu()
     await router.replace('/login')
+  } catch {
+    logoutError.value = 'Logout could not be confirmed by the server. Please try again.'
+  } finally {
+    signingOut.value = false
   }
 }
 </script>
@@ -248,7 +250,7 @@ async function signOut(): Promise<void> {
           </span>
         </div>
       </header>
-      <main class="shell-content"><slot /></main>
+      <main class="shell-content"><div v-if="logoutError" class="alert alert-danger" role="alert">{{ logoutError }}</div><slot /></main>
     </div>
   </div>
 </template>

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { useRoute, useRouter } from 'vue-router'
+import { authError } from '@/services/auth'
 import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const username = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const submitting = ref(false)
-const error = ref('')
+const error = ref(route.query.reason === 'expired' ? 'Your session has expired. Please sign in again.' : route.query.reason === 'unavailable' ? 'Cannot verify your session. Please try again.' : '')
 async function signIn() {
   error.value = ''
   submitting.value = true
@@ -17,9 +18,7 @@ async function signIn() {
     await auth.login(username.value.trim(), password.value)
     await router.replace('/dashboard')
   } catch (e) {
-    error.value = axios.isAxiosError(e) && e.response?.status === 422
-      ? 'Invalid username or password.'
-      : 'Unable to sign in. Check your credentials and that the Laravel API is running.'
+    error.value = authError(e)
   } finally { submitting.value = false }
 }
 </script>
@@ -34,9 +33,9 @@ async function signIn() {
       <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
       <form @submit.prevent="signIn">
         <div class="mb-4">
-          <label for="username" class="field-label">Username</label>
+          <label for="username" class="field-label">Username or email</label>
           <div class="input-wrap"><i class="bi bi-person input-icon" aria-hidden="true"></i>
-            <input id="username" v-model="username" class="input-modern" name="username" type="text" placeholder="Enter your username" autocomplete="username" required autofocus />
+            <input id="username" v-model="username" class="input-modern" name="username" type="text" placeholder="Enter your username or email" autocomplete="username" required autofocus />
           </div>
         </div>
         <div class="mb-4">

@@ -1,42 +1,45 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import axios from 'axios'
-
-interface AuthUser { id: number; name: string; username: string }
-const api = axios.create({ baseURL: '/api', headers: { Accept: 'application/json' } })
+import * as service from '@/services/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref(sessionStorage.getItem('gss_token'))
-  const user = ref<AuthUser | null>(null)
-  const isAuthenticated = computed(() => Boolean(token.value))
-  const authHeader = () => ({ Authorization: `Bearer ${token.value}` })
-
-  async function login(username: string, password: string) {
-    const { data } = await api.post<{ token: string; user: AuthUser }>('/login', { username, password })
-    token.value = data.token
-    user.value = data.user
-    sessionStorage.setItem('gss_token', data.token)
+  const user = ref<service.User | null>(null)
+  const isLoading = ref(false)
+  const isInitializing = ref(true)
+  const initialized = ref(false)
+  let revision = 0
+  let pending: Promise<void> | null = null
+  const isAuthenticated = computed(() => user.value !== null)
+  function clearLegacy() {
+    try { sessionStorage.removeItem('gss_token'); localStorage.removeItem('gss_token') } catch { /* Storage may be blocked. */ }
   }
-  async function loadUser() {
-    if (!token.value) return false
-    try {
-      const { data } = await api.get<AuthUser>('/user', { headers: authHeader() })
-      user.value = data
-      return true
-    } catch {
-      token.value = null
-      user.value = null
-      sessionStorage.removeItem('gss_token')
-      return false
+  function clearAuth() { revision++; user.value = null; clearLegacy() }
+  async function getUser() {
+    if (!pending) {
+      const currentRevision = revision
+      pending = service.getUser().then(value => {
+        if (currentRevision === revision) user.value = value
+      }).finally(() => { pending = null })
     }
+    await pending
+  }
+  async function initializeAuth() {
+    if (initialized.value) return
+    isInitializing.value = true
+    clearLegacy()
+    try { await getUser(); initialized.value = true }
+    finally { isInitializing.value = false }
+  }
+  async function login(identifier: string, password: string) {
+    isLoading.value = true
+    revision++
+    try { user.value = await service.login(identifier, password); initialized.value = true; clearLegacy() }
+    finally { isLoading.value = false }
   }
   async function logout() {
-    try { if (token.value) await api.post('/logout', {}, { headers: authHeader() }) }
-    finally {
-      token.value = null
-      user.value = null
-      sessionStorage.removeItem('gss_token')
-    }
+    isLoading.value = true
+    try { await service.logout(); clearAuth() }
+    finally { isLoading.value = false }
   }
-  return { token, user, isAuthenticated, login, loadUser, logout }
+  return { user, isAuthenticated, isLoading, isInitializing, login, logout, getUser, initializeAuth, clearAuth }
 })

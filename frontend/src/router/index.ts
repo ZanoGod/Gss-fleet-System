@@ -19,7 +19,14 @@ const router = createRouter({ history: createWebHistory(import.meta.env.BASE_URL
 ] })
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
-  if (auth.token && !auth.user) await auth.loadUser()
+  try {
+    const wasAuthenticated = auth.isAuthenticated
+    await auth.initializeAuth()
+    if (wasAuthenticated && !to.meta.public) await auth.getUser()
+  } catch {
+    if (to.path === '/login') return true
+    return { path: '/login', query: { reason: 'unavailable' } }
+  }
   if (!to.meta.public && !auth.isAuthenticated) return { path: '/login', query: { redirect: to.fullPath } }
   if (to.path === '/login' && auth.isAuthenticated) return '/dashboard'
 })

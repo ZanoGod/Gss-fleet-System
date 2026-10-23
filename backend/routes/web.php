@@ -3,7 +3,7 @@
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->post(
+Route::post(
     '/login',
     [AuthController::class, 'login']
 )->middleware('throttle:5,1');
