@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import AppHeader from '@/components/layout/AppHeader.vue'
+import { getApiErrorMessage } from '@/services/apiErrors'
 import { useAuthStore } from '@/stores/auth'
 import './AppSidebar.css'
 
@@ -29,7 +31,7 @@ const sidebarElement = ref<HTMLElement | null>(null)
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: 'bi-grid-1x2-fill' },
-  { to: '/bookings', label: 'Daily Bookings', icon: 'bi-calendar-check' },
+  { to: '/daily-bookings', label: 'Daily Bookings', icon: 'bi-calendar-check' },
   { to: '/monthly-contracts', label: 'Monthly Contracts', icon: 'bi-calendar3' },
   { to: '/fleet', label: 'Cars / Vehicles', icon: 'bi-car-front-fill' },
   { to: '/customers', label: 'Customers', icon: 'bi-people' },
@@ -226,30 +228,7 @@ async function signOut(): Promise<void> {
     </aside>
 
     <div class="app-main">
-      <header class="shell-header">
-        <div>
-          <button
-            ref="mobileMenuButton"
-            type="button"
-            class="btn-outline-warm mobile-menu mb-3"
-            aria-controls="gss-sidebar"
-            :aria-expanded="mobileOpen"
-            @click="openMobileMenu"
-          >
-            <i class="bi bi-list" aria-hidden="true"></i>
-            <span>Menu</span>
-          </button>
-          <div class="eyebrow">Web-Based Fleet Management System</div>
-          <h1>{{ $route.meta.title || 'Dashboard' }}</h1>
-          <p>{{ $route.meta.description || 'Manage fleet operations from one place.' }}</p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-          <span class="btn-outline-warm user-chip">
-            <i class="bi bi-person-circle me-2" aria-hidden="true"></i>
-            {{ auth.user?.username || auth.user?.name || 'Administrator' }}
-          </span>
-        </div>
-      </header>
+      <AppHeader :mobile-open="mobileOpen" @toggle-menu="openMobileMenu" />
       <main class="shell-content"><div v-if="logoutError" class="alert alert-danger" role="alert">{{ logoutError }}</div><slot /></main>
     </div>
   </div>

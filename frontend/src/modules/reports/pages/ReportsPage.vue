@@ -1,0 +1,4 @@
+<script setup lang="ts">
+import ReportFilters from '../components/ReportFilters.vue'
+</script>
+<template><section class="card-shell section-card"><div class="section-head"><div><div class="eyebrow">Reporting</div><h2>Reports</h2><p>Review operational summaries and export filtered results.</p></div></div><ReportFilters/><div class="notice mt-3" role="status"><i class="bi bi-info-circle me-2"></i>Report types, columns, calculations, and exports depend on the legacy PHP implementation, which is not present in this checkout. No fabricated report data or export actions are shown.</div><div class="empty-state"><i class="bi bi-bar-chart-line" aria-hidden="true"></i><h3 class="h5 mt-3">Reports are not connected</h3><p class="mb-0">Connect verified report definitions and endpoints to show results.</p></div></section></template>

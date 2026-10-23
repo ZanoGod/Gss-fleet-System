@@ -4,24 +4,28 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    vue(),
-    vueDevTools(),
-  ],
-
+  plugins: [vue(), vueDevTools()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-
   server: {
     host: '127.0.0.1',
     port: 5173,
     proxy: {
-      '^/(api|sanctum|login|logout)(/|$)': {
+      '^/(api|sanctum)(/|$)': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      // Vue Router owns GET /login; only its POST request belongs to Laravel.
+      '/login': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        bypass: request => request.method === 'GET' ? '/index.html' : undefined,
+      },
+      '/logout': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { authError } from '@/services/auth'
+import { API_ERROR_MESSAGES } from '@/services/apiErrors'
 import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const route = useRoute()
@@ -10,7 +11,7 @@ const username = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const submitting = ref(false)
-const error = ref(route.query.reason === 'expired' ? 'Your session has expired. Please sign in again.' : route.query.reason === 'unavailable' ? 'Cannot verify your session. Please try again.' : '')
+const error = ref(route.query.reason === 'expired' ? API_ERROR_MESSAGES.sessionExpired : route.query.reason === 'database' ? API_ERROR_MESSAGES.database : route.query.reason === 'server' ? API_ERROR_MESSAGES.server : route.query.reason === 'unavailable' ? API_ERROR_MESSAGES.offline : '')
 async function signIn() {
   error.value = ''
   submitting.value = true

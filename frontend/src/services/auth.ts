@@ -1,5 +1,6 @@
 import axios from 'axios'
 import api from './api'
+import { getApiErrorMessage } from './apiErrors'
 
 export interface User {
   id: number
@@ -42,15 +43,5 @@ export async function logout(): Promise<void> {
 }
 
 export function authError(error: unknown): string {
-  if (!axios.isAxiosError(error)) return 'Something went wrong. Please try again.'
-  if (!error.response) return 'Cannot connect to the server. Please check your connection.'
-  const status = error.response.status
-  if (status === 401) return 'Incorrect username or password.'
-  if (status === 419) return 'Your session has expired. Please sign in again.'
-  if (status === 429) return 'Too many sign-in attempts. Please wait a minute and try again.'
-  if (status === 422) {
-    const messages = Object.values(error.response.data?.errors || {}).flat()
-    return typeof messages[0] === 'string' ? messages[0] : 'Please check the entered details.'
-  }
-  return 'Something went wrong on the server. Please try again.'
+  return getApiErrorMessage(error)
 }

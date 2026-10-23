@@ -8,13 +8,14 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import api from '@/services/api'
+import { getApiErrorMessage } from '@/services/apiErrors'
 import { useAuthStore } from '@/stores/auth'
 
 const app = createApp(App)
 app.use(createPinia())
 const auth = useAuthStore()
 api.interceptors.response.use(response => response, async error => {
-  if ([401, 419].includes(error.response?.status) && auth.isAuthenticated && !['/login', '/logout'].includes(error.config?.url)) {
+  if (error.response?.status === 401 && auth.isAuthenticated && !['/login', '/logout'].includes(error.config?.url)) {
     auth.clearAuth()
     await router.replace({ path: '/login', query: { reason: 'expired' } })
   }

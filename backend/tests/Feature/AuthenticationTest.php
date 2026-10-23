@@ -55,10 +55,10 @@ class AuthenticationTest extends TestCase
 
     public function test_validation_invalid_credentials_and_csrf_protection(): void
     {
-        $this->postJson('/login', ['login' => 'nobody', 'password' => 'wrong'])->assertStatus(419);
+        $this->postJson('/login', ['login' => 'nobody', 'password' => 'wrong'])->assertStatus(419)->assertJsonPath('code', 'CSRF_INVALID')->assertJsonPath('message', 'Your session is invalid or expired. Please refresh and try again.');
         $token = $this->csrf();
         $this->postJson('/login', [], ['X-CSRF-TOKEN' => $token])->assertUnprocessable()->assertJsonValidationErrors(['login', 'password']);
-        $this->postJson('/login', ['login' => 'nobody', 'password' => 'wrong'], ['X-CSRF-TOKEN' => $token])->assertUnprocessable()->assertJsonPath('errors.login.0', 'Incorrect username or password.');
+        $this->postJson('/login', ['login' => 'nobody', 'password' => 'wrong'], ['X-CSRF-TOKEN' => $token])->assertUnprocessable()->assertJsonPath('code', 'VALIDATION_ERROR')->assertJsonPath('errors.login.0', 'Incorrect username or password.');
         $this->getJson('/api/user')->assertUnauthorized();
     }
 
