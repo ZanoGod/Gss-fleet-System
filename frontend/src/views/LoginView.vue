@@ -48,6 +48,7 @@ async function signIn() {
         </div>
         <button class="btn-gold login-submit" :disabled="submitting" type="submit"><span v-if="submitting" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{{ submitting ? 'Signing in…' : 'Secure Login' }}</button>
       </form>
+      <p class="mt-3 text-center">Need an account? <RouterLink to="/register">Register</RouterLink></p>
     </div>
   </main>
 </template>

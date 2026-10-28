@@ -8,6 +8,20 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function register(Request $request)
+    {
+        $input = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:users,username'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+        $user = \App\Models\User::create($input);
+        Auth::guard('web')->login($user);
+        $request->session()->regenerate();
+        return response()->json(['success' => true, 'user' => $user->only(['id', 'name', 'username', 'email'])], 201);
+    }
+
     public function login(Request $request)
     {
         $input = $request->validate([

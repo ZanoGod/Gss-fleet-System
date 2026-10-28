@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -83,6 +84,10 @@ class ApiErrorResponses
 
         if ($exception instanceof AuthenticationException) {
             return self::failure('UNAUTHENTICATED', 'Authentication is required to continue.', 401);
+        }
+
+        if ($exception instanceof AuthorizationException) {
+            return self::failure('FORBIDDEN', 'You are not authorized to perform this action.', 403);
         }
 
         if ($exception instanceof TokenMismatchException) {

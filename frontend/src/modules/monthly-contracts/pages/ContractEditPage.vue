@@ -1,4 +1,2 @@
-<script setup lang="ts">
-import ModulePageShell from '@/components/common/ModulePageShell.vue'
-</script>
-<template><ModulePageShell title="Edit Monthly contract" entity="Monthly contract" base-path="/monthly-contracts" mode="edit" /></template>
+<script setup lang="ts">import MonthlyContractForm from'../components/MonthlyContractForm.vue';import{useRoute}from'vue-router';const route=useRoute()</script>
+<template><main class="fleet-module page-content"><MonthlyContractForm :contract-id="Number(route.params.id)"/></main></template>

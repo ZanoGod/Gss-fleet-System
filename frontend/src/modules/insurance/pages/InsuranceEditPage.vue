@@ -1,4 +1,2 @@
-<script setup lang="ts">
-import ModulePageShell from '@/components/common/ModulePageShell.vue'
-</script>
-<template><ModulePageShell title="Edit Insurance policy" entity="Insurance policy" base-path="/insurance" mode="edit" /></template>
+<script setup lang="ts">import InsurancePolicyForm from '../components/InsurancePolicyForm.vue'; import { useRoute } from 'vue-router'; const route=useRoute()</script>
+<template><main class="fleet-module page-content"><InsurancePolicyForm :policy-id="Number(route.params.id)" /></main></template>

@@ -25,6 +25,11 @@ export default defineConfig({
         changeOrigin: true,
         bypass: request => request.method === 'GET' ? '/index.html' : undefined,
       },
+      '/register': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        bypass: request => request.method === 'GET' ? '/index.html' : undefined,
+      },
       '/logout': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,

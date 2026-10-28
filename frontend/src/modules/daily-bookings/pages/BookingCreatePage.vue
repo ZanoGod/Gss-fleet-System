@@ -1,4 +1,2 @@
-<script setup lang="ts">
-import ModulePageShell from '@/components/common/ModulePageShell.vue'
-</script>
-<template><ModulePageShell title="Create Booking" entity="Booking" base-path="/daily-bookings" mode="create" /></template>
+<script setup lang="ts">import DailyBookingForm from'../components/DailyBookingForm.vue'</script>
+<template><main class="fleet-module page-content"><DailyBookingForm/></main></template>

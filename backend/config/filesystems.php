@@ -38,6 +38,15 @@ return [
             'report' => false,
         ],
 
+        'insurance' => [
+            'driver' => 'local',
+            'root' => env('INSURANCE_DOCUMENT_ROOT', storage_path('app/private/insurance')),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
