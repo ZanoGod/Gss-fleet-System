@@ -1,4 +1,4 @@
 <script setup lang="ts">
-import ModulePageShell from '@/components/common/ModulePageShell.vue'
+import CustomerForm from '../components/CustomerForm.vue'
 </script>
-<template><ModulePageShell title="Create Customer" entity="Customer" base-path="/customers" mode="create" /></template>
+<template><main class="fleet-module page-content"><CustomerForm/></main></template>
