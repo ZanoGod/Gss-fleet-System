@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\Customer;
+use App\Models\User;
+
+/** Matches the existing MonthlyContractPolicy; no new role catalog is introduced. */
+class CustomerPolicy
+{
+    public function viewAny(User $user): bool { return $user->exists; }
+    public function view(User $user, Customer $customer): bool { return $user->exists; }
+    public function create(User $user): bool { return $user->exists; }
+    public function update(User $user, Customer $customer): bool { return $user->exists; }
+    public function delete(User $user, Customer $customer): bool { return $user->exists; }
+}

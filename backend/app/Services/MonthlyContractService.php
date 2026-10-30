@@ -24,6 +24,10 @@ class MonthlyContractService
     {
         return DB::transaction(function () use ($data, $existing): MonthlyContract {
             $record = $existing ? MonthlyContract::query()->lockForUpdate()->findOrFail($existing->id) : new MonthlyContract();
+            // Coordinate customer assignment with CustomerService::delete.
+            if (! empty($data['customer_id'])) {
+                Customer::query()->lockForUpdate()->findOrFail($data['customer_id']);
+            }
             $this->lockAndValidateResources($data, $record->id ?: null);
             if (! $record->exists) {
                 $customer = Customer::query()->findOrFail($data['customer_id']);
@@ -59,6 +63,10 @@ class MonthlyContractService
             $data['start_date'] = $start->toDateString();
             $data['end_date'] = $end->toDateString();
             $data['status'] = 'Active';
+            $customerId = $data['customer_id'] ?? $parent->customer_id;
+            if ($customerId) {
+                Customer::query()->lockForUpdate()->findOrFail($customerId);
+            }
             $this->lockAndValidateResources($data, $parent->id);
             $child = new MonthlyContract();
             $child->fill(array_merge($parent->only(self::SNAPSHOT_FIELDS), $data));

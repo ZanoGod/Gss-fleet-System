@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\InsuranceClaimController;
 use App\Http\Controllers\Api\InsuranceDashboardController;
 use App\Http\Controllers\Api\InsuranceDocumentController;
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\Route;
 // Only the session guard is accepted: legacy bearer tokens cannot authenticate.
 Route::middleware('auth:web')->group(function (): void {
     Route::get('/user', [AuthController::class, 'user']);
+
+    Route::get('/customers/summary', [CustomerController::class, 'summary']);
+    Route::apiResource('customers', CustomerController::class);
 
     Route::get('/daily-bookings/options', [DailyBookingController::class, 'options']);
     Route::apiResource('daily-bookings', DailyBookingController::class)->parameters(['daily-bookings' => 'dailyBooking']);
