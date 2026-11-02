@@ -1,17 +1,17 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap');
 /* Color values live in styles/theme.css. */
 * {
   box-sizing: border-box;
 }
 html {
-  font-family: "Quicksand", sans-serif;
+  font-family: 'Quicksand', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: "Quicksand", sans-serif;
+  font-family: 'Quicksand', sans-serif;
   color: var(--ink);
   background: var(--gss-page-background);
   background-attachment: fixed;
@@ -60,7 +60,11 @@ input:focus-visible {
   color: var(--muted);
 }
 .btn-gold {
-  background: linear-gradient(135deg, var(--gss-button-primary-bg), var(--gss-button-primary-bg-end));
+  background: linear-gradient(
+    135deg,
+    var(--gss-button-primary-bg),
+    var(--gss-button-primary-bg-end)
+  );
   color: var(--gss-button-default-text);
   font-weight: 700;
   border: 0;
@@ -488,4 +492,3 @@ input:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
-

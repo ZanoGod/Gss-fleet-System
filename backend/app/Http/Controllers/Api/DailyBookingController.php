@@ -37,26 +37,34 @@ class DailyBookingController extends Controller
             });
         $sort = $request->input('sort', 'updated_at');
         $direction = $request->input('direction', 'desc');
-        if (! in_array($sort, ['updated_at', 'start_date', 'end_date', 'status', 'guest_company_name'], true)) $sort = 'updated_at';
-        if (! in_array($direction, ['asc', 'desc'], true)) $direction = 'desc';
+        if (! in_array($sort, ['updated_at', 'start_date', 'end_date', 'status', 'guest_company_name'], true)) {
+            $sort = 'updated_at';
+        }
+        if (! in_array($direction, ['asc', 'desc'], true)) {
+            $direction = 'desc';
+        }
+
         return DailyBookingResource::collection($query->orderBy($sort, $direction)->paginate(min(max((int) $request->input('per_page', 15), 1), 100))->withQueryString());
     }
 
     public function store(DailyBookingRequest $request, DailyBookingService $service)
     {
         Gate::authorize('create', DailyBooking::class);
+
         return (new DailyBookingResource($service->save($request->validated())))->response()->setStatusCode(201);
     }
 
     public function show(DailyBooking $dailyBooking)
     {
         Gate::authorize('view', $dailyBooking);
+
         return new DailyBookingResource($dailyBooking->load('car', 'secondaryCar', 'driver', 'operator'));
     }
 
     public function update(DailyBookingRequest $request, DailyBooking $dailyBooking, DailyBookingService $service)
     {
         Gate::authorize('update', $dailyBooking);
+
         return new DailyBookingResource($service->save($request->validated(), $dailyBooking));
     }
 
@@ -64,14 +72,20 @@ class DailyBookingController extends Controller
     {
         Gate::authorize('delete', $dailyBooking);
         $service->delete($dailyBooking);
+
         return response()->noContent();
     }
 
     public function options()
     {
         Gate::authorize('viewAny', DailyBooking::class);
+
         return response()->json(['data' => [
-            'cars' => Car::query()->orderBy('plate_no')->get(['id', 'plate_no', 'model_name', 'availability_status'])->map(function ($car) { $car->availability_status = $car->effectiveAvailability(); return $car; }),
+            'cars' => Car::query()->orderBy('plate_no')->get(['id', 'plate_no', 'model_name', 'availability_status'])->map(function ($car) {
+                $car->availability_status = $car->effectiveAvailability();
+
+                return $car;
+            }),
             'drivers' => Driver::query()->orderBy('full_name')->get(['id', 'full_name', 'driver_status']),
             'operators' => Operator::query()->where('operator_status', 'Active')->orderBy('full_name')->get(['id', 'full_name']),
             'statuses' => DailyBooking::STATUSES,

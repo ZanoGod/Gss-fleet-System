@@ -1,26 +1,46 @@
 <?php
+
 namespace Tests\Feature;
 
-use App\Models\{Car, Customer, DailyBooking, Driver, MonthlyContract, MonthlyDriver, Operator, User};
+use App\Models\Car;
+use App\Models\Customer;
+use App\Models\DailyBooking;
+use App\Models\Driver;
+use App\Models\MonthlyContract;
+use App\Models\MonthlyDriver;
+use App\Models\Operator;
+use App\Models\User;
+use App\Policies\DriverPolicy;
+use App\Services\DriverAvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class DriverApiTest extends TestCase
 {
     use RefreshDatabase;
-    private function data(array $extra = []): array { return array_merge(['full_name' => 'Ko Driver', 'phone_number' => '0912345678', 'driver_status' => 'Available', 'note' => 'Airport route'], $extra); }
+
+    private function data(array $extra = []): array
+    {
+        return array_merge(['full_name' => 'Ko Driver', 'phone_number' => '0912345678', 'driver_status' => 'Available', 'note' => 'Airport route'], $extra);
+    }
+
     private function booking(Driver $driver, array $extra = []): DailyBooking
     {
         return DailyBooking::create(array_merge(['guest_company_name' => 'Daily Company', 'driver_id' => $driver->id, 'operator_name' => 'Operator snapshot', 'start_date' => '2026-11-01', 'end_date' => '2026-11-10', 'status' => 'Confirm'], $extra));
     }
+
     private function contract(MonthlyDriver $driver, array $extra = []): MonthlyContract
     {
         return MonthlyContract::create(array_merge(['contract_no' => 'MC-DRIVER-1', 'customer_name' => 'Monthly Company', 'assignment_type' => 'Driver Only', 'driver_id' => $driver->id, 'start_date' => '2026-11-01', 'end_date' => '2026-11-10', 'monthly_rate' => '100', 'rental_currency' => 'MMK', 'rental_status' => 'Driver only', 'status' => 'Active'], $extra));
     }
+
     public function test_all_actions_require_session_and_policy_denials_are_respected(): void
     {
-        foreach (['', '/summary', '/options', '/1'] as $path) $this->getJson('/api/drivers'.$path)->assertUnauthorized();
+        foreach (['', '/summary', '/options', '/1'] as $path) {
+            $this->getJson('/api/drivers'.$path)->assertUnauthorized();
+        }
         $this->postJson('/api/drivers', [])->assertUnauthorized();
         $this->putJson('/api/drivers/1', [])->assertUnauthorized();
         $this->deleteJson('/api/drivers/1')->assertUnauthorized();
@@ -29,6 +49,7 @@ class DriverApiTest extends TestCase
         $this->getJson('/api/drivers')->assertForbidden();
         $this->postJson('/api/drivers', $this->data())->assertForbidden();
     }
+
     public function test_crud_both_scopes_required_fields_and_license_preservation(): void
     {
         $this->actingAs(User::factory()->create());
@@ -47,20 +68,25 @@ class DriverApiTest extends TestCase
         $this->assertDatabaseHas('monthly_drivers', ['id' => $monthly]);
         $this->deleteJson('/api/drivers/'.$monthly.'?resource_type=monthly')->assertNoContent();
     }
+
     public function test_search_status_ten_row_pagination_and_global_summary(): void
     {
         $this->actingAs(User::factory()->create());
-        for ($i = 0; $i < 12; $i++) Driver::create($this->data(['full_name' => sprintf('Driver %02d', $i), 'driver_status' => $i === 0 ? 'Leave' : 'Available']));
+        for ($i = 0; $i < 12; $i++) {
+            Driver::create($this->data(['full_name' => sprintf('Driver %02d', $i), 'driver_status' => $i === 0 ? 'Leave' : 'Available']));
+        }
         $this->getJson('/api/drivers?per_page=100')->assertJsonCount(10, 'data')->assertJsonPath('meta.total', 12)->assertJsonPath('data.0.full_name', 'Driver 00');
         $this->getJson('/api/drivers?page=2')->assertJsonCount(2, 'data');
         $this->getJson('/api/drivers?status=Leave&search=Airport')->assertJsonPath('meta.total', 1);
         $this->getJson('/api/drivers?search=091234')->assertJsonPath('meta.total', 12);
         $this->getJson('/api/drivers/summary?status=Leave')->assertJsonPath('data.total', 12)->assertJsonPath('data.available', 11)->assertJsonPath('data.leave', 1);
-        $driver = Driver::first(); $this->booking($driver);
+        $driver = Driver::first();
+        $this->booking($driver);
         $this->getJson('/api/drivers?search=Daily%20Company')->assertJsonPath('meta.total', 1);
         $driver->bookings()->update(['status' => 'Completed']);
         $this->getJson('/api/drivers?search=Daily%20Company')->assertJsonPath('meta.total', 0); // Legacy search uses active assignment names.
     }
+
     public function test_month_inclusive_history_vehicle_display_and_referenced_deletion(): void
     {
         $driver = Driver::create($this->data());
@@ -76,10 +102,13 @@ class DriverApiTest extends TestCase
         $this->assertSame($driver->id, $booking->fresh()->driver_id);
         $this->assertSame('Daily Company', $booking->fresh()->guest_company_name);
     }
+
     public function test_date_options_are_scope_specific_and_cancelled_records_do_not_block(): void
     {
-        $daily = Driver::create($this->data()); $monthly = MonthlyDriver::create($this->data());
-        $booking = $this->booking($daily); $contract = $this->contract($monthly);
+        $daily = Driver::create($this->data());
+        $monthly = MonthlyDriver::create($this->data());
+        $booking = $this->booking($daily);
+        $contract = $this->contract($monthly);
         $this->actingAs(User::factory()->create());
         $dates = 'date_from=2026-11-10&date_to=2026-11-11';
         $this->getJson('/api/drivers/options?'.$dates)->assertJsonPath('data.drivers.0.available', false);
@@ -93,9 +122,11 @@ class DriverApiTest extends TestCase
         $this->getJson('/api/drivers/options?resource_type=monthly&'.$dates)->assertJsonPath('data.drivers.0.available', true);
         $this->getJson('/api/drivers/options?date_from=2026-11-01')->assertUnprocessable();
     }
+
     public function test_confirmed_daily_overlap_reassignment_leave_and_historical_edits(): void
     {
-        $daily = Driver::create($this->data()); $second = Driver::create($this->data(['full_name' => 'Second']));
+        $daily = Driver::create($this->data());
+        $second = Driver::create($this->data(['full_name' => 'Second']));
         $op = Operator::create(['full_name' => 'Dispatcher', 'operator_status' => 'Active']);
         $existing = $this->booking($daily);
         $this->actingAs(User::factory()->create());
@@ -107,15 +138,19 @@ class DriverApiTest extends TestCase
         $second->update(['driver_status' => 'Leave']);
         $this->postJson('/api/daily-bookings', $input)->assertUnprocessable()->assertJsonValidationErrors('driver_id');
         $daily->update(['driver_status' => 'Inactive']);
-        $input['driver_id'] = $daily->id; $input['status'] = 'Completed';
+        $input['driver_id'] = $daily->id;
+        $input['status'] = 'Completed';
         $this->putJson('/api/daily-bookings/'.$existing->id, $input)->assertOk();
         $input['status'] = 'Confirm';
         $this->putJson('/api/daily-bookings/'.$existing->id, $input)->assertUnprocessable()->assertJsonValidationErrors('driver_id');
     }
+
     public function test_monthly_driver_overlap_and_pool_independence(): void
     {
-        $monthly = MonthlyDriver::create($this->data()); $daily = Driver::create($this->data());
-        $existing = $this->contract($monthly); $this->booking($daily, ['status' => 'Pending']);
+        $monthly = MonthlyDriver::create($this->data());
+        $daily = Driver::create($this->data());
+        $existing = $this->contract($monthly);
+        $this->booking($daily, ['status' => 'Pending']);
         $this->actingAs(User::factory()->create());
         $customer = Customer::create(['company_name' => 'Company', 'customer_status' => 'Active']);
         $input = ['customer_id' => $customer->id, 'customer_name' => 'Company', 'assignment_type' => 'Driver Only', 'driver_id' => $monthly->id, 'start_date' => '2026-11-10', 'end_date' => '2026-11-12', 'monthly_rate' => '100', 'rental_currency' => 'MMK', 'rental_status' => 'Driver only', 'insurance_price' => '0', 'status' => 'Active'];
@@ -123,14 +158,17 @@ class DriverApiTest extends TestCase
         $existing->update(['status' => 'Cancelled']);
         $this->postJson('/api/monthly-contracts', $input)->assertCreated();
         $monthly->update(['driver_status' => 'Leave']);
-        $input['start_date'] = '2026-12-01'; $input['end_date'] = '2026-12-02';
+        $input['start_date'] = '2026-12-01';
+        $input['end_date'] = '2026-12-02';
         $this->postJson('/api/monthly-contracts', $input)->assertUnprocessable()->assertJsonValidationErrors('driver_id');
     }
+
     public function test_old_daily_enum_values_are_used_without_status_rewriting(): void
     {
-        \Illuminate\Support\Facades\Schema::shouldReceive('getColumns')->once()->with('drivers')->andReturn([['name' => 'driver_status', 'type' => "enum('Available','On Trip','Leave','Inactive')"]]);
-        $this->assertSame(['Available', 'On Trip', 'Leave', 'Inactive'], app(\App\Services\DriverAvailabilityService::class)->statuses('daily'));
+        Schema::shouldReceive('getColumns')->once()->with('drivers')->andReturn([['name' => 'driver_status', 'type' => "enum('Available','On Trip','Leave','Inactive')"]]);
+        $this->assertSame(['Available', 'On Trip', 'Leave', 'Inactive'], app(DriverAvailabilityService::class)->statuses('daily'));
     }
+
     public function test_fleet_and_maintenance_show_driver_assignments_without_mutating_driver_history(): void
     {
         $this->actingAs(User::factory()->create());
@@ -151,8 +189,15 @@ class DriverApiTest extends TestCase
     }
 }
 
-class DenyDriverPolicy extends \App\Policies\DriverPolicy
+class DenyDriverPolicy extends DriverPolicy
 {
-    public function viewAny(User $user): bool { return false; }
-    public function create(User $user): bool { return false; }
+    public function viewAny(User $user): bool
+    {
+        return false;
+    }
+
+    public function create(User $user): bool
+    {
+        return false;
+    }
 }

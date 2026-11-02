@@ -8,11 +8,18 @@ use Illuminate\Validation\Rule;
 
 class MaintenanceRequest extends FormRequest
 {
-    public function authorize(): bool { return $this->user() !== null; }
+    public function authorize(): bool
+    {
+        return $this->user() !== null;
+    }
+
     protected function prepareForValidation(): void
     {
-        if (is_string($this->currency)) $this->merge(['currency' => strtoupper(trim($this->currency))]);
+        if (is_string($this->currency)) {
+            $this->merge(['currency' => strtoupper(trim($this->currency))]);
+        }
     }
+
     public function rules(): array
     {
         return [

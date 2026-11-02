@@ -30,13 +30,15 @@ export async function getUser(): Promise<User | null> {
 
 export async function logout(): Promise<void> {
   // A stale CSRF token is refreshed once; no other failed mutations are retried.
-  try { await api.post('/logout') }
-  catch (error) {
+  try {
+    await api.post('/logout')
+  } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) return
     if (!axios.isAxiosError(error) || error.response?.status !== 419) throw error
     await api.get('/sanctum/csrf-cookie')
-    try { await api.post('/logout') }
-    catch (retryError) {
+    try {
+      await api.post('/logout')
+    } catch (retryError) {
       if (!axios.isAxiosError(retryError) || retryError.response?.status !== 401) throw retryError
     }
   }

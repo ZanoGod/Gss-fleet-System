@@ -1,34 +1,34 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
-import api from "@/services/api";
-import { useAuthStore } from "@/stores/auth";
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 const router = useRouter(),
   auth = useAuthStore(),
   busy = ref(false),
-  error = ref("");
+  error = ref('')
 const form = reactive({
-  name: "",
-  username: "",
-  email: "",
-  password: "",
-  password_confirmation: "",
-});
+  name: '',
+  username: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+})
 async function register() {
-  busy.value = true;
-  error.value = "";
+  busy.value = true
+  error.value = ''
   try {
-    await api.get("/sanctum/csrf-cookie");
-    await api.post("/register", form);
-    await auth.getUser();
-    await router.replace("/dashboard");
+    await api.get('/sanctum/csrf-cookie')
+    await api.post('/register', form)
+    await auth.getUser()
+    await router.replace('/dashboard')
   } catch (e: any) {
-    const errors = e?.response?.data?.errors;
+    const errors = e?.response?.data?.errors
     error.value = errors
-      ? Object.values(errors).flat().join(" ")
-      : "Unable to register. Please try again.";
+      ? Object.values(errors).flat().join(' ')
+      : 'Unable to register. Please try again.'
   } finally {
-    busy.value = false;
+    busy.value = false
   }
 }
 </script>
@@ -74,7 +74,7 @@ async function register() {
           />
         </div>
         <button class="btn-gold login-submit" :disabled="busy">
-          {{ busy ? "Creating account…" : "Register" }}
+          {{ busy ? 'Creating account…' : 'Register' }}
         </button>
       </form>
       <p class="mt-3 text-center">

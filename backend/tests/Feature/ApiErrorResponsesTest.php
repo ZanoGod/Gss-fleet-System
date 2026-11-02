@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Tests\TestCase;
 use PDOException;
 use RuntimeException;
+use Tests\TestCase;
 
 class ApiErrorResponsesTest extends TestCase
 {

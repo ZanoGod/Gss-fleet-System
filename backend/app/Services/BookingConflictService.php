@@ -15,7 +15,9 @@ class BookingConflictService
         $carIds = collect([$data['car_id'] ?? null, $data['secondary_car_id'] ?? null])->filter()->map(fn ($id) => (int) $id)->unique()->sort()->values();
         foreach ($carIds as $carId) {
             $car = Car::query()->lockForUpdate()->findOrFail($carId);
-            if (in_array($data['status'] ?? null, ['Pending', 'Confirm'], true)) MaintenanceService::assertAssignable($car);
+            if (in_array($data['status'] ?? null, ['Pending', 'Confirm'], true)) {
+                MaintenanceService::assertAssignable($car);
+            }
             if ($car->availability_status === 'Maintenance') {
                 throw ValidationException::withMessages(['car_id' => "Vehicle {$car->plate_no} is under maintenance."]);
             }

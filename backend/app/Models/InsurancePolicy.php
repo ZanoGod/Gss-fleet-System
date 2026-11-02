@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class InsurancePolicy extends Model
 {
     public const CURRENCIES = ['MMK', 'USD'];
+
     public const STATUSES = ['active', 'expiring', 'expired', 'scheduled', 'cancelled', 'archived'];
 
     protected $table = 'insurance_policies';

@@ -53,10 +53,20 @@ export interface CustomerPage {
   data: Customer[]
   meta: { current_page: number; last_page: number; per_page: number; total: number }
 }
-export interface CustomerSummary { total: number; active: number; with_contracts: number }
+export interface CustomerSummary {
+  total: number
+  active: number
+  with_contracts: number
+}
 export const assignmentTypes = ['Driver Only', 'Vehicle Only', 'Vehicle and Driver']
 export const rentalStatuses = ['Including fuel', 'Excluding fuel', 'Car only', 'Driver only']
-export const offDays = ['Public Holidays', 'Sunday & Public Holidays', 'Sat, Sun & Public Holidays', 'Sat or Sun & Public Holidays', 'Once a week']
+export const offDays = [
+  'Public Holidays',
+  'Sunday & Public Holidays',
+  'Sat, Sun & Public Holidays',
+  'Sat or Sun & Public Holidays',
+  'Once a week',
+]
 export function currentMonth(): string {
   const today = new Date()
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`

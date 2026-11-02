@@ -18,6 +18,7 @@ class CarController extends Controller
     private function model(Request $request): string
     {
         $request->validate(['resource_type' => ['nullable', Rule::in(['daily', 'monthly'])]]);
+
         return $request->input('resource_type', 'daily') === 'monthly' ? MonthlyCar::class : Car::class;
     }
 
@@ -29,6 +30,7 @@ class CarController extends Controller
         $month = Carbon::createFromFormat('!Y-m', $request->input('month', now()->format('Y-m')));
         $assignment = fn ($q) => $q->with('driver')->where('status', '!=', 'Cancelled')->whereDate('start_date', '<=', $month->copy()->endOfMonth())->whereDate('end_date', '>=', $month);
         $relations = $monthly ? ['contracts' => $assignment] : ['bookings' => $assignment, 'secondaryBookings' => $assignment];
+
         return $model::query()->with($relations)
             ->when($request->filled('status'), fn ($q) => $q->where('availability_status', $request->input('status')))
             ->when($request->filled('search'), function ($q) use ($request, $monthly) {
@@ -36,7 +38,9 @@ class CarController extends Controller
                 $q->where(function ($q) use ($term, $monthly) {
                     $q->where('plate_no', 'like', $term)->orWhere('car_type', 'like', $term)->orWhere('model_name', 'like', $term)
                         ->orWhereHas($monthly ? 'contracts' : 'bookings', fn ($q) => $q->where($monthly ? 'customer_name' : 'guest_company_name', 'like', $term));
-                    if (! $monthly) $q->orWhereHas('secondaryBookings', fn ($q) => $q->where('guest_company_name', 'like', $term));
+                    if (! $monthly) {
+                        $q->orWhereHas('secondaryBookings', fn ($q) => $q->where('guest_company_name', 'like', $term));
+                    }
                 });
             });
     }
@@ -51,13 +55,17 @@ class CarController extends Controller
         $query = $this->query($request);
         $model = $this->model($request);
         $counts = ['total' => (clone $query)->count()];
-        foreach ($model::STATUSES as $status) $counts[strtolower($status)] = (clone $query)->where('availability_status', $status)->count();
+        foreach ($model::STATUSES as $status) {
+            $counts[strtolower($status)] = (clone $query)->where('availability_status', $status)->count();
+        }
+
         return response()->json(['data' => $counts]);
     }
 
     private function data(Request $request, $record = null): array
     {
         $model = $this->model($request);
+
         return $request->validate([
             'car_type' => 'required|string|max:100', 'plate_no' => ['required', 'string', 'max:50', Rule::unique((new $model)->getTable(), 'plate_no')->ignore($record?->id)],
             'model_name' => 'required|string|max:100', 'seat_capacity' => 'required|integer|min:1|max:255',
@@ -68,6 +76,7 @@ class CarController extends Controller
     public function store(Request $request)
     {
         $model = $this->model($request);
+
         return (new FleetVehicleResource($model::create($this->data($request))))->response()->setStatusCode(201);
     }
 
@@ -76,15 +85,18 @@ class CarController extends Controller
         $model = $this->model($request);
         $record = $model::findOrFail($car);
         $record->load($record instanceof MonthlyCar ? ['contracts.driver', 'insurancePolicies', 'maintenances'] : ['bookings.driver', 'secondaryBookings.driver', 'insurancePolicies', 'maintenances']);
+
         return new FleetVehicleResource($record);
     }
 
     public function update(Request $request, string $car)
     {
         $model = $this->model($request);
+
         return DB::transaction(function () use ($request, $model, $car) {
             $record = $model::query()->lockForUpdate()->findOrFail($car);
             $record->update($this->data($request, $record));
+
             return new FleetVehicleResource($record);
         }, 3);
     }
@@ -96,10 +108,13 @@ class CarController extends Controller
             $record = $model::query()->lockForUpdate()->findOrFail($car);
             $relations = $record instanceof MonthlyCar ? ['contracts', 'insurancePolicies', 'maintenances'] : ['bookings', 'secondaryBookings', 'insurancePolicies', 'maintenances'];
             foreach ($relations as $relation) {
-                if ($record->{$relation}()->exists()) throw ValidationException::withMessages(['vehicle' => 'This vehicle has assignment, insurance, or maintenance history and cannot be deleted.']);
+                if ($record->{$relation}()->exists()) {
+                    throw ValidationException::withMessages(['vehicle' => 'This vehicle has assignment, insurance, or maintenance history and cannot be deleted.']);
+                }
             }
             $record->delete();
         }, 3);
+
         return response()->noContent();
     }
 }

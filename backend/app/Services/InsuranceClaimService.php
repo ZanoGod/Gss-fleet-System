@@ -10,16 +10,14 @@ use Illuminate\Validation\ValidationException;
 
 class InsuranceClaimService
 {
-    
-
     public function save(array $data, User $user, ?InsuranceClaim $existing = null): InsuranceClaim
     {
         return DB::transaction(function () use ($data, $user, $existing): InsuranceClaim {
-            
+
             $policy = InsurancePolicy::query()->lockForUpdate()->findOrFail($data['policy_id']);
             $claim = $existing
                 ? InsuranceClaim::query()->lockForUpdate()->findOrFail($existing->id)
-                : new InsuranceClaim();
+                : new InsuranceClaim;
 
             if ($claim->exists && (int) $claim->policy_id !== (int) $policy->id) {
                 throw ValidationException::withMessages(['policy_id' => 'Claims cannot be moved between policies.']);

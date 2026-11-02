@@ -45,6 +45,7 @@
     "npm-run-all2": "^9.0.3",
     "oxfmt": "^0.67.0",
     "oxlint": "~1.82.0",
+    "prettier": "3.9.10",
     "typescript": "npm:typescript-native-bridge@latest",
     "vite": "^8.2.2",
     "vite-plugin-vue-devtools": "^8.2.1",

@@ -12,13 +12,14 @@ class CustomerService
         return DB::transaction(function () use ($data, $customer): Customer {
             $record = $customer
                 ? Customer::query()->lockForUpdate()->findOrFail($customer->id)
-                : new Customer();
+                : new Customer;
             unset($data['customer_status']);
             $record->fill($data);
             if (! $record->exists) {
                 $record->customer_status = 'Inactive';
             }
             $record->save();
+
             return $record;
         }, 3);
     }
@@ -32,6 +33,7 @@ class CustomerService
                 return false;
             }
             $record->delete();
+
             return true;
         }, 3);
     }

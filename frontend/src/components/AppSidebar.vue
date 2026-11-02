@@ -71,9 +71,10 @@ function handleDocumentKeydown(event: KeyboardEvent): void {
 
 function handleSidebarKeydown(event: KeyboardEvent): void {
   if (!mobileOpen.value || event.key !== 'Tab') return
-  const focusable = [...(sidebarElement.value?.querySelectorAll<HTMLElement>(
-    'a[href], button:not([disabled])',
-  ) ?? [])].filter((element) => element.getClientRects().length > 0)
+  const focusable = [
+    ...(sidebarElement.value?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])') ??
+      []),
+  ].filter((element) => element.getClientRects().length > 0)
 
   if (focusable.length === 0) return
   const first = focusable[0]
@@ -99,7 +100,10 @@ watch(mobileOpen, async (open) => {
   }
 })
 
-watch(() => route.fullPath, () => closeMobileMenu())
+watch(
+  () => route.fullPath,
+  () => closeMobileMenu(),
+)
 
 onMounted(() => {
   window.addEventListener('keydown', handleDocumentKeydown)
@@ -129,7 +133,10 @@ async function signOut(): Promise<void> {
 </script>
 
 <template>
-  <div class="gss-app-layout" :class="{ 'sidebar-collapsed': collapsed, 'mobile-sidebar-open': mobileOpen }">
+  <div
+    class="gss-app-layout"
+    :class="{ 'sidebar-collapsed': collapsed, 'mobile-sidebar-open': mobileOpen }"
+  >
     <div
       v-if="mobileOpen"
       class="sidebar-backdrop"
@@ -229,7 +236,10 @@ async function signOut(): Promise<void> {
 
     <div class="app-main">
       <AppHeader :mobile-open="mobileOpen" @toggle-menu="openMobileMenu" />
-      <main class="shell-content"><div v-if="logoutError" class="alert alert-danger" role="alert">{{ logoutError }}</div><slot /></main>
+      <main class="shell-content">
+        <div v-if="logoutError" class="alert alert-danger" role="alert">{{ logoutError }}</div>
+        <slot />
+      </main>
     </div>
   </div>
 </template>

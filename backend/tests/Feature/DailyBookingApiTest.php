@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Car;
-use App\Models\DailyBooking;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;
@@ -15,9 +14,13 @@ class DailyBookingApiTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Car $car;
+
     private Car $secondCar;
+
     private Driver $driver;
+
     private Operator $operator;
 
     protected function setUp(): void

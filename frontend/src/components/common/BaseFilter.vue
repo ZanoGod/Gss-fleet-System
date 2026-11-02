@@ -1,14 +1,14 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    label: string;
-    modelValue?: string;
-    options: Array<{ label: string; value: string }>;
-    disabled?: boolean;
+    label: string
+    modelValue?: string
+    options: Array<{ label: string; value: string }>
+    disabled?: boolean
   }>(),
-  { modelValue: "", disabled: false },
-);
-const emit = defineEmits<{ "update:modelValue": [value: string] }>();
+  { modelValue: '', disabled: false },
+)
+const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 </script>
 <template>
   <label class="gss-filter"

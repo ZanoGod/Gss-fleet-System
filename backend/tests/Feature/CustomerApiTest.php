@@ -29,6 +29,7 @@ class CustomerApiTest extends TestCase
     private function contract(Customer $customer, array $values = []): MonthlyContract
     {
         static $number = 0;
+
         return MonthlyContract::create(array_merge([
             'customer_id' => $customer->id,
             'contract_no' => 'TEST-'.(++$number),

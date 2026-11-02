@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import BaseModal from "./BaseModal.vue";
-defineProps<{ open: boolean; title?: string; message: string; busy?: boolean }>();
-const emit = defineEmits<{ close: []; confirm: [] }>();
+import BaseModal from './BaseModal.vue'
+defineProps<{ open: boolean; title?: string; message: string; busy?: boolean }>()
+const emit = defineEmits<{ close: []; confirm: [] }>()
 </script>
 <template>
   <BaseModal :open="open" :title="title || 'Please confirm'" @close="emit('close')"
@@ -9,7 +9,7 @@ const emit = defineEmits<{ close: []; confirm: [] }>();
     <template #actions
       ><button class="btn-outline-warm" :disabled="busy" @click="emit('close')">Cancel</button
       ><button class="btn-gold" :disabled="busy" @click="emit('confirm')">
-        {{ busy ? "Please wait…" : "Confirm" }}
+        {{ busy ? 'Please wait…' : 'Confirm' }}
       </button></template
     ></BaseModal
   >

@@ -2,9 +2,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('vehicle_maintenances', function (Blueprint $table) {
@@ -32,7 +34,13 @@ return new class extends Migration {
         });
         // Both references have real foreign keys. Exactly one must be supplied.
         $sql = 'ALTER TABLE vehicle_maintenances ADD CONSTRAINT maintenance_one_vehicle CHECK ((car_id IS NOT NULL AND monthly_car_id IS NULL) OR (car_id IS NULL AND monthly_car_id IS NOT NULL))';
-        if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') \Illuminate\Support\Facades\DB::statement($sql);
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement($sql);
+        }
     }
-    public function down(): void { Schema::dropIfExists('vehicle_maintenances'); }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('vehicle_maintenances');
+    }
 };

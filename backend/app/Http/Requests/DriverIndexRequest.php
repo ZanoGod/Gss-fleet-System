@@ -8,10 +8,15 @@ use Illuminate\Validation\Rule;
 
 class DriverIndexRequest extends FormRequest
 {
-    public function authorize(): bool { return $this->user() !== null; }
+    public function authorize(): bool
+    {
+        return $this->user() !== null;
+    }
+
     public function rules(): array
     {
         $scope = $this->input('resource_type') === 'monthly' ? 'monthly' : 'daily';
+
         return [
             'resource_type' => ['nullable', Rule::in(['daily', 'monthly'])],
             'search' => 'nullable|string|max:500', 'month' => 'nullable|date_format:Y-m',

@@ -1,17 +1,22 @@
 <?php
+
 namespace Tests\Feature;
 
-use App\Models\{Operator, DailyBooking, User};
+use App\Models\DailyBooking;
+use App\Models\MonthlyContract;
+use App\Models\Operator;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class OperatorApiTest extends TestCase
 {
     use RefreshDatabase;
+
     public function test_monthly_snapshots_and_inactive_existing_daily_assignments_are_preserved(): void
     {
         $operator = Operator::create(['full_name' => 'Original', 'operator_status' => 'Active']);
-        $contract = \App\Models\MonthlyContract::create(['contract_no' => 'MC-OP', 'customer_name' => 'Company', 'assignment_type' => 'Driver Only', 'operator_id' => $operator->id, 'operator_name' => 'Historical monthly name', 'start_date' => '2025-01-01', 'end_date' => '2025-01-31', 'monthly_rate' => 0, 'rental_currency' => 'MMK', 'rental_status' => 'Driver only', 'status' => 'Expired']);
+        $contract = MonthlyContract::create(['contract_no' => 'MC-OP', 'customer_name' => 'Company', 'assignment_type' => 'Driver Only', 'operator_id' => $operator->id, 'operator_name' => 'Historical monthly name', 'start_date' => '2025-01-01', 'end_date' => '2025-01-31', 'monthly_rate' => 0, 'rental_currency' => 'MMK', 'rental_status' => 'Driver only', 'status' => 'Expired']);
         $this->actingAs(User::factory()->create());
         $this->putJson('/api/operators/'.$operator->id, ['full_name' => 'Renamed', 'operator_status' => 'Inactive'])->assertOk();
         $this->assertSame('Historical monthly name', $contract->fresh()->operator_name);
@@ -22,6 +27,7 @@ class OperatorApiTest extends TestCase
         $this->putJson('/api/daily-bookings/'.$booking->id, $data)->assertOk();
         $this->postJson('/api/daily-bookings', $data)->assertUnprocessable()->assertJsonValidationErrors('operator_id');
     }
+
     public function test_crud_filters_validation_and_legacy_daily_name_sync(): void
     {
         $this->getJson('/api/operators')->assertUnauthorized();

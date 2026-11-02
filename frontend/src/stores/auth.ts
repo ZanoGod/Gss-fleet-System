@@ -11,15 +11,29 @@ export const useAuthStore = defineStore('auth', () => {
   let pending: Promise<void> | null = null
   const isAuthenticated = computed(() => user.value !== null)
   function clearLegacy() {
-    try { sessionStorage.removeItem('gss_token'); localStorage.removeItem('gss_token') } catch { /* Storage may be blocked. */ }
+    try {
+      sessionStorage.removeItem('gss_token')
+      localStorage.removeItem('gss_token')
+    } catch {
+      /* Storage may be blocked. */
+    }
   }
-  function clearAuth() { revision++; user.value = null; clearLegacy() }
+  function clearAuth() {
+    revision++
+    user.value = null
+    clearLegacy()
+  }
   async function getUser() {
     if (!pending) {
       const currentRevision = revision
-      pending = service.getUser().then(value => {
-        if (currentRevision === revision) user.value = value
-      }).finally(() => { pending = null })
+      pending = service
+        .getUser()
+        .then((value) => {
+          if (currentRevision === revision) user.value = value
+        })
+        .finally(() => {
+          pending = null
+        })
     }
     await pending
   }
@@ -27,19 +41,42 @@ export const useAuthStore = defineStore('auth', () => {
     if (initialized.value) return
     isInitializing.value = true
     clearLegacy()
-    try { await getUser(); initialized.value = true }
-    finally { isInitializing.value = false }
+    try {
+      await getUser()
+      initialized.value = true
+    } finally {
+      isInitializing.value = false
+    }
   }
   async function login(identifier: string, password: string) {
     isLoading.value = true
     revision++
-    try { user.value = await service.login(identifier, password); initialized.value = true; clearLegacy() }
-    finally { isLoading.value = false }
+    try {
+      user.value = await service.login(identifier, password)
+      initialized.value = true
+      clearLegacy()
+    } finally {
+      isLoading.value = false
+    }
   }
   async function logout() {
     isLoading.value = true
-    try { await service.logout(); clearAuth() }
-    finally { isLoading.value = false }
+    try {
+      await service.logout()
+      clearAuth()
+    } finally {
+      isLoading.value = false
+    }
   }
-  return { user, isAuthenticated, isLoading, isInitializing, login, logout, getUser, initializeAuth, clearAuth }
+  return {
+    user,
+    isAuthenticated,
+    isLoading,
+    isInitializing,
+    login,
+    logout,
+    getUser,
+    initializeAuth,
+    clearAuth,
+  }
 })

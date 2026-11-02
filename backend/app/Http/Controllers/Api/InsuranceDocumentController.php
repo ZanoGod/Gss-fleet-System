@@ -56,12 +56,16 @@ class InsuranceDocumentController extends Controller
                     'size' => $file->getSize(),
                     'replaces_id' => $old?->id,
                 ]);
+
                 return $document;
             });
         } catch (\Throwable $error) {
-            if ($stored) $disk->delete($stored);
+            if ($stored) {
+                $disk->delete($stored);
+            }
             throw $error;
         }
+
         return (new InsuranceDocumentResource($document))->response()->setStatusCode(201);
     }
 
@@ -72,6 +76,7 @@ class InsuranceDocumentController extends Controller
         if (! $disk->exists($document->storage_key)) {
             abort(404);
         }
+
         return response()->streamDownload(function () use ($disk, $document): void {
             $stream = $disk->readStream($document->storage_key);
             if ($stream === false) {
@@ -92,7 +97,10 @@ class InsuranceDocumentController extends Controller
     public function archive(InsuranceDocument $document)
     {
         Gate::authorize('update', $document->policy);
-        if (! $document->archived_at) $document->forceFill(['archived_at' => now()])->save();
+        if (! $document->archived_at) {
+            $document->forceFill(['archived_at' => now()])->save();
+        }
+
         return new InsuranceDocumentResource($document->refresh());
     }
 }

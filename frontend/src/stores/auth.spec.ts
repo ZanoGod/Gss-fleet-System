@@ -4,7 +4,11 @@ import { useAuthStore } from './auth'
 import * as service from '@/services/auth'
 vi.mock('@/services/auth', () => ({ getUser: vi.fn(), login: vi.fn(), logout: vi.fn() }))
 const user = { id: 1, name: 'Test', username: 'test', email: 'test@example.test' }
-beforeEach(() => { setActivePinia(createPinia()); vi.resetAllMocks(); sessionStorage.clear() })
+beforeEach(() => {
+  setActivePinia(createPinia())
+  vi.resetAllMocks()
+  sessionStorage.clear()
+})
 describe('cookie authentication', () => {
   it('deduplicates initialization and restores server identity without a token', async () => {
     vi.mocked(service.getUser).mockResolvedValue(user)
@@ -44,7 +48,11 @@ describe('cookie authentication', () => {
     vi.mocked(service.login).mockResolvedValue(user)
     vi.mocked(service.logout).mockResolvedValue()
     let resolveUser!: (value: typeof user) => void
-    vi.mocked(service.getUser).mockReturnValue(new Promise(resolve => { resolveUser = resolve }))
+    vi.mocked(service.getUser).mockReturnValue(
+      new Promise((resolve) => {
+        resolveUser = resolve
+      }),
+    )
     const auth = useAuthStore()
     await auth.login('test', 'password')
     const pending = auth.getUser()
@@ -53,5 +61,4 @@ describe('cookie authentication', () => {
     await pending
     expect(auth.isAuthenticated).toBe(false)
   })
-
 })

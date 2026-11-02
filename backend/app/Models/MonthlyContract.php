@@ -9,8 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class MonthlyContract extends Model
 {
     public const ASSIGNMENT_TYPES = ['Driver Only', 'Vehicle Only', 'Vehicle and Driver'];
+
     public const STATUSES = ['Draft', 'Active', 'Expired', 'Renewed', 'Cancelled'];
+
     public const CURRENCIES = ['MMK', 'USD'];
+
     public const RENTAL_STATUSES = ['Including fuel', 'Excluding fuel', 'Car only', 'Driver only'];
 
     protected $table = 'monthly_contracts';

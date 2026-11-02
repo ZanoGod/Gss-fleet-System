@@ -1,10 +1,10 @@
 <script setup lang="ts">
-defineProps<{ label?: string }>();
+defineProps<{ label?: string }>()
 </script>
 <template>
   <div class="gss-loading" role="status">
     <span class="spinner-border spinner-border-sm" aria-hidden="true"></span
-    ><span>{{ label || "Loading…" }}</span>
+    ><span>{{ label || 'Loading…' }}</span>
   </div>
 </template>
 <style scoped>

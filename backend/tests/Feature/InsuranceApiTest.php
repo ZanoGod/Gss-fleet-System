@@ -5,8 +5,8 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\AdminUserLink;
 use App\Models\Car;
-use App\Models\InsurancePolicy;
 use App\Models\InsuranceDocument;
+use App\Models\InsurancePolicy;
 use App\Models\InsuranceProvider;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,7 +19,9 @@ class InsuranceApiTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Car $car;
+
     private InsuranceProvider $provider;
 
     protected function setUp(): void

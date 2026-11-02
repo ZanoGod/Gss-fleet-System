@@ -2,13 +2,17 @@
 
 namespace App\Services;
 
-use App\Models\{DailyBooking, Driver, MonthlyContract, MonthlyDriver};
+use App\Models\Driver;
+use App\Models\MonthlyDriver;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class DriverAvailabilityService
 {
-    public function model(string $scope): string { return $scope === 'monthly' ? MonthlyDriver::class : Driver::class; }
+    public function model(string $scope): string
+    {
+        return $scope === 'monthly' ? MonthlyDriver::class : Driver::class;
+    }
 
     /** Respect the installed enum, including older daily schemas using On Trip. No data rewriting. */
     public function statuses(string $scope): array
@@ -16,7 +20,10 @@ class DriverAvailabilityService
         $model = $this->model($scope);
         $column = collect(Schema::getColumns((new $model)->getTable()))->firstWhere('name', 'driver_status');
         $type = $column['type'] ?? '';
-        if (str_starts_with(strtolower($type), 'enum(') && preg_match_all("/'([^']+)'/", $type, $matches)) return $matches[1];
+        if (str_starts_with(strtolower($type), 'enum(') && preg_match_all("/'([^']+)'/", $type, $matches)) {
+            return $matches[1];
+        }
+
         return $model::STATUSES;
     }
 
@@ -40,7 +47,9 @@ class DriverAvailabilityService
 
     public function assertStoredStatus(Driver|MonthlyDriver $driver, bool $retained, bool $historical): void
     {
-        if ($historical && $retained) return;
+        if ($historical && $retained) {
+            return;
+        }
         if (in_array($driver->driver_status, ['Leave', 'Inactive'], true) || (! $retained && $driver->driver_status !== 'Available')) {
             throw ValidationException::withMessages(['driver_id' => 'Choose an Available driver. A driver on leave or inactive cannot receive an active assignment.']);
         }

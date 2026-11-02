@@ -11,12 +11,9 @@ use Illuminate\Validation\ValidationException;
 
 class InsurancePolicyService
 {
-    
-
     public function save(array $data, User $user, ?InsurancePolicy $existing = null, ?InsurancePolicy $parent = null): InsurancePolicy
     {
         return DB::transaction(function () use ($data, $user, $existing, $parent): InsurancePolicy {
-            
 
             if ($existing) {
                 $existing = InsurancePolicy::query()->lockForUpdate()->findOrFail($existing->id);
@@ -72,7 +69,7 @@ class InsurancePolicyService
                 }
             }
 
-            $policy = $existing ?? new InsurancePolicy();
+            $policy = $existing ?? new InsurancePolicy;
             $policy->fill($data);
             if (! $existing) {
                 $policy->created_by_user_id = $user->id;

@@ -10,8 +10,23 @@ class InsuranceClaimPolicy
 {
     use RequiresLegacyAdminLink;
 
-    public function viewAny(User $user): bool { return $user->exists; }
-    public function view(User $user, InsuranceClaim $claim): bool { return $user->exists; }
-    public function create(User $user): bool { return $user->exists; }
-    public function update(User $user, InsuranceClaim $claim): bool { return $user->exists; }
+    public function viewAny(User $user): bool
+    {
+        return $user->exists;
+    }
+
+    public function view(User $user, InsuranceClaim $claim): bool
+    {
+        return $user->exists;
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->exists;
+    }
+
+    public function update(User $user, InsuranceClaim $claim): bool
+    {
+        return $user->exists;
+    }
 }

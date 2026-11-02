@@ -18,7 +18,10 @@
   --gss-sidebar-text: #f6f1e9;
   --gss-header-background: transparent;
   --gss-header-text: #3d2418;
-  --gss-page-background: radial-gradient(circle at top left, rgba(255, 200, 70, 0.22), transparent 42%), radial-gradient(circle at bottom right, rgba(255, 150, 40, 0.16), transparent 40%), linear-gradient(180deg, #f7f5f1, #efece5);
+  --gss-page-background:
+    radial-gradient(circle at top left, rgba(255, 200, 70, 0.22), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(255, 150, 40, 0.16), transparent 40%),
+    linear-gradient(180deg, #f7f5f1, #efece5);
   --gss-surface-card: #fffdf9;
   --gss-surface-card-header: #fffaf3;
   --gss-surface-card-overlay: rgba(255, 253, 249, 0.97);
@@ -188,20 +191,20 @@
   --gss-palette-rgba-240-193-75-p14: rgba(240, 193, 75, 0.14);
   --gss-palette-rgba-255-119-95-p4: rgba(255, 119, 95, 0.4);
   --gss-palette-rgba-255-150-40-p16: rgba(255, 150, 40, 0.16);
-  --gss-palette-rgba-255-154-0-24: rgba(255, 154, 0, .24);
+  --gss-palette-rgba-255-154-0-24: rgba(255, 154, 0, 0.24);
   --gss-palette-rgba-255-200-70-p22: rgba(255, 200, 70, 0.22);
-  --gss-palette-rgba-255-217-61-2: rgba(255, 217, 61, .2);
-  --gss-palette-rgba-255-217-61-35: rgba(255, 217, 61, .35);
-  --gss-palette-rgba-255-255-255-12: rgba(255, 255, 255, .12);
-  --gss-palette-rgba-255-255-255-22: rgba(255, 255, 255, .22);
-  --gss-palette-rgba-255-255-255-8: rgba(255, 255, 255, .08);
+  --gss-palette-rgba-255-217-61-2: rgba(255, 217, 61, 0.2);
+  --gss-palette-rgba-255-217-61-35: rgba(255, 217, 61, 0.35);
+  --gss-palette-rgba-255-255-255-12: rgba(255, 255, 255, 0.12);
+  --gss-palette-rgba-255-255-255-22: rgba(255, 255, 255, 0.22);
+  --gss-palette-rgba-255-255-255-8: rgba(255, 255, 255, 0.08);
   --gss-palette-rgba-255-255-255-p09: rgba(255, 255, 255, 0.09);
   --gss-palette-rgba-255-255-255-p13: rgba(255, 255, 255, 0.13);
   --gss-palette-rgba-255-255-255-p7: rgba(255, 255, 255, 0.7);
   --gss-palette-rgba-255-255-255-p82: rgba(255, 255, 255, 0.82);
   --gss-palette-rgba-255-255-255-p95: rgba(255, 255, 255, 0.95);
   --gss-palette-rgba-30-15-5-p55: rgba(30, 15, 5, 0.55);
-  --gss-palette-rgba-32-13-5-18: rgba(32, 13, 5, .18);
-  --gss-palette-rgba-32-14-7-54: rgba(32, 14, 7, .54);
-  --gss-palette-rgba-79-32-13-8: rgba(79, 32, 13, .08);
+  --gss-palette-rgba-32-13-5-18: rgba(32, 13, 5, 0.18);
+  --gss-palette-rgba-32-14-7-54: rgba(32, 14, 7, 0.54);
+  --gss-palette-rgba-79-32-13-8: rgba(79, 32, 13, 0.08);
 }

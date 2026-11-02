@@ -12,6 +12,7 @@ trait RequiresLegacyAdminLink
     {
         try {
             app(LegacyAdminIdentity::class)->requireActiveAdminId($user);
+
             return true;
         } catch (AuthorizationException) {
             return false;

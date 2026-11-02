@@ -13,24 +13,84 @@ const auth = vi.hoisted(() => ({
 }))
 
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => auth }))
-vi.mock('@/modules/insurance/api', () => ({ insuranceApi: {
-  dashboard: async () => ({ total_policies: 0, active_policies: 0, expired_policies: 0, expiring_soon_policies: 0, scheduled_policies: 0, claims: { total: 0, open: 0, approved: 0, paid: 0 }, uninsured_vehicles: { daily: 0, monthly: 0 }, expiring_policies: [], recent_claims: [] }),
-  policies: async () => [], providers: async () => [], claims: async () => [], vehicles: async () => [], policy: async (id: number) => ({ id, car_id: null, monthly_car_id: null, vehicle: null, provider_id: 0, policy_number: '', insurance_type: '', coverage_details: null, start_date: '', expiration_date: '', premium_amount: '0.00', currency: 'MMK', coverage_amount: '0.00', notes: null, status: 'active', renewal_parent_id: null, cancelled_at: null, archived_at: null }),
-} }))
+vi.mock('@/modules/insurance/api', () => ({
+  insuranceApi: {
+    dashboard: async () => ({
+      total_policies: 0,
+      active_policies: 0,
+      expired_policies: 0,
+      expiring_soon_policies: 0,
+      scheduled_policies: 0,
+      claims: { total: 0, open: 0, approved: 0, paid: 0 },
+      uninsured_vehicles: { daily: 0, monthly: 0 },
+      expiring_policies: [],
+      recent_claims: [],
+    }),
+    policies: async () => [],
+    providers: async () => [],
+    claims: async () => [],
+    vehicles: async () => [],
+    policy: async (id: number) => ({
+      id,
+      car_id: null,
+      monthly_car_id: null,
+      vehicle: null,
+      provider_id: 0,
+      policy_number: '',
+      insurance_type: '',
+      coverage_details: null,
+      start_date: '',
+      expiration_date: '',
+      premium_amount: '0.00',
+      currency: 'MMK',
+      coverage_amount: '0.00',
+      notes: null,
+      status: 'active',
+      renewal_parent_id: null,
+      cancelled_at: null,
+      archived_at: null,
+    }),
+  },
+}))
 
 import router from './index'
 
 const pagePaths = [
   '/dashboard',
-  '/daily-bookings', '/daily-bookings/create', '/daily-bookings/42', '/daily-bookings/42/edit',
-  '/fleet', '/fleet/create', '/fleet/42', '/fleet/42/edit',
-  '/customers', '/customers/create', '/customers/42', '/customers/42/edit',
-  '/drivers', '/drivers/create', '/drivers/42', '/drivers/42/edit',
-  '/operators', '/operators/create', '/operators/42', '/operators/42/edit',
-  '/insurance', '/insurance/create', '/insurance/42', '/insurance/42/edit',
-  '/maintenance', '/maintenance/create', '/maintenance/42', '/maintenance/42/edit',
-  '/monthly-contracts', '/monthly-contracts/create', '/monthly-contracts/42', '/monthly-contracts/42/edit',
-  '/payments', '/reports',
+  '/daily-bookings',
+  '/daily-bookings/create',
+  '/daily-bookings/42',
+  '/daily-bookings/42/edit',
+  '/fleet',
+  '/fleet/create',
+  '/fleet/42',
+  '/fleet/42/edit',
+  '/customers',
+  '/customers/create',
+  '/customers/42',
+  '/customers/42/edit',
+  '/drivers',
+  '/drivers/create',
+  '/drivers/42',
+  '/drivers/42/edit',
+  '/operators',
+  '/operators/create',
+  '/operators/42',
+  '/operators/42/edit',
+  '/insurance',
+  '/insurance/create',
+  '/insurance/42',
+  '/insurance/42/edit',
+  '/maintenance',
+  '/maintenance/create',
+  '/maintenance/42',
+  '/maintenance/42/edit',
+  '/monthly-contracts',
+  '/monthly-contracts/create',
+  '/monthly-contracts/42',
+  '/monthly-contracts/42/edit',
+  '/payments',
+  '/reports',
 ]
 
 describe('application routes', () => {
@@ -45,7 +105,9 @@ describe('application routes', () => {
     await router.push('/dashboard')
     const app = mount(App, { global: { plugins: [createPinia(), router] } })
     await flushPromises()
-    for (const [path, expectedTitle] of pagePaths.map(path => [path, router.resolve(path).meta.title] as const)) {
+    for (const [path, expectedTitle] of pagePaths.map(
+      (path) => [path, router.resolve(path).meta.title] as const,
+    )) {
       await router.push(path)
       await flushPromises()
       await nextTick()

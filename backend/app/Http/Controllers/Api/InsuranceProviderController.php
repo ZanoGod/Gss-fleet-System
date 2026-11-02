@@ -25,12 +25,14 @@ class InsuranceProviderController extends Controller
     public function store(InsuranceProviderRequest $request)
     {
         Gate::authorize('create', InsuranceProvider::class);
+
         return (new InsuranceProviderResource(InsuranceProvider::create($request->validated())))->response()->setStatusCode(201);
     }
 
     public function show(InsuranceProvider $provider)
     {
         Gate::authorize('view', $provider);
+
         return new InsuranceProviderResource($provider->loadCount('policies'));
     }
 
@@ -38,6 +40,7 @@ class InsuranceProviderController extends Controller
     {
         Gate::authorize('update', $provider);
         $provider->update($request->validated());
+
         return new InsuranceProviderResource($provider->refresh()->loadCount('policies'));
     }
 
@@ -48,6 +51,7 @@ class InsuranceProviderController extends Controller
             throw ValidationException::withMessages(['provider' => 'A provider with policies cannot be deleted.']);
         }
         $provider->delete();
+
         return response()->noContent();
     }
 }

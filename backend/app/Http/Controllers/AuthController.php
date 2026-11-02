@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -16,9 +17,10 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
-        $user = \App\Models\User::create($input);
+        $user = User::create($input);
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+
         return response()->json(['success' => true, 'user' => $user->only(['id', 'name', 'username', 'email'])], 201);
     }
 

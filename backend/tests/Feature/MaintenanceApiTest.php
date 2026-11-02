@@ -1,22 +1,39 @@
 <?php
+
 namespace Tests\Feature;
 
-use App\Models\{Car, MonthlyCar, DailyBooking, MonthlyContract, Operator, User, VehicleMaintenance};
+use App\Models\Car;
+use App\Models\DailyBooking;
+use App\Models\MonthlyCar;
+use App\Models\MonthlyContract;
+use App\Models\Operator;
+use App\Models\User;
+use App\Models\VehicleMaintenance;
+use App\Services\MonthlyContractService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class MaintenanceApiTest extends TestCase
 {
     use RefreshDatabase;
+
     private Car $car;
+
     private User $user;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->user = User::factory()->create();
         $this->car = Car::create(['car_type' => 'Van', 'plate_no' => 'MAINT-1', 'model_name' => 'Van', 'seat_capacity' => 8, 'availability_status' => 'Available']);
     }
-    private function data(array $extra = []): array { return array_merge(['car_id' => $this->car->id, 'monthly_car_id' => null, 'maintenance_type' => 'Preventive', 'title' => 'Oil service', 'scheduled_date' => now()->toDateString(), 'status' => 'Scheduled', 'currency' => 'MMK', 'estimated_cost' => '100.00', 'actual_cost' => null], $extra); }
+
+    private function data(array $extra = []): array
+    {
+        return array_merge(['car_id' => $this->car->id, 'monthly_car_id' => null, 'maintenance_type' => 'Preventive', 'title' => 'Oil service', 'scheduled_date' => now()->toDateString(), 'status' => 'Scheduled', 'currency' => 'MMK', 'estimated_cost' => '100.00', 'actual_cost' => null], $extra);
+    }
+
     public function test_authentication_validation_crud_and_transitions(): void
     {
         $this->getJson('/api/maintenances')->assertUnauthorized();
@@ -39,6 +56,7 @@ class MaintenanceApiTest extends TestCase
         $this->getJson('/api/maintenances?search=MAINT-1&status=Completed&per_page=1')->assertOk()->assertJsonPath('meta.total', 1);
         $this->getJson('/api/maintenances/'.$id)->assertOk()->assertJsonPath('data.actual_cost', '25.50');
     }
+
     public function test_both_vehicle_pools_and_secondary_bookings_block_start(): void
     {
         $this->actingAs($this->user);
@@ -50,6 +68,7 @@ class MaintenanceApiTest extends TestCase
         MonthlyContract::create(['contract_no' => 'MC-TEST', 'customer_name' => 'Monthly Guest', 'assignment_type' => 'Vehicle Only', 'car_id' => $monthly->id, 'start_date' => now()->addDay()->toDateString(), 'end_date' => now()->addMonth()->toDateString(), 'monthly_rate' => 0, 'rental_currency' => 'MMK', 'rental_status' => 'Car only', 'status' => 'Active']);
         $this->postJson('/api/maintenances', $this->data(['car_id' => null, 'monthly_car_id' => $monthly->id, 'status' => 'In Progress']))->assertUnprocessable();
     }
+
     public function test_active_maintenance_blocks_booking_and_monthly_service_assignments(): void
     {
         $this->actingAs($this->user);
@@ -63,14 +82,19 @@ class MaintenanceApiTest extends TestCase
         $monthly = MonthlyCar::create($this->car->only(['car_type', 'plate_no', 'model_name', 'seat_capacity', 'availability_status']));
         $this->postJson('/api/maintenances', $this->data(['car_id' => null, 'monthly_car_id' => $monthly->id, 'status' => 'In Progress']))->assertCreated();
         try {
-            app(\App\Services\MonthlyContractService::class)->save(['car_id' => $monthly->id, 'status' => 'Active', 'start_date' => now()->toDateString(), 'end_date' => now()->addDay()->toDateString()]);
+            app(MonthlyContractService::class)->save(['car_id' => $monthly->id, 'status' => 'Active', 'start_date' => now()->toDateString(), 'end_date' => now()->addDay()->toDateString()]);
             $this->fail('Monthly assignment should be blocked');
-        } catch (\Illuminate\Validation\ValidationException $error) { $this->assertArrayHasKey('car_id', $error->errors()); }
+        } catch (ValidationException $error) {
+            $this->assertArrayHasKey('car_id', $error->errors());
+        }
     }
+
     public function test_currency_totals_period_filters_and_safe_deletion(): void
     {
         $this->actingAs($this->user);
-        foreach ([['MMK', '25.50'], ['MMK', '4.50'], ['USD', '9.25']] as [$currency, $amount]) $this->postJson('/api/maintenances', $this->data(['currency' => $currency, 'actual_cost' => $amount]))->assertCreated();
+        foreach ([['MMK', '25.50'], ['MMK', '4.50'], ['USD', '9.25']] as [$currency, $amount]) {
+            $this->postJson('/api/maintenances', $this->data(['currency' => $currency, 'actual_cost' => $amount]))->assertCreated();
+        }
         $summary = $this->getJson('/api/maintenances/summary?date_from='.now()->toDateString().'&date_to='.now()->toDateString())->assertOk()->assertJsonPath('data.total', 3);
         $this->assertSame(['MMK' => '30.00', 'USD' => '9.25'], collect($summary->json('data.actual_costs'))->pluck('total', 'currency')->all());
         $this->getJson('/api/maintenances/summary?date_from=2000-01-01&date_to=2000-01-02')->assertJsonPath('data.total', 0);
@@ -109,4 +133,3 @@ class MaintenanceApiTest extends TestCase
         $this->assertSame(['MMK' => '250000.00', 'USD' => '40.00'], collect($summary->json('data.dashboard.spend_this_month'))->pluck('total', 'currency')->all());
     }
 }
-

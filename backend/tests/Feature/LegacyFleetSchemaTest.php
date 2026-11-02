@@ -2,15 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
+use App\Models\AdminUserLink;
 use App\Models\Car;
 use App\Models\DailyBooking;
 use App\Models\MonthlyCar;
 use App\Models\MonthlyContract;
 use App\Models\User;
-use App\Models\Admin;
-use App\Models\AdminUserLink;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Services\LegacyAdminIdentity;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -100,7 +101,7 @@ class LegacyFleetSchemaTest extends TestCase
             'username' => 'fleet-admin', 'email' => null,
             'password_hash' => 'hash-is-not-returned', 'is_active' => true,
         ]);
-        $resolver = app(\App\Services\LegacyAdminIdentity::class);
+        $resolver = app(LegacyAdminIdentity::class);
 
         try {
             $resolver->requireActiveAdminId($user);

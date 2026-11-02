@@ -12,7 +12,14 @@ class FleetVehicleResource extends JsonResource
     {
         $monthly = $this->resource instanceof MonthlyCar;
         $assignments = $monthly && $this->relationLoaded('contracts') ? $this->contracts : collect();
-        if (! $monthly) foreach (['bookings', 'secondaryBookings'] as $relation) if ($this->relationLoaded($relation)) $assignments = $assignments->merge($this->{$relation});
+        if (! $monthly) {
+            foreach (['bookings', 'secondaryBookings'] as $relation) {
+                if ($this->relationLoaded($relation)) {
+                    $assignments = $assignments->merge($this->{$relation});
+                }
+            }
+        }
+
         return array_merge($this->resource->only(['id', 'car_type', 'plate_no', 'model_name', 'seat_capacity', 'availability_status', 'note', 'created_at', 'updated_at']), [
             'resource_type' => $monthly ? 'monthly' : 'daily',
             'effective_status' => $this->resource->effectiveAvailability(),

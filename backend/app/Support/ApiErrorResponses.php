@@ -2,12 +2,11 @@
 
 namespace App\Support;
 
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\QueryException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
 use PDOException;

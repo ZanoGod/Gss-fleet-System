@@ -26,6 +26,7 @@ class AuthenticationTest extends TestCase
     {
         $this->get('/sanctum/csrf-cookie')->assertNoContent();
         $this->withCookie(config('session.cookie'), session()->getId());
+
         return session()->token();
     }
 
@@ -90,4 +91,3 @@ class AuthenticationTest extends TestCase
         $this->postJson('/login', ['login' => 'missing', 'password' => 'wrong'], ['X-CSRF-TOKEN' => $token])->assertStatus(429);
     }
 }
-

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    variant?: "gold" | "outline" | "danger";
-    disabled?: boolean;
-    type?: "button" | "submit" | "reset";
+    variant?: 'gold' | 'outline' | 'danger'
+    disabled?: boolean
+    type?: 'button' | 'submit' | 'reset'
   }>(),
-  { variant: "outline", disabled: false, type: "button" },
-);
+  { variant: 'outline', disabled: false, type: 'button' },
+)
 </script>
 <template>
   <button

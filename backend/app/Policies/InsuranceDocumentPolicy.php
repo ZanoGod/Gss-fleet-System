@@ -10,6 +10,13 @@ class InsuranceDocumentPolicy
 {
     use RequiresLegacyAdminLink;
 
-    public function view(User $user, InsuranceDocument $document): bool { return $user->exists; }
-    public function update(User $user, InsuranceDocument $document): bool { return $user->exists; }
+    public function view(User $user, InsuranceDocument $document): bool
+    {
+        return $user->exists;
+    }
+
+    public function update(User $user, InsuranceDocument $document): bool
+    {
+        return $user->exists;
+    }
 }

@@ -23,12 +23,12 @@ export default defineConfig({
       '/login': {
         target: process.env.DEV_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
-        bypass: request => request.method === 'GET' ? '/index.html' : undefined,
+        bypass: (request) => (request.method === 'GET' ? '/index.html' : undefined),
       },
       '/register': {
         target: process.env.DEV_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
-        bypass: request => request.method === 'GET' ? '/index.html' : undefined,
+        bypass: (request) => (request.method === 'GET' ? '/index.html' : undefined),
       },
       '/logout': {
         target: process.env.DEV_BACKEND_URL || 'http://127.0.0.1:8000',

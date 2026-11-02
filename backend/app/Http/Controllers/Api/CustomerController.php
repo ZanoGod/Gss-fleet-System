@@ -10,6 +10,7 @@ use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use App\Services\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 
@@ -53,12 +54,14 @@ class CustomerController extends Controller
                 }
             });
         }
+
         return CustomerResource::collection($query->orderBy('company_name')->orderBy('id')->paginate(10)->withQueryString());
     }
 
     public function summary()
     {
         Gate::authorize('viewAny', Customer::class);
+
         return response()->json(['data' => [
             'total' => Customer::query()->count(),
             'active' => Customer::query()->where('customer_status', 'Active')->count(),
@@ -73,18 +76,20 @@ class CustomerController extends Controller
         $start = $month->copy()->startOfMonth()->toDateString();
         $end = $month->copy()->endOfMonth()->toDateString();
         $record = $this->aggregates(Customer::query())->findOrFail($customer->id);
-        $record->load(['monthlyContracts' => function (\Illuminate\Database\Eloquent\Relations\HasMany $contracts) use ($start, $end): void {
+        $record->load(['monthlyContracts' => function (HasMany $contracts) use ($start, $end): void {
             $contracts->with('car', 'driver', 'operator')
                 ->where('start_date', '<=', $end)->where('end_date', '>=', $start)
                 ->whereNotIn('status', ['Cancelled', 'Canceled', 'Cancel'])
                 ->orderBy('end_date')->orderByDesc('id');
         }]);
+
         return (new CustomerResource($record))->additional(['meta' => ['month' => $month->format('Y-m')]]);
     }
 
     public function store(StoreCustomerRequest $request, CustomerService $service)
     {
         $customer = $service->save($request->validated());
+
         return (new CustomerResource($this->aggregates(Customer::query())->findOrFail($customer->id)))
             ->response()->setStatusCode(201);
     }
@@ -92,6 +97,7 @@ class CustomerController extends Controller
     public function update(UpdateCustomerRequest $request, Customer $customer, CustomerService $service)
     {
         $record = $service->save($request->validated(), $customer);
+
         return new CustomerResource($this->aggregates(Customer::query())->findOrFail($record->id));
     }
 
@@ -106,6 +112,7 @@ class CustomerController extends Controller
                 'errors' => (object) [],
             ], 409);
         }
+
         return response()->noContent();
     }
 

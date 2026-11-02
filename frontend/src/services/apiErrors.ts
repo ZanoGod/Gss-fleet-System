@@ -22,7 +22,18 @@ type ApiErrorPayload = {
   error?: { code?: string; message?: string; errors?: Record<string, string[] | string> }
 }
 
-export type ApiErrorCategory = 'database' | 'offline' | 'session' | 'csrf' | 'validation' | 'server' | 'unauthorized' | 'forbidden' | 'not-found' | 'rate-limited' | 'request'
+export type ApiErrorCategory =
+  | 'database'
+  | 'offline'
+  | 'session'
+  | 'csrf'
+  | 'validation'
+  | 'server'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'not-found'
+  | 'rate-limited'
+  | 'request'
 
 export function getApiErrorCode(error: unknown): string | undefined {
   if (!axios.isAxiosError<ApiErrorPayload>(error)) return undefined
@@ -38,13 +49,18 @@ function firstValidationMessage(payload?: ApiErrorPayload): string | undefined {
   const errors = payload?.errors || payload?.error?.errors
   if (!errors) return undefined
   for (const value of Object.values(errors)) {
-    const message = Array.isArray(value) ? value.find(item => typeof item === 'string' && item.trim()) : value
+    const message = Array.isArray(value)
+      ? value.find((item) => typeof item === 'string' && item.trim())
+      : value
     if (typeof message === 'string' && message.trim()) return message
   }
   return undefined
 }
 
-export function getApiErrorCategory(error: unknown, options: { existingSession?: boolean } = {}): ApiErrorCategory {
+export function getApiErrorCategory(
+  error: unknown,
+  options: { existingSession?: boolean } = {},
+): ApiErrorCategory {
   if (!axios.isAxiosError(error)) return 'server'
   if (!error.response) return 'offline'
 
@@ -61,12 +77,16 @@ export function getApiErrorCategory(error: unknown, options: { existingSession?:
   return 'request'
 }
 
-export function getApiErrorMessage(error: unknown, options: { existingSession?: boolean } = {}): string {
+export function getApiErrorMessage(
+  error: unknown,
+  options: { existingSession?: boolean } = {},
+): string {
   if (!axios.isAxiosError<ApiErrorPayload>(error)) return API_ERROR_MESSAGES.server
   if (!error.response) return API_ERROR_MESSAGES.offline
 
   const category = getApiErrorCategory(error, options)
-  if (category === 'validation') return firstValidationMessage(payloadOf(error)) || API_ERROR_MESSAGES.validation
+  if (category === 'validation')
+    return firstValidationMessage(payloadOf(error)) || API_ERROR_MESSAGES.validation
 
   return {
     database: API_ERROR_MESSAGES.database,

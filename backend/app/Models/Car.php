@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasMaintenance;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Car extends Model
 {
-    use \App\Models\Concerns\HasMaintenance;
+    use HasMaintenance;
+
     public const STATUSES = ['Available', 'Assigned', 'Maintenance'];
 
     protected $table = 'cars';

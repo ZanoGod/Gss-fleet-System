@@ -21,16 +21,19 @@
   --gss-sidebar-background: linear-gradient(180deg, #4f200d, #64351e);
   --gss-sidebar-active-background: #783f23;
   --gss-sidebar-active-text: #fffdfa;
-  --gss-sidebar-active-icon-background: rgba(255,253,250,.12);
+  --gss-sidebar-active-icon-background: rgba(255, 253, 250, 0.12);
   --gss-sidebar-text: #f6f1e9;
   --gss-header-background: transparent;
   --gss-header-text: #44382f;
-  --gss-page-background: radial-gradient(circle at top left, rgba(255,217,61,.075), transparent 42%), radial-gradient(circle at bottom right, rgba(255,154,0,.055), transparent 42%), linear-gradient(180deg, #f7f4ef, #efe9e0);
+  --gss-page-background:
+    radial-gradient(circle at top left, rgba(255, 217, 61, 0.075), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(255, 154, 0, 0.055), transparent 42%),
+    linear-gradient(180deg, #f7f4ef, #efe9e0);
   --gss-surface-card: #fffdfa;
   --gss-surface-card-header: #f5efe6;
-  --gss-surface-card-overlay: rgba(255,253,250,.97);
+  --gss-surface-card-overlay: rgba(255, 253, 250, 0.97);
   --gss-border-default: #ded5c9;
-  --gss-border-default-alpha: rgba(68,56,47,.12);
+  --gss-border-default-alpha: rgba(68, 56, 47, 0.12);
 
   /* Buttons */
   --gss-button-default-text: #ffffff;
@@ -79,9 +82,9 @@
   --gss-status-info-text: #6f6458;
 
   /* Shadows */
-  --gss-shadow-tint-soft: rgba(68,56,47,.07);
-  --gss-shadow-tint-subtle: rgba(68,56,47,.035);
-  --gss-shadow-tint-medium: rgba(68,56,47,.055);
+  --gss-shadow-tint-soft: rgba(68, 56, 47, 0.07);
+  --gss-shadow-tint-subtle: rgba(68, 56, 47, 0.035);
+  --gss-shadow-tint-medium: rgba(68, 56, 47, 0.055);
 
   /* Bootstrap root values (Bootstrap utility classes may also use RGB vars) */
   --bs-primary: #4f200d;
@@ -179,13 +182,13 @@
   --ink: var(--gss-text-body);
   --muted: var(--gss-text-muted);
   --line: var(--gss-border-default-alpha);
-  --shadow: 0 18px 42px rgba(68,56,47,.07);
+  --shadow: 0 18px 42px rgba(68, 56, 47, 0.07);
 
   /* Legacy literal-based aliases: override as a compatibility layer */
-  --gss-palette-24160e33: rgba(68,56,47,.20);
-  --gss-palette-24160e80: rgba(68,56,47,.50);
-  --gss-palette-24160eb3: rgba(68,56,47,.70);
-  --gss-palette-4f200d09: rgba(68,56,47,.035);
+  --gss-palette-24160e33: rgba(68, 56, 47, 0.2);
+  --gss-palette-24160e80: rgba(68, 56, 47, 0.5);
+  --gss-palette-24160eb3: rgba(68, 56, 47, 0.7);
+  --gss-palette-4f200d09: rgba(68, 56, 47, 0.035);
   --gss-palette-57483f: #665c53;
   --gss-palette-70411d: #704523;
   --gss-palette-785025: #7b4322;
@@ -202,10 +205,10 @@
   --gss-palette-dfd2c2: #d4c9bc;
   --gss-palette-e5dacd: #e7ded3;
   --gss-palette-e7e1d8: #ece3d7;
-  --gss-palette-e8b33b22: rgba(200,161,91,.12);
+  --gss-palette-e8b33b22: rgba(200, 161, 91, 0.12);
   --gss-palette-ead7a7: #ddd0b9;
   --gss-palette-eee: #eee8df;
-  --gss-palette-efbe4626: rgba(200,161,91,.15);
+  --gss-palette-efbe4626: rgba(200, 161, 91, 0.15);
   --gss-palette-efe1cc: #e9ddce;
   --gss-palette-efe5d9: #f1e9dd;
   --gss-palette-efece5: #efe9e0;
@@ -217,28 +220,28 @@
   --gss-palette-fff1c9: #f1eadc;
   --gss-palette-fff3cd: #f2e9d7;
   --gss-palette-fff5e3: #f4f1e9;
-  --gss-palette-rgba-0-0-0-p08: rgba(0,0,0,.06);
-  --gss-palette-rgba-240-181-52-p2: rgba(200,161,91,.14);
-  --gss-palette-rgba-240-181-52-p26: rgba(200,161,91,.18);
-  --gss-palette-rgba-240-193-75-p14: rgba(200,161,91,.10);
-  --gss-palette-rgba-255-119-95-p4: rgba(148,82,75,.28);
-  --gss-palette-rgba-255-150-40-p16: rgba(184,133,88,.09);
-  --gss-palette-rgba-255-154-0-24: rgba(255,154,0,.12);
-  --gss-palette-rgba-255-200-70-p22: rgba(255,200,70,.09);
-  --gss-palette-rgba-255-217-61-2: rgba(255,217,61,.14);
-  --gss-palette-rgba-255-217-61-35: rgba(255,217,61,.24);
-  --gss-palette-rgba-255-255-255-12: rgba(255,255,255,.12);
-  --gss-palette-rgba-255-255-255-22: rgba(255,255,255,.22);
-  --gss-palette-rgba-255-255-255-8: rgba(255,255,255,.08);
-  --gss-palette-rgba-255-255-255-p09: rgba(255,255,255,.09);
-  --gss-palette-rgba-255-255-255-p13: rgba(255,255,255,.13);
-  --gss-palette-rgba-255-255-255-p7: rgba(255,255,255,.70);
-  --gss-palette-rgba-255-255-255-p82: rgba(255,255,255,.82);
-  --gss-palette-rgba-255-255-255-p95: rgba(255,255,255,.95);
-  --gss-palette-rgba-30-15-5-p55: rgba(68,56,47,.55);
-  --gss-palette-rgba-32-13-5-18: rgba(68,56,47,.18);
-  --gss-palette-rgba-32-14-7-54: rgba(68,56,47,.54);
-  --gss-palette-rgba-79-32-13-8: rgba(68,56,47,.08);
+  --gss-palette-rgba-0-0-0-p08: rgba(0, 0, 0, 0.06);
+  --gss-palette-rgba-240-181-52-p2: rgba(200, 161, 91, 0.14);
+  --gss-palette-rgba-240-181-52-p26: rgba(200, 161, 91, 0.18);
+  --gss-palette-rgba-240-193-75-p14: rgba(200, 161, 91, 0.1);
+  --gss-palette-rgba-255-119-95-p4: rgba(148, 82, 75, 0.28);
+  --gss-palette-rgba-255-150-40-p16: rgba(184, 133, 88, 0.09);
+  --gss-palette-rgba-255-154-0-24: rgba(255, 154, 0, 0.12);
+  --gss-palette-rgba-255-200-70-p22: rgba(255, 200, 70, 0.09);
+  --gss-palette-rgba-255-217-61-2: rgba(255, 217, 61, 0.14);
+  --gss-palette-rgba-255-217-61-35: rgba(255, 217, 61, 0.24);
+  --gss-palette-rgba-255-255-255-12: rgba(255, 255, 255, 0.12);
+  --gss-palette-rgba-255-255-255-22: rgba(255, 255, 255, 0.22);
+  --gss-palette-rgba-255-255-255-8: rgba(255, 255, 255, 0.08);
+  --gss-palette-rgba-255-255-255-p09: rgba(255, 255, 255, 0.09);
+  --gss-palette-rgba-255-255-255-p13: rgba(255, 255, 255, 0.13);
+  --gss-palette-rgba-255-255-255-p7: rgba(255, 255, 255, 0.7);
+  --gss-palette-rgba-255-255-255-p82: rgba(255, 255, 255, 0.82);
+  --gss-palette-rgba-255-255-255-p95: rgba(255, 255, 255, 0.95);
+  --gss-palette-rgba-30-15-5-p55: rgba(68, 56, 47, 0.55);
+  --gss-palette-rgba-32-13-5-18: rgba(68, 56, 47, 0.18);
+  --gss-palette-rgba-32-14-7-54: rgba(68, 56, 47, 0.54);
+  --gss-palette-rgba-79-32-13-8: rgba(68, 56, 47, 0.08);
 }
 
 /* Bootstrap buttons use component-level variables, not just :root --bs-primary. */
@@ -270,9 +273,10 @@
   --bs-btn-disabled-color: #9d9083;
   --bs-btn-disabled-border-color: #d4c9bc;
 }
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
   border-color: var(--gss-input-focus-border);
-  box-shadow: 0 0 0 .25rem rgba(79,32,13,.13);
+  box-shadow: 0 0 0 0.25rem rgba(79, 32, 13, 0.13);
 }
 .form-check-input:checked {
   background-color: var(--gss-input-checked);
@@ -281,10 +285,10 @@
 
 /* Shared navigation: apply .gss-nav-link to sidebar or tab links in templates. */
 .gss-nav-link.active,
-.gss-nav-link[aria-current="page"] {
-  background-color: rgba(255, 217, 61, .15);
+.gss-nav-link[aria-current='page'] {
+  background-color: rgba(255, 217, 61, 0.15);
   color: #ffd93d;
-  border-color: rgba(255, 217, 61, .28);
+  border-color: rgba(255, 217, 61, 0.28);
 }
 
 /* Bootstrap navigation states outside the dark sidebar. */
@@ -297,5 +301,5 @@
 /* Use browser-native text contrast for Cocoa buttons. */
 .btn-primary:focus-visible,
 .btn-outline-primary:focus-visible {
-  box-shadow: 0 0 0 .25rem rgba(79, 32, 13, .18);
+  box-shadow: 0 0 0 0.25rem rgba(79, 32, 13, 0.18);
 }

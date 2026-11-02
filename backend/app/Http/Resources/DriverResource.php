@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Resources;
 
 use App\Models\MonthlyDriver;
@@ -19,6 +20,7 @@ class DriverResource extends JsonResource
             'vehicle' => $a->car?->plate_no ?: ($monthly ? null : $a->custom_car_name),
             'car_id' => $a->car_id, 'secondary_vehicle' => $monthly ? null : $a->secondaryCar?->plate_no,
         ]) : [];
+
         return $data;
     }
 }

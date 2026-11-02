@@ -2,14 +2,21 @@
 
 namespace Tests\Feature;
 
-use App\Models\{Car, DailyBooking, User};
+use App\Models\Car;
+use App\Models\DailyBooking;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class FleetApiTest extends TestCase
 {
     use RefreshDatabase;
-    private function data(array $extra = []): array { return array_merge(['car_type' => 'Van', 'plate_no' => 'GSS-101', 'model_name' => 'Hiace', 'seat_capacity' => 8, 'availability_status' => 'Available'], $extra); }
+
+    private function data(array $extra = []): array
+    {
+        return array_merge(['car_type' => 'Van', 'plate_no' => 'GSS-101', 'model_name' => 'Hiace', 'seat_capacity' => 8, 'availability_status' => 'Available'], $extra);
+    }
+
     public function test_authentication_crud_validation_and_scope(): void
     {
         $this->getJson('/api/cars')->assertUnauthorized();
@@ -24,6 +31,7 @@ class FleetApiTest extends TestCase
         $this->getJson("/api/cars/{$id}")->assertOk();
         $this->deleteJson("/api/cars/{$id}")->assertNoContent();
     }
+
     public function test_historical_and_secondary_assignments_are_visible_and_protected(): void
     {
         $car = Car::create($this->data());

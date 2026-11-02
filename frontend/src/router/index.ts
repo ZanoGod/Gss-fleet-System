@@ -1,396 +1,396 @@
-import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
-import { getApiErrorCategory } from "@/services/apiErrors";
+import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { getApiErrorCategory } from '@/services/apiErrors'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: "/register",
-      component: () => import("@/layouts/AuthLayout.vue"),
+      path: '/register',
+      component: () => import('@/layouts/AuthLayout.vue'),
       meta: { public: true },
       children: [
         {
-          path: "",
-          component: () => import("@/views/RegisterView.vue"),
-          meta: { title: "Register", public: true },
+          path: '',
+          component: () => import('@/views/RegisterView.vue'),
+          meta: { title: 'Register', public: true },
         },
       ],
     },
     {
-      path: "/login",
-      component: () => import("@/layouts/AuthLayout.vue"),
+      path: '/login',
+      component: () => import('@/layouts/AuthLayout.vue'),
       meta: { public: true },
       children: [
         {
-          path: "",
-          name: "login",
-          component: () => import("@/views/LoginView.vue"),
-          meta: { title: "Login", public: true },
+          path: '',
+          name: 'login',
+          component: () => import('@/views/LoginView.vue'),
+          meta: { title: 'Login', public: true },
         },
       ],
     },
     {
-      path: "/",
-      component: () => import("@/layouts/AppLayout.vue"),
+      path: '/',
+      component: () => import('@/layouts/AppLayout.vue'),
       children: [
-        { path: "", redirect: "/dashboard" },
+        { path: '', redirect: '/dashboard' },
         {
-          path: "dashboard",
-          name: "dashboard",
-          component: () => import("@/modules/dashboard/pages/DashboardPage.vue"),
-          meta: { title: "Dashboard", description: "Monitor fleet operations from one place." },
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('@/modules/dashboard/pages/DashboardPage.vue'),
+          meta: { title: 'Dashboard', description: 'Monitor fleet operations from one place.' },
         },
         {
-          path: "daily-bookings",
-          name: "dailybookingsList",
-          component: () => import("@/modules/daily-bookings/pages/BookingListPage.vue"),
+          path: 'daily-bookings',
+          name: 'dailybookingsList',
+          component: () => import('@/modules/daily-bookings/pages/BookingListPage.vue'),
           meta: {
-            title: "Daily Bookings",
-            description: "Search, review, and manage date-based fleet bookings.",
+            title: 'Daily Bookings',
+            description: 'Search, review, and manage date-based fleet bookings.',
           },
         },
         {
-          path: "daily-bookings/create",
-          name: "dailybookingsCreate",
-          component: () => import("@/modules/daily-bookings/pages/BookingCreatePage.vue"),
+          path: 'daily-bookings/create',
+          name: 'dailybookingsCreate',
+          component: () => import('@/modules/daily-bookings/pages/BookingCreatePage.vue'),
           meta: {
-            title: "Create Daily Booking",
+            title: 'Create Daily Booking',
             description:
-              "Booking dates are inclusive calendar dates. The server checks vehicle and driver availability when confirming.",
+              'Booking dates are inclusive calendar dates. The server checks vehicle and driver availability when confirming.',
           },
         },
         {
-          path: "daily-bookings/:id/edit",
-          name: "dailybookingsEdit",
-          component: () => import("@/modules/daily-bookings/pages/BookingEditPage.vue"),
+          path: 'daily-bookings/:id/edit',
+          name: 'dailybookingsEdit',
+          component: () => import('@/modules/daily-bookings/pages/BookingEditPage.vue'),
           meta: {
-            title: "Edit Daily Booking",
-            description: "Update the saved booking fields and status.",
+            title: 'Edit Daily Booking',
+            description: 'Update the saved booking fields and status.',
           },
         },
         {
-          path: "daily-bookings/:id",
-          name: "dailybookingsDetail",
-          component: () => import("@/modules/daily-bookings/pages/BookingDetailPage.vue"),
+          path: 'daily-bookings/:id',
+          name: 'dailybookingsDetail',
+          component: () => import('@/modules/daily-bookings/pages/BookingDetailPage.vue'),
           meta: {
-            title: "Booking Details",
-            description: "Review vehicle, driver, operator, date, and status information.",
+            title: 'Booking Details',
+            description: 'Review vehicle, driver, operator, date, and status information.',
           },
         },
         {
-          path: "fleet",
-          name: "fleetList",
-          component: () => import("@/modules/fleet/pages/VehicleListPage.vue"),
+          path: 'fleet',
+          name: 'fleetList',
+          component: () => import('@/modules/fleet/pages/VehicleListPage.vue'),
           meta: {
-            title: "Vehicles",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Vehicles',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "fleet/create",
-          name: "fleetCreate",
-          component: () => import("@/modules/fleet/pages/VehicleCreatePage.vue"),
+          path: 'fleet/create',
+          name: 'fleetCreate',
+          component: () => import('@/modules/fleet/pages/VehicleCreatePage.vue'),
           meta: {
-            title: "Create Vehicle",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Create Vehicle',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "fleet/:id/edit",
-          name: "fleetEdit",
-          component: () => import("@/modules/fleet/pages/VehicleEditPage.vue"),
+          path: 'fleet/:id/edit',
+          name: 'fleetEdit',
+          component: () => import('@/modules/fleet/pages/VehicleEditPage.vue'),
           meta: {
-            title: "Edit Vehicle",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Edit Vehicle',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "fleet/:id",
-          name: "fleetDetail",
-          component: () => import("@/modules/fleet/pages/VehicleDetailPage.vue"),
+          path: 'fleet/:id',
+          name: 'fleetDetail',
+          component: () => import('@/modules/fleet/pages/VehicleDetailPage.vue'),
           meta: {
-            title: "Vehicle details",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Vehicle details',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "customers",
-          name: "customersList",
-          component: () => import("@/modules/customers/pages/CustomerListPage.vue"),
+          path: 'customers',
+          name: 'customersList',
+          component: () => import('@/modules/customers/pages/CustomerListPage.vue'),
           meta: {
-            title: "Customers",
-            description: "Search customer profiles and review monthly contract assignments.",
+            title: 'Customers',
+            description: 'Search customer profiles and review monthly contract assignments.',
           },
         },
         {
-          path: "customers/create",
-          name: "customersCreate",
-          component: () => import("@/modules/customers/pages/CustomerCreatePage.vue"),
+          path: 'customers/create',
+          name: 'customersCreate',
+          component: () => import('@/modules/customers/pages/CustomerCreatePage.vue'),
           meta: {
-            title: "Create Customer",
-            description: "Create a customer profile for monthly contracts.",
+            title: 'Create Customer',
+            description: 'Create a customer profile for monthly contracts.',
           },
         },
         {
-          path: "customers/:id/edit",
-          name: "customersEdit",
-          component: () => import("@/modules/customers/pages/CustomerEditPage.vue"),
+          path: 'customers/:id/edit',
+          name: 'customersEdit',
+          component: () => import('@/modules/customers/pages/CustomerEditPage.vue'),
           meta: {
-            title: "Edit Customer",
-            description: "Update customer contact and service information.",
+            title: 'Edit Customer',
+            description: 'Update customer contact and service information.',
           },
         },
         {
-          path: "customers/:id",
-          name: "customersDetail",
-          component: () => import("@/modules/customers/pages/CustomerDetailPage.vue"),
+          path: 'customers/:id',
+          name: 'customersDetail',
+          component: () => import('@/modules/customers/pages/CustomerDetailPage.vue'),
           meta: {
-            title: "Customer details",
-            description: "Review the customer profile and contracts for a selected month.",
+            title: 'Customer details',
+            description: 'Review the customer profile and contracts for a selected month.',
           },
         },
         {
-          path: "drivers",
-          name: "driversList",
-          component: () => import("@/modules/drivers/pages/DriverListPage.vue"),
+          path: 'drivers',
+          name: 'driversList',
+          component: () => import('@/modules/drivers/pages/DriverListPage.vue'),
           meta: {
-            title: "Drivers",
-            description: "Manage daily and monthly drivers and review dated assignment history.",
+            title: 'Drivers',
+            description: 'Manage daily and monthly drivers and review dated assignment history.',
           },
         },
         {
-          path: "drivers/create",
-          name: "driversCreate",
-          component: () => import("@/modules/drivers/pages/DriverCreatePage.vue"),
+          path: 'drivers/create',
+          name: 'driversCreate',
+          component: () => import('@/modules/drivers/pages/DriverCreatePage.vue'),
           meta: {
-            title: "Create Driver",
-            description: "Manage daily and monthly drivers and review dated assignment history.",
+            title: 'Create Driver',
+            description: 'Manage daily and monthly drivers and review dated assignment history.',
           },
         },
         {
-          path: "drivers/:id/edit",
-          name: "driversEdit",
-          component: () => import("@/modules/drivers/pages/DriverEditPage.vue"),
+          path: 'drivers/:id/edit',
+          name: 'driversEdit',
+          component: () => import('@/modules/drivers/pages/DriverEditPage.vue'),
           meta: {
-            title: "Edit Driver",
-            description: "Manage daily and monthly drivers and review dated assignment history.",
+            title: 'Edit Driver',
+            description: 'Manage daily and monthly drivers and review dated assignment history.',
           },
         },
         {
-          path: "drivers/:id",
-          name: "driversDetail",
-          component: () => import("@/modules/drivers/pages/DriverDetailPage.vue"),
+          path: 'drivers/:id',
+          name: 'driversDetail',
+          component: () => import('@/modules/drivers/pages/DriverDetailPage.vue'),
           meta: {
-            title: "Driver details",
-            description: "Manage daily and monthly drivers and review dated assignment history.",
+            title: 'Driver details',
+            description: 'Manage daily and monthly drivers and review dated assignment history.',
           },
         },
         {
-          path: "operators",
-          name: "operatorsList",
-          component: () => import("@/modules/operators/pages/OperatorListPage.vue"),
+          path: 'operators',
+          name: 'operatorsList',
+          component: () => import('@/modules/operators/pages/OperatorListPage.vue'),
           meta: {
-            title: "Operators",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Operators',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "operators/create",
-          name: "operatorsCreate",
-          component: () => import("@/modules/operators/pages/OperatorCreatePage.vue"),
+          path: 'operators/create',
+          name: 'operatorsCreate',
+          component: () => import('@/modules/operators/pages/OperatorCreatePage.vue'),
           meta: {
-            title: "Create Operator",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Create Operator',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "operators/:id/edit",
-          name: "operatorsEdit",
-          component: () => import("@/modules/operators/pages/OperatorEditPage.vue"),
+          path: 'operators/:id/edit',
+          name: 'operatorsEdit',
+          component: () => import('@/modules/operators/pages/OperatorEditPage.vue'),
           meta: {
-            title: "Edit Operator",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Edit Operator',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "operators/:id",
-          name: "operatorsDetail",
-          component: () => import("@/modules/operators/pages/OperatorDetailPage.vue"),
+          path: 'operators/:id',
+          name: 'operatorsDetail',
+          component: () => import('@/modules/operators/pages/OperatorDetailPage.vue'),
           meta: {
-            title: "Operator details",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Operator details',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "insurance",
-          name: "insuranceList",
-          component: () => import("@/modules/insurance/pages/InsuranceListPage.vue"),
+          path: 'insurance',
+          name: 'insuranceList',
+          component: () => import('@/modules/insurance/pages/InsuranceListPage.vue'),
           meta: {
-            title: "Insurance Management",
-            description: "Manage coverage, providers, and claims across both vehicle fleets.",
+            title: 'Insurance Management',
+            description: 'Manage coverage, providers, and claims across both vehicle fleets.',
           },
         },
         {
-          path: "insurance/create",
-          name: "insuranceCreate",
-          component: () => import("@/modules/insurance/pages/InsuranceCreatePage.vue"),
+          path: 'insurance/create',
+          name: 'insuranceCreate',
+          component: () => import('@/modules/insurance/pages/InsuranceCreatePage.vue'),
           meta: {
-            title: "Create Insurance Policy",
-            description: "Record a policy against its verified daily or monthly fleet vehicle.",
+            title: 'Create Insurance Policy',
+            description: 'Record a policy against its verified daily or monthly fleet vehicle.',
           },
         },
         {
-          path: "insurance/:id/edit",
-          name: "insuranceEdit",
-          component: () => import("@/modules/insurance/pages/InsuranceEditPage.vue"),
+          path: 'insurance/:id/edit',
+          name: 'insuranceEdit',
+          component: () => import('@/modules/insurance/pages/InsuranceEditPage.vue'),
           meta: {
-            title: "Edit Insurance Policy",
-            description: "Update a policy that has not been renewed, cancelled, or archived.",
+            title: 'Edit Insurance Policy',
+            description: 'Update a policy that has not been renewed, cancelled, or archived.',
           },
         },
         {
-          path: "insurance/:id",
-          name: "insuranceDetail",
-          component: () => import("@/modules/insurance/pages/InsuranceDetailPage.vue"),
+          path: 'insurance/:id',
+          name: 'insuranceDetail',
+          component: () => import('@/modules/insurance/pages/InsuranceDetailPage.vue'),
           meta: {
-            title: "Insurance Policy",
-            description: "Policy details, claims, renewal history, and private documents.",
+            title: 'Insurance Policy',
+            description: 'Policy details, claims, renewal history, and private documents.',
           },
         },
         {
-          path: "maintenance",
-          name: "maintenanceList",
-          component: () => import("@/modules/maintenance/pages/MaintenanceListPage.vue"),
+          path: 'maintenance',
+          name: 'maintenanceList',
+          component: () => import('@/modules/maintenance/pages/MaintenanceListPage.vue'),
           meta: {
-            title: "Maintenances",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Maintenances',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "maintenance/create",
-          name: "maintenanceCreate",
-          component: () => import("@/modules/maintenance/pages/MaintenanceCreatePage.vue"),
+          path: 'maintenance/create',
+          name: 'maintenanceCreate',
+          component: () => import('@/modules/maintenance/pages/MaintenanceCreatePage.vue'),
           meta: {
-            title: "Create Maintenance",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Create Maintenance',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "maintenance/:id/edit",
-          name: "maintenanceEdit",
-          component: () => import("@/modules/maintenance/pages/MaintenanceEditPage.vue"),
+          path: 'maintenance/:id/edit',
+          name: 'maintenanceEdit',
+          component: () => import('@/modules/maintenance/pages/MaintenanceEditPage.vue'),
           meta: {
-            title: "Edit Maintenance",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Edit Maintenance',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "maintenance/:id",
-          name: "maintenanceDetail",
-          component: () => import("@/modules/maintenance/pages/MaintenanceDetailPage.vue"),
+          path: 'maintenance/:id',
+          name: 'maintenanceDetail',
+          component: () => import('@/modules/maintenance/pages/MaintenanceDetailPage.vue'),
           meta: {
-            title: "Maintenance details",
-            description: "Manage records, review history, and maintain assignment availability.",
+            title: 'Maintenance details',
+            description: 'Manage records, review history, and maintain assignment availability.',
           },
         },
         {
-          path: "monthly-contracts",
-          name: "monthlycontractsList",
-          component: () => import("@/modules/monthly-contracts/pages/ContractListPage.vue"),
+          path: 'monthly-contracts',
+          name: 'monthlycontractsList',
+          component: () => import('@/modules/monthly-contracts/pages/ContractListPage.vue'),
           meta: {
-            title: "Monthly Contracts",
-            description: "Manage customer agreements and monthly fleet assignments.",
+            title: 'Monthly Contracts',
+            description: 'Manage customer agreements and monthly fleet assignments.',
           },
         },
         {
-          path: "monthly-contracts/create",
-          name: "monthlycontractsCreate",
-          component: () => import("@/modules/monthly-contracts/pages/ContractCreatePage.vue"),
+          path: 'monthly-contracts/create',
+          name: 'monthlycontractsCreate',
+          component: () => import('@/modules/monthly-contracts/pages/ContractCreatePage.vue'),
           meta: {
-            title: "Create Monthly Contract",
+            title: 'Create Monthly Contract',
             description:
-              "Assign monthly fleet resources and capture customer and contract insurance snapshots.",
+              'Assign monthly fleet resources and capture customer and contract insurance snapshots.',
           },
         },
         {
-          path: "monthly-contracts/:id/edit",
-          name: "monthlycontractsEdit",
-          component: () => import("@/modules/monthly-contracts/pages/ContractEditPage.vue"),
+          path: 'monthly-contracts/:id/edit',
+          name: 'monthlycontractsEdit',
+          component: () => import('@/modules/monthly-contracts/pages/ContractEditPage.vue'),
           meta: {
-            title: "Edit Monthly Contract",
-            description: "Update the contract while preserving its number and renewal history.",
+            title: 'Edit Monthly Contract',
+            description: 'Update the contract while preserving its number and renewal history.',
           },
         },
         {
-          path: "monthly-contracts/:id/renew",
-          name: "monthlycontractsRenew",
-          component: () => import("@/modules/monthly-contracts/pages/ContractRenewPage.vue"),
+          path: 'monthly-contracts/:id/renew',
+          name: 'monthlycontractsRenew',
+          component: () => import('@/modules/monthly-contracts/pages/ContractRenewPage.vue'),
           meta: {
-            title: "Renew Monthly Contract",
+            title: 'Renew Monthly Contract',
             description:
-              "Renewal preserves the prior contract and creates a linked historical term.",
+              'Renewal preserves the prior contract and creates a linked historical term.',
           },
         },
         {
-          path: "monthly-contracts/:id",
-          name: "monthlycontractsDetail",
-          component: () => import("@/modules/monthly-contracts/pages/ContractDetailPage.vue"),
+          path: 'monthly-contracts/:id',
+          name: 'monthlycontractsDetail',
+          component: () => import('@/modules/monthly-contracts/pages/ContractDetailPage.vue'),
           meta: {
-            title: "Monthly Contract Details",
+            title: 'Monthly Contract Details',
             description:
-              "Contract period, customer snapshots, monthly fleet assignments, and renewal lineage.",
+              'Contract period, customer snapshots, monthly fleet assignments, and renewal lineage.',
           },
         },
         {
-          path: "payments",
-          name: "payments",
-          component: () => import("@/modules/payments/pages/PaymentListPage.vue"),
+          path: 'payments',
+          name: 'payments',
+          component: () => import('@/modules/payments/pages/PaymentListPage.vue'),
           meta: {
-            title: "Payments",
-            description: "Review payment records when the legacy workflow and API are verified.",
+            title: 'Payments',
+            description: 'Review payment records when the legacy workflow and API are verified.',
           },
         },
         {
-          path: "reports",
-          name: "reports",
-          component: () => import("@/modules/reports/pages/ReportsPage.vue"),
-          meta: { title: "Reports", description: "Review operational reporting." },
+          path: 'reports',
+          name: 'reports',
+          component: () => import('@/modules/reports/pages/ReportsPage.vue'),
+          meta: { title: 'Reports', description: 'Review operational reporting.' },
         },
       ],
     },
     {
-      path: "/bookings/:pathMatch(.*)*",
+      path: '/bookings/:pathMatch(.*)*',
       redirect: (to) =>
-        "/daily-bookings" +
+        '/daily-bookings' +
         (to.params.pathMatch
-          ? "/" +
+          ? '/' +
             (Array.isArray(to.params.pathMatch)
-              ? to.params.pathMatch.join("/")
+              ? to.params.pathMatch.join('/')
               : to.params.pathMatch)
-          : ""),
+          : ''),
     },
-    { path: "/bookings", redirect: "/daily-bookings" },
-    { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
+    { path: '/bookings', redirect: '/daily-bookings' },
+    { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
   ],
-});
+})
 
 router.beforeEach(async (to) => {
-  const auth = useAuthStore();
+  const auth = useAuthStore()
   try {
-    const wasAuthenticated = auth.isAuthenticated;
-    await auth.initializeAuth();
-    if (wasAuthenticated && !to.meta.public) await auth.getUser();
+    const wasAuthenticated = auth.isAuthenticated
+    await auth.initializeAuth()
+    if (wasAuthenticated && !to.meta.public) await auth.getUser()
   } catch (error) {
-    if (to.meta.public) return true;
-    const category = getApiErrorCategory(error);
+    if (to.meta.public) return true
+    const category = getApiErrorCategory(error)
     const reason =
-      category === "database" ? "database" : category === "server" ? "server" : "unavailable";
-    return { path: "/login", query: { reason } };
+      category === 'database' ? 'database' : category === 'server' ? 'server' : 'unavailable'
+    return { path: '/login', query: { reason } }
   }
   if (!to.meta.public && !auth.isAuthenticated)
-    return { path: "/login", query: { redirect: to.fullPath } };
-  if (to.path === "/login" && auth.isAuthenticated) return "/dashboard";
-});
+    return { path: '/login', query: { redirect: to.fullPath } }
+  if (to.path === '/login' && auth.isAuthenticated) return '/dashboard'
+})
 
-export default router;
+export default router

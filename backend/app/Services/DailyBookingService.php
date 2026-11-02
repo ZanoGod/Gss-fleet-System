@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\DailyBooking;
 use App\Models\Operator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class DailyBookingService
 {
@@ -17,12 +18,13 @@ class DailyBookingService
             $this->conflicts->lockAndValidate($data, $existing?->id);
             $operator = Operator::query()->lockForUpdate()->findOrFail($data['operator_id']);
             if ($operator->operator_status !== 'Active' && $existing?->operator_id !== $operator->id) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['operator_id' => 'Choose an active operator for a new assignment.']);
+                throw ValidationException::withMessages(['operator_id' => 'Choose an active operator for a new assignment.']);
             }
-            $record = $existing ?? new DailyBooking();
+            $record = $existing ?? new DailyBooking;
             $record->fill($data);
             $record->operator_name = $operator->full_name;
             $record->save();
+
             return $record->load('car', 'secondaryCar', 'driver', 'operator');
         }, 3);
     }

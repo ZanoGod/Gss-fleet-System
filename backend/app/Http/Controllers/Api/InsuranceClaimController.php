@@ -26,24 +26,28 @@ class InsuranceClaimController extends Controller
                 });
             })
             ->orderByDesc('incident_date')->orderByDesc('id')->paginate(min(max((int) $request->input('per_page', 15), 1), 100));
+
         return InsuranceClaimResource::collection($claims);
     }
 
     public function store(InsuranceClaimRequest $request, InsuranceClaimService $service)
     {
         Gate::authorize('create', InsuranceClaim::class);
+
         return (new InsuranceClaimResource($service->save($request->validated(), $request->user())))->response()->setStatusCode(201);
     }
 
     public function show(InsuranceClaim $claim)
     {
         Gate::authorize('view', $claim);
+
         return new InsuranceClaimResource($claim->load('policy.provider', 'events.actor'));
     }
 
     public function update(InsuranceClaimRequest $request, InsuranceClaim $claim, InsuranceClaimService $service)
     {
         Gate::authorize('update', $claim);
+
         return new InsuranceClaimResource($service->save($request->validated(), $request->user(), $claim));
     }
 }
