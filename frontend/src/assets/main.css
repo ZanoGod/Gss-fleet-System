@@ -1,19 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap");
-@import "bootstrap/dist/css/bootstrap.min.css";
-@import "bootstrap-icons/font/bootstrap-icons.css";
-:root {
-  --cream: #f6f1e9;
-  --gold: #ffd93d;
-  --amber: #ff9a00;
-  --cocoa: #4f200d;
-  --cocoa-soft: #7b4322;
-  --paper: #fffaf3;
-  --paper-strong: #fffdf9;
-  --ink: #3d2418;
-  --muted: #8f735f;
-  --line: rgba(79, 32, 13, 0.12);
-  --shadow: 0 22px 50px rgba(79, 32, 13, 0.08);
-}
+/* Color values live in styles/theme.css. */
 * {
   box-sizing: border-box;
 }
@@ -27,10 +13,7 @@ body {
   min-height: 100vh;
   font-family: "Quicksand", sans-serif;
   color: var(--ink);
-  background:
-    radial-gradient(circle at top left, rgba(255, 200, 70, 0.22), transparent 42%),
-    radial-gradient(circle at bottom right, rgba(255, 150, 40, 0.16), transparent 40%),
-    linear-gradient(180deg, #f7f5f1, #efece5);
+  background: var(--gss-page-background);
   background-attachment: fixed;
 }
 button,
@@ -62,36 +45,40 @@ input:focus-visible {
   border-radius: 16px;
   color: var(--cocoa);
   font-weight: 800;
-  box-shadow: 0 10px 25px rgba(240, 181, 52, 0.2);
+  box-shadow: 0 10px 25px var(--gss-palette-rgba-240-181-52-p2);
 }
 .card-shell {
-  background: rgba(255, 253, 249, 0.97);
-  border: 1px solid rgba(79, 32, 13, 0.08);
+  background: var(--gss-surface-card-overlay);
+  border: 1px solid var(--gss-shadow-tint-soft);
   border-radius: 26px;
   box-shadow:
-    0 1px 2px rgba(79, 32, 13, 0.04),
-    0 8px 24px rgba(79, 32, 13, 0.06),
-    0 24px 48px -12px rgba(79, 32, 13, 0.08);
+    0 1px 2px var(--gss-shadow-tint-subtle),
+    0 8px 24px var(--gss-shadow-tint-medium),
+    0 24px 48px -12px var(--gss-shadow-tint-soft);
 }
 .muted {
   color: var(--muted);
 }
 .btn-gold {
-  background: linear-gradient(135deg, #ffd76a, #f0b534);
-  color: var(--cocoa);
+  background: linear-gradient(135deg, var(--gss-button-primary-bg), var(--gss-button-primary-bg-end));
+  color: var(--gss-button-default-text);
   font-weight: 700;
   border: 0;
   border-radius: 14px;
   padding: 0.8rem 1.2rem;
-  box-shadow: 0 10px 25px rgba(240, 181, 52, 0.2);
+  box-shadow: 0 10px 25px var(--gss-palette-rgba-240-181-52-p2);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
 }
 .btn-gold:hover {
-  box-shadow: 0 14px 28px rgba(240, 181, 52, 0.26);
+  background: var(--gss-button-primary-hover-bg);
+  box-shadow: 0 14px 28px var(--gss-palette-rgba-240-181-52-p26);
 }
-.btn-gold:active,
+.btn-gold:active {
+  background: var(--gss-button-primary-active-bg);
+  transform: scale(0.96);
+}
 .nav-item:active {
   transform: scale(0.96);
 }
@@ -122,11 +109,11 @@ input:focus-visible {
 .login-card {
   width: min(100%, 460px);
   padding: 42px;
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--gss-palette-rgba-255-255-255-p82);
   backdrop-filter: blur(12px);
   border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--gss-palette-rgba-255-255-255-p7);
+  box-shadow: 0 20px 60px var(--gss-palette-rgba-0-0-0-p08);
 }
 .login-brand {
   text-align: center;
@@ -145,7 +132,7 @@ input:focus-visible {
 }
 .login-brand p {
   margin: 8px 0 0;
-  color: #8c8178;
+  color: var(--gss-palette-8c8178);
 }
 .field-label {
   display: block;
@@ -162,14 +149,14 @@ input:focus-visible {
   left: 18px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9c9187;
+  color: var(--gss-palette-9c9187);
 }
 .input-modern {
   height: 58px;
-  border: 1px solid #e7e1d8;
+  border: 1px solid var(--gss-palette-e7e1d8);
   border-radius: 16px;
   padding: 0 48px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--gss-palette-rgba-255-255-255-p95);
   width: 100%;
   font-size: 1rem;
   transition:
@@ -178,8 +165,8 @@ input:focus-visible {
 }
 .input-modern:focus {
   outline: none;
-  border-color: #f0c14b;
-  box-shadow: 0 0 0 4px rgba(240, 193, 75, 0.14);
+  border-color: var(--gss-palette-f0c14b);
+  box-shadow: 0 0 0 4px var(--gss-palette-rgba-240-193-75-p14);
 }
 .toggle-password {
   position: absolute;
@@ -188,7 +175,7 @@ input:focus-visible {
   transform: translateY(-50%);
   background: none;
   border: 0;
-  color: #89776c;
+  color: var(--gss-palette-89776c);
   width: 36px;
   height: 38px;
 }
@@ -203,7 +190,7 @@ input:focus-visible {
   z-index: 1050;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, var(--cocoa), var(--cocoa-soft));
+  background: var(--gss-sidebar-background);
   padding: 20px 14px;
   color: var(--paper-strong);
   overflow-y: auto;
@@ -257,12 +244,12 @@ input:focus-visible {
     transform 0.15s;
 }
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--gss-palette-rgba-255-255-255-p09);
   color: white;
 }
 .nav-item.router-link-active {
-  color: var(--cocoa);
-  background: linear-gradient(135deg, var(--gold), var(--amber));
+  color: var(--gss-sidebar-active-text);
+  background: var(--gss-sidebar-active-background);
 }
 .nav-icon {
   width: 36px;
@@ -270,22 +257,22 @@ input:focus-visible {
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--gss-palette-rgba-255-255-255-p09);
   font-size: 1rem;
   flex: 0 0 36px;
 }
 .router-link-active .nav-icon {
-  background: rgba(79, 32, 13, 0.08);
+  background: var(--gss-shadow-tint-soft);
 }
 .nav-label {
   white-space: nowrap;
 }
 .sidebar-footer {
   padding-top: 15px;
-  border-top: 1px solid rgba(255, 255, 255, 0.13);
+  border-top: 1px solid var(--gss-palette-rgba-255-255-255-p13);
 }
 .logout-item:hover {
-  background: rgba(255, 119, 95, 0.4);
+  background: var(--gss-palette-rgba-255-119-95-p4);
 }
 .sidebar-toggle {
   background: transparent;
@@ -301,6 +288,8 @@ input:focus-visible {
   transition: margin-left 0.22s ease;
 }
 .shell-header {
+  color: var(--gss-header-text);
+  background: var(--gss-header-background);
   padding: 28px 32px 6px;
   display: flex;
   align-items: flex-start;
@@ -419,9 +408,9 @@ input:focus-visible {
 .notice {
   border-radius: 14px;
   padding: 13px 15px;
-  background: #fff5e3;
-  border: 1px solid #f4d7a1;
-  color: #70411d;
+  background: var(--gss-palette-fff5e3);
+  border: 1px solid var(--gss-palette-f4d7a1);
+  color: var(--gss-palette-70411d);
 }
 .loading-placeholder {
   color: var(--muted);
@@ -451,7 +440,7 @@ input:focus-visible {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(30, 15, 5, 0.55);
+    background: var(--gss-palette-rgba-30-15-5-p55);
     z-index: 1040;
   }
   .sidebar-collapsed .sidebar-brand-copy,

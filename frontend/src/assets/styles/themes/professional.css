@@ -1,0 +1,301 @@
+/* GSS Fleet Management — Original Logo Palette + Cocoa Actions theme
+   Load AFTER the original theme.css and Bootstrap CSS.
+   The original theme remains unchanged; remove this import to restore it.
+   This overrides semantic variables and legacy palette aliases.
+*/
+:root {
+  /* Original GSS logo colors (warm.css) */
+  --gss-brand-primary: #ffd93d;
+  --gss-brand-secondary: #ff9a00;
+  --gss-primary: #ffd93d;
+  --gss-secondary: #ff9a00;
+
+  /* Text: warm browns and neutral greys */
+  --gss-text-strong: #4f200d;
+  --gss-text-secondary: #7b4322;
+  --gss-text-body: #443b34;
+  --gss-text-muted: #786f67;
+  --gss-text-label: #704523;
+
+  /* Structure and backgrounds */
+  --gss-sidebar-background: linear-gradient(180deg, #4f200d, #64351e);
+  --gss-sidebar-active-background: #783f23;
+  --gss-sidebar-active-text: #fffdfa;
+  --gss-sidebar-active-icon-background: rgba(255,253,250,.12);
+  --gss-sidebar-text: #f6f1e9;
+  --gss-header-background: transparent;
+  --gss-header-text: #44382f;
+  --gss-page-background: radial-gradient(circle at top left, rgba(255,217,61,.075), transparent 42%), radial-gradient(circle at bottom right, rgba(255,154,0,.055), transparent 42%), linear-gradient(180deg, #f7f4ef, #efe9e0);
+  --gss-surface-card: #fffdfa;
+  --gss-surface-card-header: #f5efe6;
+  --gss-surface-card-overlay: rgba(255,253,250,.97);
+  --gss-border-default: #ded5c9;
+  --gss-border-default-alpha: rgba(68,56,47,.12);
+
+  /* Buttons */
+  --gss-button-default-text: #ffffff;
+  --gss-button-primary-bg: #4f200d;
+  --gss-button-primary-bg-end: #68402a;
+  --gss-button-primary-border: #4f200d;
+  --gss-button-primary-hover-bg: #64351e;
+  --gss-button-primary-hover-border: #64351e;
+  --gss-button-primary-active-bg: #783f23;
+  --gss-button-primary-disabled-bg: #b8a797;
+  --gss-button-primary-disabled-border: #b8a797;
+  --gss-button-primary-disabled-text: #f9f6f1;
+  --gss-button-outline-text: #4f200d;
+  --gss-button-outline-border: #8f735f;
+  --gss-button-outline-hover-bg: #f5e9db;
+  --gss-button-outline-hover-border: #7b4322;
+  --gss-button-outline-active-bg: #ead8c4;
+  --gss-button-outline-disabled-text: #9d9083;
+  --gss-button-outline-disabled-border: #e7ded3;
+
+  /* Forms */
+  --gss-form-background: #fffdfa;
+  --gss-input-background: #fffdfa;
+  --gss-input-text: #443b34;
+  --gss-input-border: #d9cdbf;
+  --gss-input-placeholder: #928476;
+  --gss-input-focus-border: #7b4322;
+  --gss-input-checked: #4f200d;
+
+  /* Tables */
+  --gss-table-background: transparent;
+  --gss-table-text: #443b34;
+  --gss-table-border: #e9dfd3;
+  --gss-table-hover: #fff4df;
+  --gss-table-header-background: #f2eade;
+  --gss-table-header-text: #665c53;
+
+  /* Status colors: semantic and restrained */
+  --gss-status-success-background: #e1ede5;
+  --gss-status-success-text: #42634d;
+  --gss-status-warning-background: #f2e9d7;
+  --gss-status-warning-text: #826330;
+  --gss-status-danger-background: #f3e3e1;
+  --gss-status-danger-text: #94524b;
+  --gss-status-info-background: #eee9df;
+  --gss-status-info-text: #6f6458;
+
+  /* Shadows */
+  --gss-shadow-tint-soft: rgba(68,56,47,.07);
+  --gss-shadow-tint-subtle: rgba(68,56,47,.035);
+  --gss-shadow-tint-medium: rgba(68,56,47,.055);
+
+  /* Bootstrap root values (Bootstrap utility classes may also use RGB vars) */
+  --bs-primary: #4f200d;
+  --bs-secondary: #786f67;
+  --bs-success: #42634d;
+  --bs-info: #6f6458;
+  --bs-warning: #a17b3d;
+  --bs-danger: #94524b;
+  --bs-light: #f7f4ef;
+  --bs-dark: #44382f;
+  --bs-primary-rgb: 79, 32, 13;
+  --bs-secondary-rgb: 120, 111, 103;
+  --bs-success-rgb: 66, 99, 77;
+  --bs-info-rgb: 111, 100, 88;
+  --bs-warning-rgb: 161, 123, 61;
+  --bs-danger-rgb: 148, 82, 75;
+  --bs-light-rgb: 247, 244, 239;
+  --bs-dark-rgb: 68, 56, 47;
+  --bs-body-color: #443b34;
+  --bs-body-color-rgb: 68, 59, 52;
+  --bs-body-bg: #f7f4ef;
+  --bs-body-bg-rgb: 247, 244, 239;
+  --bs-border-color: #ded5c9;
+  --bs-link-color: #704523;
+  --bs-link-hover-color: #4f200d;
+  --bs-link-color-rgb: 112, 69, 35;
+  --bs-link-hover-color-rgb: 79, 32, 13;
+  --bs-primary-text-emphasis: #4f200d;
+  --bs-primary-bg-subtle: #f6e9de;
+  --bs-primary-border-subtle: #dcbda7;
+  --bs-secondary-text-emphasis: #443b34;
+  --bs-secondary-bg-subtle: #eee6dc;
+  --bs-secondary-border-subtle: #dacfc2;
+  --bs-success-text-emphasis: #36513f;
+  --bs-success-bg-subtle: #e1ede5;
+  --bs-success-border-subtle: #b7d1bf;
+  --bs-danger-text-emphasis: #7d403a;
+  --bs-danger-bg-subtle: #f3e3e1;
+  --bs-danger-border-subtle: #e6c5c0;
+  --bs-warning-text-emphasis: #725728;
+  --bs-warning-bg-subtle: #f2e9d7;
+  --bs-warning-border-subtle: #e1cda9;
+  --bs-info-text-emphasis: #62584f;
+  --bs-info-bg-subtle: #eee9df;
+  --bs-info-border-subtle: #d8c9b6;
+
+  /* Compatibility tokens used by existing GSS overrides */
+  --gss-bs-primary-rgb: 79, 32, 13;
+  --gss-bs-link-hover-rgb: 79, 32, 13;
+  --gss-bs-secondary-rgb: 120, 111, 103;
+  --gss-bs-success-rgb: 66, 99, 77;
+  --gss-bs-info-rgb: 111, 100, 88;
+  --gss-bs-warning-rgb: 161, 123, 61;
+  --gss-bs-danger-rgb: 148, 82, 75;
+  --gss-bs-light-rgb: 247, 244, 239;
+  --gss-bs-dark-rgb: 68, 56, 47;
+  --gss-bs-primary-focus-rgb: 123, 67, 34;
+  --gss-bs-primary-hover: #64351e;
+  --gss-bs-primary-active: #783f23;
+  --gss-bs-primary-active-border: #783f23;
+  --gss-bs-secondary-hover: #665c53;
+  --gss-bs-secondary-hover-border: #594f46;
+  --gss-bs-secondary-active-border: #51463e;
+  --gss-bs-success-hover: #36513f;
+  --gss-bs-success-hover-border: #304938;
+  --gss-bs-success-active: #304938;
+  --gss-bs-success-active-border: #293e30;
+  --gss-bs-danger-hover: #7d403a;
+  --gss-bs-danger-hover-border: #723a35;
+  --gss-bs-danger-active: #723a35;
+  --gss-bs-danger-active-border: #66322e;
+  --gss-bs-warning-hover: #b18a49;
+  --gss-bs-warning-hover-border: #a58040;
+  --gss-bs-warning-active: #947037;
+  --gss-bs-warning-active-border: #896632;
+  --gss-bs-info-hover: #62584f;
+  --gss-bs-info-hover-border: #62584f;
+  --gss-bs-info-active: #594f46;
+  --gss-bs-info-active-border: #51463e;
+  --gss-bs-light-hover: #eee7dd;
+  --gss-bs-light-hover-border: #dfd4c8;
+  --gss-bs-light-active-border: #d4c7b7;
+  --gss-bs-dark-hover: #5a493c;
+  --gss-bs-dark-hover-border: #514136;
+  --gss-bs-dark-active: #685548;
+
+  /* Short aliases */
+  --cream: var(--gss-sidebar-text);
+  --gold: var(--gss-brand-primary);
+  --amber: var(--gss-brand-secondary);
+  --cocoa: var(--gss-text-strong);
+  --cocoa-soft: var(--gss-text-secondary);
+  --paper: #f5efe6;
+  --paper-strong: var(--gss-surface-card);
+  --ink: var(--gss-text-body);
+  --muted: var(--gss-text-muted);
+  --line: var(--gss-border-default-alpha);
+  --shadow: 0 18px 42px rgba(68,56,47,.07);
+
+  /* Legacy literal-based aliases: override as a compatibility layer */
+  --gss-palette-24160e33: rgba(68,56,47,.20);
+  --gss-palette-24160e80: rgba(68,56,47,.50);
+  --gss-palette-24160eb3: rgba(68,56,47,.70);
+  --gss-palette-4f200d09: rgba(68,56,47,.035);
+  --gss-palette-57483f: #665c53;
+  --gss-palette-70411d: #704523;
+  --gss-palette-785025: #7b4322;
+  --gss-palette-806957: #84766a;
+  --gss-palette-806e5d: #8b7d70;
+  --gss-palette-856c55: #938579;
+  --gss-palette-89776c: #9d9083;
+  --gss-palette-8c8178: #a79a8c;
+  --gss-palette-946b25: #946b25;
+  --gss-palette-9c9187: #a99d90;
+  --gss-palette-9d8c7c: #9d9083;
+  --gss-palette-b8a797: #c8b9a7;
+  --gss-palette-cbb799: #c2af98;
+  --gss-palette-dfd2c2: #d4c9bc;
+  --gss-palette-e5dacd: #e7ded3;
+  --gss-palette-e7e1d8: #ece3d7;
+  --gss-palette-e8b33b22: rgba(200,161,91,.12);
+  --gss-palette-ead7a7: #ddd0b9;
+  --gss-palette-eee: #eee8df;
+  --gss-palette-efbe4626: rgba(200,161,91,.15);
+  --gss-palette-efe1cc: #e9ddce;
+  --gss-palette-efe5d9: #f1e9dd;
+  --gss-palette-efece5: #efe9e0;
+  --gss-palette-f0c14b: #ffd93d;
+  --gss-palette-f3eadd: #f2eade;
+  --gss-palette-f4d7a1: #e3d4b9;
+  --gss-palette-f6eddf: #f1e9dd;
+  --gss-palette-f7f5f1: #f7f4ef;
+  --gss-palette-fff1c9: #f1eadc;
+  --gss-palette-fff3cd: #f2e9d7;
+  --gss-palette-fff5e3: #f4f1e9;
+  --gss-palette-rgba-0-0-0-p08: rgba(0,0,0,.06);
+  --gss-palette-rgba-240-181-52-p2: rgba(200,161,91,.14);
+  --gss-palette-rgba-240-181-52-p26: rgba(200,161,91,.18);
+  --gss-palette-rgba-240-193-75-p14: rgba(200,161,91,.10);
+  --gss-palette-rgba-255-119-95-p4: rgba(148,82,75,.28);
+  --gss-palette-rgba-255-150-40-p16: rgba(184,133,88,.09);
+  --gss-palette-rgba-255-154-0-24: rgba(255,154,0,.12);
+  --gss-palette-rgba-255-200-70-p22: rgba(255,200,70,.09);
+  --gss-palette-rgba-255-217-61-2: rgba(255,217,61,.14);
+  --gss-palette-rgba-255-217-61-35: rgba(255,217,61,.24);
+  --gss-palette-rgba-255-255-255-12: rgba(255,255,255,.12);
+  --gss-palette-rgba-255-255-255-22: rgba(255,255,255,.22);
+  --gss-palette-rgba-255-255-255-8: rgba(255,255,255,.08);
+  --gss-palette-rgba-255-255-255-p09: rgba(255,255,255,.09);
+  --gss-palette-rgba-255-255-255-p13: rgba(255,255,255,.13);
+  --gss-palette-rgba-255-255-255-p7: rgba(255,255,255,.70);
+  --gss-palette-rgba-255-255-255-p82: rgba(255,255,255,.82);
+  --gss-palette-rgba-255-255-255-p95: rgba(255,255,255,.95);
+  --gss-palette-rgba-30-15-5-p55: rgba(68,56,47,.55);
+  --gss-palette-rgba-32-13-5-18: rgba(68,56,47,.18);
+  --gss-palette-rgba-32-14-7-54: rgba(68,56,47,.54);
+  --gss-palette-rgba-79-32-13-8: rgba(68,56,47,.08);
+}
+
+/* Bootstrap buttons use component-level variables, not just :root --bs-primary. */
+.btn-primary {
+  --bs-btn-color: #ffffff;
+  --bs-btn-bg: var(--gss-button-primary-bg);
+  --bs-btn-border-color: var(--gss-button-primary-border);
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-hover-bg: var(--gss-button-primary-hover-bg);
+  --bs-btn-hover-border-color: var(--gss-button-primary-hover-border);
+  --bs-btn-focus-shadow-rgb: 123, 67, 34;
+  --bs-btn-active-color: #ffffff;
+  --bs-btn-active-bg: var(--gss-button-primary-active-bg);
+  --bs-btn-active-border-color: var(--gss-button-primary-hover-border);
+  --bs-btn-disabled-color: var(--gss-button-primary-disabled-text);
+  --bs-btn-disabled-bg: var(--gss-button-primary-disabled-bg);
+  --bs-btn-disabled-border-color: var(--gss-button-primary-disabled-border);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--gss-button-outline-text);
+  --bs-btn-border-color: var(--gss-button-outline-border);
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-hover-bg: var(--gss-button-outline-hover-bg);
+  --bs-btn-hover-border-color: var(--gss-button-outline-hover-border);
+  --bs-btn-focus-shadow-rgb: 123, 67, 34;
+  --bs-btn-active-color: #ffffff;
+  --bs-btn-active-bg: var(--gss-button-outline-active-bg);
+  --bs-btn-active-border-color: var(--gss-button-outline-hover-border);
+  --bs-btn-disabled-color: #9d9083;
+  --bs-btn-disabled-border-color: #d4c9bc;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--gss-input-focus-border);
+  box-shadow: 0 0 0 .25rem rgba(79,32,13,.13);
+}
+.form-check-input:checked {
+  background-color: var(--gss-input-checked);
+  border-color: var(--gss-input-checked);
+}
+
+/* Shared navigation: apply .gss-nav-link to sidebar or tab links in templates. */
+.gss-nav-link.active,
+.gss-nav-link[aria-current="page"] {
+  background-color: rgba(255, 217, 61, .15);
+  color: #ffd93d;
+  border-color: rgba(255, 217, 61, .28);
+}
+
+/* Bootstrap navigation states outside the dark sidebar. */
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  background-color: #4f200d;
+  color: #ffffff;
+}
+
+/* Use browser-native text contrast for Cocoa buttons. */
+.btn-primary:focus-visible,
+.btn-outline-primary:focus-visible {
+  box-shadow: 0 0 0 .25rem rgba(79, 32, 13, .18);
+}

@@ -5,11 +5,11 @@
 .gss-app-layout .sidebar {
   width: 250px;
   padding: 20px 14px;
-  background: linear-gradient(180deg, var(--cocoa) 0%, var(--cocoa-soft) 100%);
+  background: var(--gss-sidebar-background);
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, .22) transparent;
+  scrollbar-color: var(--gss-palette-rgba-255-255-255-22) transparent;
   overscroll-behavior: contain;
   transition: width .24s ease, transform .24s ease;
 }
@@ -55,7 +55,7 @@
 }
 
 .gss-app-layout .sidebar-brand-trigger:hover {
-  box-shadow: 0 8px 22px rgba(255, 154, 0, .24);
+  box-shadow: 0 8px 22px var(--gss-palette-rgba-255-154-0-24);
 }
 
 .gss-app-layout .sidebar-brand-trigger .brand-mark-text,
@@ -103,8 +103,8 @@
   display: grid;
   place-items: center;
   padding: 0;
-  background: rgba(255, 255, 255, .08);
-  border: 1px solid rgba(255, 255, 255, .12);
+  background: var(--gss-palette-rgba-255-255-255-8);
+  border: 1px solid var(--gss-palette-rgba-255-255-255-12);
   border-radius: 10px;
   color: var(--paper-strong);
   cursor: pointer;
@@ -113,8 +113,8 @@
 
 .gss-app-layout .sidebar-collapse-btn:hover,
 .gss-app-layout .sidebar-mobile-close:hover {
-  background: rgba(255, 217, 61, .2);
-  border-color: rgba(255, 217, 61, .35);
+  background: var(--gss-palette-rgba-255-217-61-2);
+  border-color: var(--gss-palette-rgba-255-217-61-35);
 }
 
 .gss-app-layout .sidebar-brand-trigger:active,
@@ -134,12 +134,12 @@
 }
 
 .gss-app-layout .sidebar .nav-item.router-link-exact-active {
-  background: linear-gradient(135deg, var(--gold), var(--amber));
-  color: var(--cocoa);
+  background: var(--gss-sidebar-active-background);
+  color: var(--gss-sidebar-active-text);
 }
 
 .gss-app-layout .sidebar .nav-item.router-link-exact-active .nav-icon {
-  background: rgba(79, 32, 13, .08);
+  background: var(--gss-sidebar-active-icon-background);
 }
 
 .gss-app-layout .sidebar :is(button, a):focus-visible {
@@ -204,7 +204,7 @@
     padding: 20px 14px;
     transform: translateX(-102%);
     visibility: hidden;
-    box-shadow: 20px 0 60px rgba(32, 13, 5, .18);
+    box-shadow: 20px 0 60px var(--gss-palette-rgba-32-13-5-18);
     transition: transform .22s ease, visibility 0s linear .22s;
   }
 
@@ -256,7 +256,7 @@
     inset: 0;
     z-index: 1040;
     display: block;
-    background: rgba(32, 14, 7, .54);
+    background: var(--gss-palette-rgba-32-14-7-54);
     backdrop-filter: blur(2px);
   }
 
