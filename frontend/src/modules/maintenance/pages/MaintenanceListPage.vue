@@ -1,4 +1,5 @@
 <script setup lang="ts">
-import ModulePageShell from '@/components/common/ModulePageShell.vue'
+import ResourceWorkspace from '@/components/common/ResourceWorkspace.vue'
+import { maintenanceConfig } from '../config'
 </script>
-<template><ModulePageShell title="Maintenance records" entity="Maintenance record" base-path="/maintenance" mode="list" /></template>
+<template><ResourceWorkspace :config="maintenanceConfig" /></template>

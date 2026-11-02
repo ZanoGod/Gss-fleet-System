@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Car extends Model
 {
+    use \App\Models\Concerns\HasMaintenance;
     public const STATUSES = ['Available', 'Assigned', 'Maintenance'];
 
     protected $table = 'cars';

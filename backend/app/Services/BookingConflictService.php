@@ -15,6 +15,7 @@ class BookingConflictService
         $carIds = collect([$data['car_id'] ?? null, $data['secondary_car_id'] ?? null])->filter()->map(fn ($id) => (int) $id)->unique()->sort()->values();
         foreach ($carIds as $carId) {
             $car = Car::query()->lockForUpdate()->findOrFail($carId);
+            if (in_array($data['status'] ?? null, ['Pending', 'Confirm'], true)) MaintenanceService::assertAssignable($car);
             if ($car->availability_status === 'Maintenance') {
                 throw ValidationException::withMessages(['car_id' => "Vehicle {$car->plate_no} is under maintenance."]);
             }
@@ -23,9 +24,8 @@ class BookingConflictService
         $driverId = $data['driver_id'] ?? null;
         if ($driverId) {
             $driver = Driver::query()->lockForUpdate()->findOrFail($driverId);
-            if (in_array($driver->driver_status, ['Leave', 'Inactive'], true)) {
-                throw ValidationException::withMessages(['driver_id' => 'A driver on leave or inactive cannot be assigned.']);
-            }
+            $existing = $exceptBookingId ? DailyBooking::find($exceptBookingId) : null;
+            app(DriverAvailabilityService::class)->assertStoredStatus($driver, $existing && (int) $existing->driver_id === (int) $driver->id, in_array($data['status'] ?? null, ['Completed', 'Cancelled'], true));
         }
 
         if (($data['status'] ?? null) !== 'Confirm') {

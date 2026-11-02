@@ -16,22 +16,22 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '^/(api|sanctum)(/|$)': {
-        target: 'http://127.0.0.1:8000',
+        target: process.env.DEV_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
       // Vue Router owns GET /login; only its POST request belongs to Laravel.
       '/login': {
-        target: 'http://127.0.0.1:8000',
+        target: process.env.DEV_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
         bypass: request => request.method === 'GET' ? '/index.html' : undefined,
       },
       '/register': {
-        target: 'http://127.0.0.1:8000',
+        target: process.env.DEV_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
         bypass: request => request.method === 'GET' ? '/index.html' : undefined,
       },
       '/logout': {
-        target: 'http://127.0.0.1:8000',
+        target: process.env.DEV_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

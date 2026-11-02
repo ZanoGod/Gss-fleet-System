@@ -1,4 +1,5 @@
 <script setup lang="ts">
-import ModulePageShell from '@/components/common/ModulePageShell.vue'
+import ResourceWorkspace from '@/components/common/ResourceWorkspace.vue'
+import { driverConfig } from '../config'
 </script>
-<template><ModulePageShell title="Create Driver" entity="Driver" base-path="/drivers" mode="create" /></template>
+<template><ResourceWorkspace :config="driverConfig" /></template>

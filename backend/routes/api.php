@@ -14,6 +14,17 @@ use Illuminate\Support\Facades\Route;
 // Only the session guard is accepted: legacy bearer tokens cannot authenticate.
 Route::middleware('auth:web')->group(function (): void {
     Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/drivers/options', [\App\Http\Controllers\Api\DriverController::class, 'options']);
+    Route::get('/drivers/summary', [\App\Http\Controllers\Api\DriverController::class, 'summary']);
+    Route::apiResource('drivers', \App\Http\Controllers\Api\DriverController::class);
+
+    Route::get('/cars/summary', [\App\Http\Controllers\Api\CarController::class, 'summary']);
+    Route::apiResource('cars', \App\Http\Controllers\Api\CarController::class);
+    Route::get('/operators/summary', [\App\Http\Controllers\Api\OperatorController::class, 'summary']);
+    Route::apiResource('operators', \App\Http\Controllers\Api\OperatorController::class);
+    Route::get('/maintenances/options', [\App\Http\Controllers\Api\MaintenanceController::class, 'options']);
+    Route::get('/maintenances/summary', [\App\Http\Controllers\Api\MaintenanceController::class, 'summary']);
+    Route::apiResource('maintenances', \App\Http\Controllers\Api\MaintenanceController::class);
 
     Route::get('/customers/summary', [CustomerController::class, 'summary']);
     Route::apiResource('customers', CustomerController::class);

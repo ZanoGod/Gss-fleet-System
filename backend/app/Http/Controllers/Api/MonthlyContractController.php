@@ -77,7 +77,7 @@ class MonthlyContractController extends Controller
         Gate::authorize('viewAny',MonthlyContract::class);
         return response()->json(['data'=>[
             'customers'=>Customer::query()->orderBy('company_name')->orderBy('guest_name')->get(['id','company_name','guest_name','contact_person','contact_phone','contact_email','customer_address','off_day','service_hour','customer_status']),
-            'cars'=>MonthlyCar::query()->orderBy('plate_no')->get(['id','plate_no','model_name','availability_status']),
+            'cars'=>MonthlyCar::query()->orderBy('plate_no')->get(['id','plate_no','model_name','availability_status'])->map(function ($car) { $car->availability_status = $car->effectiveAvailability(); return $car; }),
             'drivers'=>MonthlyDriver::query()->orderBy('full_name')->get(['id','full_name','driver_status']),
             'operators'=>Operator::query()->orderBy('full_name')->get(['id','full_name','operator_status']),
             'statuses'=>MonthlyContract::STATUSES,

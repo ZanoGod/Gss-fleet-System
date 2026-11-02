@@ -15,7 +15,10 @@ class DailyBookingService
         return DB::transaction(function () use ($data, $booking): DailyBooking {
             $existing = $booking ? DailyBooking::query()->lockForUpdate()->findOrFail($booking->id) : null;
             $this->conflicts->lockAndValidate($data, $existing?->id);
-            $operator = Operator::query()->where('operator_status', 'Active')->lockForUpdate()->findOrFail($data['operator_id']);
+            $operator = Operator::query()->lockForUpdate()->findOrFail($data['operator_id']);
+            if ($operator->operator_status !== 'Active' && $existing?->operator_id !== $operator->id) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['operator_id' => 'Choose an active operator for a new assignment.']);
+            }
             $record = $existing ?? new DailyBooking();
             $record->fill($data);
             $record->operator_name = $operator->full_name;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
-import ModulePageShell from '@/components/common/ModulePageShell.vue'
+import ResourceWorkspace from '@/components/common/ResourceWorkspace.vue'
+import { operatorConfig } from '../config'
 </script>
-<template><ModulePageShell title="Operators" entity="Operator" base-path="/operators" mode="list" /></template>
+<template><ResourceWorkspace :config="operatorConfig" /></template>

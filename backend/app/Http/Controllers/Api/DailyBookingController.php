@@ -71,7 +71,7 @@ class DailyBookingController extends Controller
     {
         Gate::authorize('viewAny', DailyBooking::class);
         return response()->json(['data' => [
-            'cars' => Car::query()->orderBy('plate_no')->get(['id', 'plate_no', 'model_name', 'availability_status']),
+            'cars' => Car::query()->orderBy('plate_no')->get(['id', 'plate_no', 'model_name', 'availability_status'])->map(function ($car) { $car->availability_status = $car->effectiveAvailability(); return $car; }),
             'drivers' => Driver::query()->orderBy('full_name')->get(['id', 'full_name', 'driver_status']),
             'operators' => Operator::query()->where('operator_status', 'Active')->orderBy('full_name')->get(['id', 'full_name']),
             'statuses' => DailyBooking::STATUSES,

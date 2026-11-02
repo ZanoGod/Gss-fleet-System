@@ -29,6 +29,10 @@ class MonthlyContractService
                 Customer::query()->lockForUpdate()->findOrFail($data['customer_id']);
             }
             $this->lockAndValidateResources($data, $record->id ?: null);
+            if (! empty($data['operator_id'])) {
+                $operator = \App\Models\Operator::query()->lockForUpdate()->findOrFail($data['operator_id']);
+                if ($operator->operator_status !== 'Active' && (int) $record->operator_id !== (int) $operator->id) throw ValidationException::withMessages(['operator_id' => 'Choose an active operator for a new assignment.']);
+            }
             if (! $record->exists) {
                 $customer = Customer::query()->findOrFail($data['customer_id']);
                 $this->fillCustomerSnapshotDefaults($data, $customer);
@@ -98,15 +102,15 @@ class MonthlyContractService
         $driver = null;
         if (! empty($data['car_id'])) {
             $car = MonthlyCar::query()->lockForUpdate()->findOrFail($data['car_id']);
+            if (in_array($data['status'] ?? null, ['Draft', 'Active'], true)) MaintenanceService::assertAssignable($car);
             if (in_array($car->availability_status, ['Maintenance','Inactive'], true)) {
                 throw ValidationException::withMessages(['car_id' => 'Monthly vehicle is under maintenance or inactive.']);
             }
         }
         if (! empty($data['driver_id'])) {
             $driver = MonthlyDriver::query()->lockForUpdate()->findOrFail($data['driver_id']);
-            if (in_array($driver->driver_status, ['Leave','Inactive'], true)) {
-                throw ValidationException::withMessages(['driver_id' => 'Monthly driver is on leave or inactive.']);
-            }
+            $existing = $exceptId ? MonthlyContract::find($exceptId) : null;
+            app(DriverAvailabilityService::class)->assertStoredStatus($driver, $existing && (int) $existing->driver_id === (int) $driver->id, in_array($data['status'] ?? null, ['Expired', 'Renewed', 'Cancelled'], true));
         }
         if (! in_array($data['status'] ?? null, ['Draft','Active'], true)) {
             return;

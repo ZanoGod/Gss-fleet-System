@@ -1,0 +1,62 @@
+import type { ResourceConfig } from '../fleet/config'
+const types = ['Preventive', 'Corrective', 'Inspection', 'Other']
+const statuses = ['Scheduled', 'In Progress', 'Completed', 'Cancelled']
+export const maintenanceConfig: ResourceConfig = {
+  key: 'maintenance',
+  title: 'Maintenance',
+  singular: 'Maintenance Record',
+  path: '/maintenance',
+  endpoint: '/api/maintenances',
+  icon: 'bi-tools',
+  description: 'Plan service, track work orders, and review costs by currency.',
+  formHelp:
+    'Scheduling keeps the vehicle bookable. Starting work blocks new assignments until completed or cancelled. Resolve current and future assignments first. Start and completion dates default to today when changing status. Closed work cannot be reopened. Currency uses a three-letter code; totals are kept separate. Period filters use the scheduled date.',
+  statusKey: 'status',
+  statuses,
+  fields: [
+    { key: 'vehicle_key', label: 'Vehicle', required: true },
+    {
+      key: 'maintenance_type',
+      label: 'Maintenance Type',
+      required: true,
+      options: types,
+      default: 'Preventive',
+    },
+    { key: 'title', label: 'Title', required: true, max: 200 },
+    { key: 'status', label: 'Work Order Status', required: true, default: 'Scheduled' },
+    { key: 'scheduled_date', label: 'Scheduled Date', type: 'date', required: true },
+    { key: 'started_at', label: 'Started Date', type: 'date' },
+    { key: 'completed_at', label: 'Completed Date', type: 'date' },
+    {
+      key: 'odometer_reading',
+      label: 'Odometer Reading',
+      type: 'number',
+      min: 0,
+      maxNumber: 4294967295,
+    },
+    { key: 'service_provider', label: 'Service Provider', max: 200 },
+    { key: 'currency', label: 'Currency Code', required: true, max: 3 },
+    { key: 'estimated_cost', label: 'Estimated Cost', type: 'number', min: 0, step: '0.01' },
+    { key: 'actual_cost', label: 'Actual Cost', type: 'number', min: 0, step: '0.01' },
+    { key: 'description', label: 'Work Description', type: 'textarea' },
+    { key: 'notes', label: 'Notes', type: 'textarea' },
+  ],
+  filters: [
+    { key: 'search', label: 'Search', placeholder: 'Vehicle, title, provider, notes' },
+    { key: 'status', label: 'Work Order Status', options: statuses },
+    { key: 'maintenance_type', label: 'Maintenance Type', options: types },
+    { key: 'vehicle', label: 'Vehicle' },
+    { key: 'date_from', label: 'Scheduled From', type: 'date' },
+    { key: 'date_to', label: 'Scheduled To', type: 'date' },
+  ],
+  columns: [
+    { key: 'title', label: 'Title' },
+    { key: 'vehicle_label', label: 'Vehicle' },
+    { key: 'maintenance_type', label: 'Type' },
+    { key: 'scheduled_date', label: 'Scheduled' },
+    { key: 'status', label: 'Work Order Status' },
+    { key: 'estimated_cost', label: 'Estimated Cost' },
+    { key: 'actual_cost', label: 'Actual Cost' },
+    { key: 'currency', label: 'Currency' },
+  ],
+}

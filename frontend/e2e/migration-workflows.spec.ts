@@ -2,6 +2,16 @@ import { expect, test } from '@playwright/test'
 
 const user = { success: true, user: { id: 7, name: 'Test User', username: 'tester', email: 'tester@example.test' } }
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/drivers/options?**', route => {
+    const monthly = new URL(route.request().url()).searchParams.get('resource_type') === 'monthly'
+    return route.fulfill({ status: 200, json: { data: {
+      statuses: ['Available', 'Assigned', 'Leave', 'Inactive'],
+      drivers: [{ id: monthly ? 9 : 2, full_name: monthly ? 'Monthly Driver' : 'Daily Driver', driver_status: 'Available', available: true }],
+    } } })
+  })
+})
+
 test('creates a date-only confirmed booking and opens its saved details', async ({ page }) => {
   await page.route('**/api/user', route => route.fulfill({ status: 200, json: user }))
   await page.route('**/api/daily-bookings/options', route => route.fulfill({ status: 200, json: { data: {

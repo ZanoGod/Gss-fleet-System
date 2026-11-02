@@ -1,4 +1,5 @@
 <script setup lang="ts">
-import ModulePageShell from '@/components/common/ModulePageShell.vue'
+import ResourceWorkspace from '@/components/common/ResourceWorkspace.vue'
+import { fleetConfig } from '../config'
 </script>
-<template><ModulePageShell title="Edit Vehicle" entity="Vehicle" base-path="/fleet" mode="edit" /></template>
+<template><ResourceWorkspace :config="fleetConfig" /></template>
