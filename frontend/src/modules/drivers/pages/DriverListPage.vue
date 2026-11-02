@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ResourceWorkspace from '@/components/common/ResourceWorkspace.vue'
-import { driverConfig } from '../config'
+import DriverWorkspace from '../DriverWorkspace.vue'
 </script>
-<template><ResourceWorkspace :config="driverConfig" /></template>
+<template><DriverWorkspace /></template>

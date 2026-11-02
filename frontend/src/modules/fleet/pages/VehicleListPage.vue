@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ResourceWorkspace from '@/components/common/ResourceWorkspace.vue'
-import { fleetConfig } from '../config'
+import VehicleWorkspace from '../VehicleWorkspace.vue'
 </script>
-<template><ResourceWorkspace :config="fleetConfig" /></template>
+<template><VehicleWorkspace /></template>

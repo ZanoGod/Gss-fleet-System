@@ -1,4 +1,4 @@
-import type { ResourceConfig } from '../fleet/config'
+import type { ResourceConfig } from '@/components/common/resourceTypes'
 const types = ['Preventive', 'Corrective', 'Inspection', 'Other']
 const statuses = ['Scheduled', 'In Progress', 'Completed', 'Cancelled']
 export const maintenanceConfig: ResourceConfig = {
@@ -53,7 +53,7 @@ export const maintenanceConfig: ResourceConfig = {
     { key: 'title', label: 'Title' },
     { key: 'vehicle_label', label: 'Vehicle' },
     { key: 'maintenance_type', label: 'Type' },
-    { key: 'scheduled_date', label: 'Scheduled' },
+    { key: 'scheduled_date', label: 'Scheduled Date' },
     { key: 'status', label: 'Work Order Status' },
     { key: 'estimated_cost', label: 'Estimated Cost' },
     { key: 'actual_cost', label: 'Actual Cost' },

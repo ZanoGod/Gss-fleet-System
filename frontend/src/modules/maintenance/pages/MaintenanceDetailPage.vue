@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ResourceWorkspace from '@/components/common/ResourceWorkspace.vue'
-import { maintenanceConfig } from '../config'
+import MaintenanceWorkspace from '../MaintenanceWorkspace.vue'
 </script>
-<template><ResourceWorkspace :config="maintenanceConfig" /></template>
+<template><MaintenanceWorkspace /></template>

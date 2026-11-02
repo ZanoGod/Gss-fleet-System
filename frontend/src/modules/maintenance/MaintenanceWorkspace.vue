@@ -4,15 +4,41 @@ import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import api from '@/services/api'
 import { getApiErrorMessage } from '@/services/apiErrors'
-import BasePagination from './BasePagination.vue'
-import BaseStatusBadge from './BaseStatusBadge.vue'
-import type { ResourceConfig, ResourceRow } from '@/modules/fleet/config'
-const props = defineProps<{ config: ResourceConfig }>()
+import BasePagination from '@/components/common/BasePagination.vue'
+import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import type { ResourceRow } from '@/components/common/resourceTypes'
+import { maintenanceConfig } from './config'
+const config = maintenanceConfig
 const route = useRoute(),
   router = useRouter()
 const rows = ref<ResourceRow[]>([]),
-  record = ref<ResourceRow | null>(null),
-  metrics = ref<Record<string, number | string>>({})
+  record = ref<ResourceRow | null>(null)
+interface MaintenanceDashboard {
+  due_this_week: number
+  overdue: number
+  in_workshop: number
+  completed_this_month: number
+  completed_previous_month: number
+  spend_this_month: { currency: string; total: string }[]
+  month_label: string
+  previous_month_label: string
+}
+const dashboard = ref<MaintenanceDashboard | null>(null)
+const spend = computed(() => dashboard.value?.spend_this_month || [])
+const spendValue = computed(() =>
+  spend.value.length === 1
+    ? Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(
+        Number(spend.value[0]?.total),
+      )
+    : spend.value.length > 1
+      ? '—'
+      : '0',
+)
+const completionChange = computed(() =>
+  dashboard.value
+    ? dashboard.value.completed_this_month - dashboard.value.completed_previous_month
+    : 0,
+)
 const total = ref(0),
   page = ref(1),
   loading = ref(false),
@@ -20,9 +46,9 @@ const total = ref(0),
   error = ref(''),
   notice = ref(
     route.query.notice === 'saved'
-      ? `${props.config.singular} saved successfully.`
+      ? `${config.singular} saved successfully.`
       : route.query.notice === 'deleted'
-        ? `${props.config.singular} deleted.`
+        ? `${config.singular} deleted.`
         : '',
   )
 const errors = ref<Record<string, string[]>>({}),
@@ -39,21 +65,21 @@ const mode = computed(() =>
         : 'list',
 )
 const scope = computed(() => String(route.query.resource_type || 'daily'))
-const scopedResource = computed(() => ['fleet', 'drivers'].includes(props.config.key))
+const scopedResource = computed(() => ['fleet', 'drivers'].includes(config.key))
 const driverStatuses = ref<string[]>([])
 const params = computed(() => (scopedResource.value ? { resource_type: scope.value } : {}))
 const statuses = computed(() =>
-  props.config.key === 'drivers'
+  config.key === 'drivers'
     ? driverStatuses.value.length
       ? driverStatuses.value
-      : props.config.statuses
-    : props.config.key === 'fleet' && scope.value === 'monthly'
-      ? [...props.config.statuses, 'Inactive']
-      : props.config.statuses,
+      : config.statuses
+    : config.key === 'fleet' && scope.value === 'monthly'
+      ? [...config.statuses, 'Inactive']
+      : config.statuses,
 )
 const fields = computed(() =>
-  props.config.fields.map((field) =>
-    field.key === props.config.statusKey ? { ...field, options: statuses.value } : field,
+  config.fields.map((field) =>
+    field.key === config.statusKey ? { ...field, options: statuses.value } : field,
   ),
 )
 const link = (path: string) => ({ path, query: params.value })
@@ -71,18 +97,18 @@ async function load(next = 1) {
   errors.value = {}
   record.value = null
   rows.value = []
-  metrics.value = {}
+  dashboard.value = null
   try {
-    if (props.config.key === 'drivers') {
-      const response = await api.get(`${props.config.endpoint}/options`, { params: params.value })
+    if (config.key === 'drivers') {
+      const response = await api.get(`${config.endpoint}/options`, { params: params.value })
       if (version !== generation) return
       driverStatuses.value = response.data.data.statuses
     }
     if (mode.value === 'list') {
       const query = { ...params.value, ...filters, page: next, per_page: 10 }
       const [list, summary] = await Promise.all([
-        api.get(props.config.endpoint, { params: query }),
-        api.get(`${props.config.endpoint}/summary`, { params: query }),
+        api.get(config.endpoint, { params: query }),
+        api.get(`${config.endpoint}/summary`, { params: query }),
       ])
       if (version !== generation) return
       if (next > list.data.meta.last_page) {
@@ -92,42 +118,33 @@ async function load(next = 1) {
       rows.value = list.data.data
       total.value = list.data.meta.total
       page.value = list.data.meta.current_page
-      if (props.config.key === 'maintenance') {
-        const response = await api.get(`${props.config.endpoint}/options`)
+      dashboard.value = summary.data.data.dashboard
+      if (config.key === 'maintenance') {
+        const response = await api.get(`${config.endpoint}/options`)
         if (version !== generation) return
         options.value = response.data.data.vehicles.map((v: ResourceRow) => ({
           value: `${v.resource_type}:${v.id}`,
           label: `${v.plate_no} · ${v.model_name} (${v.resource_type})`,
         }))
       }
-      for (const [key, value] of Object.entries(summary.data.data)) {
-        if (typeof value === 'number' || typeof value === 'string') metrics.value[key] = value
-        else if (key === 'actual_costs' && Array.isArray(value))
-          for (const item of value)
-            metrics.value[`Actual cost (${item.currency})`] = Number(item.total).toLocaleString(
-              undefined,
-              { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-            )
-      }
     } else {
       let value: ResourceRow | null = null
       if (mode.value !== 'create')
-        value = (
-          await api.get(`${props.config.endpoint}/${route.params.id}`, { params: params.value })
-        ).data.data
+        value = (await api.get(`${config.endpoint}/${route.params.id}`, { params: params.value }))
+          .data.data
       if (version !== generation) return
       record.value = value
       for (const key of Object.keys(form)) delete form[key]
       for (const field of fields.value)
         form[field.key] = (value?.[field.key] as string | number) ?? field.default ?? ''
-      if (props.config.key === 'maintenance')
+      if (config.key === 'maintenance')
         form.vehicle_key = value
           ? value.car_id
             ? `daily:${value.car_id}`
             : `monthly:${value.monthly_car_id}`
           : String(route.query.vehicle || '')
-      if (props.config.key === 'maintenance' && mode.value !== 'detail') {
-        const response = await api.get(`${props.config.endpoint}/options`)
+      if (config.key === 'maintenance' && mode.value !== 'detail') {
+        const response = await api.get(`${config.endpoint}/options`)
         if (version !== generation) return
         options.value = response.data.data.vehicles.map((v: ResourceRow) => ({
           value: `${v.resource_type}:${v.id}`,
@@ -143,7 +160,7 @@ async function load(next = 1) {
 }
 async function apply() {
   await router.replace({
-    path: props.config.path,
+    path: config.path,
     query: { ...params.value, ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) },
   })
   await load()
@@ -182,7 +199,7 @@ async function save() {
     const payload: Record<string, string | number | null> = Object.fromEntries(
       Object.entries(form).map(([k, v]) => [k, typeof v === 'string' ? v.trim() || null : v]),
     )
-    if (props.config.key === 'maintenance') {
+    if (config.key === 'maintenance') {
       const [type, id] = String(form.vehicle_key).split(':')
       payload.car_id = type === 'daily' ? Number(id) : null
       payload.monthly_car_id = type === 'monthly' ? Number(id) : null
@@ -190,20 +207,17 @@ async function save() {
     }
     await api.request({
       method: mode.value === 'edit' ? 'put' : 'post',
-      url: `${props.config.endpoint}${mode.value === 'edit' ? `/${route.params.id}` : ''}`,
+      url: `${config.endpoint}${mode.value === 'edit' ? `/${route.params.id}` : ''}`,
       params: params.value,
       data: payload,
     })
-    notice.value = `${props.config.singular} saved successfully.`
-    await router.push({ path: props.config.path, query: { ...params.value, notice: 'saved' } })
+    notice.value = `${config.singular} saved successfully.`
+    await router.push({ path: config.path, query: { ...params.value, notice: 'saved' } })
   } catch (cause) {
     error.value = getApiErrorMessage(cause)
     if (axios.isAxiosError(cause)) {
       errors.value = cause.response?.data?.errors || cause.response?.data?.error?.errors || {}
-      if (
-        props.config.key === 'maintenance' &&
-        (errors.value.car_id || errors.value.monthly_car_id)
-      )
+      if (config.key === 'maintenance' && (errors.value.car_id || errors.value.monthly_car_id))
         errors.value.vehicle_key = [
           ...(errors.value.car_id || []),
           ...(errors.value.monthly_car_id || []),
@@ -219,9 +233,9 @@ async function remove() {
   saving.value = true
   error.value = ''
   try {
-    await api.delete(`${props.config.endpoint}/${route.params.id}`, { params: params.value })
+    await api.delete(`${config.endpoint}/${route.params.id}`, { params: params.value })
     confirmDialog.value?.close()
-    await router.push({ path: props.config.path, query: { ...params.value, notice: 'deleted' } })
+    await router.push({ path: config.path, query: { ...params.value, notice: 'deleted' } })
   } catch (cause) {
     confirmDialog.value?.close()
     error.value = getApiErrorMessage(cause)
@@ -233,7 +247,7 @@ watch(
   () => [route.path, route.query.resource_type],
   () => {
     for (const key of Object.keys(filters)) delete filters[key]
-    for (const field of props.config.filters)
+    for (const field of config.filters)
       filters[field.key] = String(route.query[field.key] || field.default || '')
     void load()
   },
@@ -295,12 +309,61 @@ watch(
       <button v-if="!saving" class="btn-outline-warm" @click="load(page)">Reload</button>
     </div>
     <template v-if="mode === 'list'">
-      <div class="row g-3 mb-4">
-        <div v-for="(value, key) in metrics" :key="key" class="col-sm-6 col-xl-3">
-          <div class="card-shell p-4">
-            <span class="text-muted metric-label">{{ String(key).replaceAll('_', ' ') }}</span>
-            <div class="fs-3 fw-bold numeric">{{ value }}</div>
-          </div>
+      <div class="row g-3 mb-4" aria-label="Maintenance status summary">
+        <div class="col-sm-6 col-xl-3">
+          <article class="card-shell maintenance-metric">
+            <span class="maintenance-metric-icon icon-due"
+              ><i class="bi bi-calendar-event" aria-hidden="true"
+            /></span>
+            <h3>Due this week</h3>
+            <strong class="numeric">{{ dashboard?.due_this_week ?? '—' }}</strong>
+            <p class="metric-due">{{ dashboard?.overdue ?? 0 }} services overdue</p>
+          </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <article class="card-shell maintenance-metric">
+            <span class="maintenance-metric-icon icon-workshop"
+              ><i class="bi bi-wrench-adjustable" aria-hidden="true"
+            /></span>
+            <h3>In workshop</h3>
+            <strong class="numeric">{{ dashboard?.in_workshop ?? '—' }}</strong>
+            <p class="metric-workshop">Vehicles unavailable</p>
+          </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <article class="card-shell maintenance-metric">
+            <span class="maintenance-metric-icon icon-completed"
+              ><i class="bi bi-grid" aria-hidden="true"
+            /></span>
+            <h3>Completed this month</h3>
+            <strong class="numeric">{{ dashboard?.completed_this_month ?? '—' }}</strong>
+            <p class="metric-completed">
+              {{ completionChange >= 0 ? '↑' : '↓' }} {{ Math.abs(completionChange) }} vs
+              {{ dashboard?.previous_month_label || 'previous month' }}
+            </p>
+          </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <article class="card-shell maintenance-metric">
+            <span class="maintenance-metric-icon icon-spend"
+              ><i class="bi bi-credit-card" aria-hidden="true"
+            /></span>
+            <h3>Maintenance spend</h3>
+            <strong class="numeric" :title="spend.length === 1 ? spend[0]?.total : undefined">{{
+              spendValue
+            }}</strong>
+            <p class="metric-spend" v-if="spend.length <= 1">
+              {{ spend[0]?.currency || 'No spend' }} ·
+              {{ dashboard?.month_label || 'This month' }} to date
+            </p>
+            <p class="metric-spend" v-else>
+              {{
+                spend
+                  .map((item) => `${item.currency} ${Number(item.total).toLocaleString()}`)
+                  .join(' · ')
+              }}
+            </p>
+          </article>
         </div>
       </div>
       <section class="card-shell p-4 mb-4" aria-label="Search and filters">
@@ -635,8 +698,71 @@ watch(
 .table {
   font-variant-numeric: tabular-nums;
 }
-.metric-label {
-  text-transform: capitalize;
+.maintenance-metric {
+  position: relative;
+  min-height: 124px;
+  height: 100%;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px var(--gss-shadow-tint-subtle);
+}
+.maintenance-metric h3 {
+  margin: 0 40px 12px 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.maintenance-metric strong {
+  display: block;
+  color: var(--ink);
+  font-size: 1.85rem;
+  line-height: 1.1;
+}
+.maintenance-metric p {
+  margin: 10px 0 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.maintenance-metric-icon {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  font-size: 1rem;
+}
+.icon-due {
+  color: #a75a00;
+  background: #fff0cf;
+}
+.icon-workshop {
+  color: #6849b3;
+  background: #eee8fa;
+}
+.icon-completed {
+  color: #0c7850;
+  background: #ddf4e9;
+}
+.icon-spend {
+  color: #265b9d;
+  background: #e6effb;
+}
+.metric-due {
+  color: #a75a00;
+}
+.metric-workshop {
+  color: #6849b3;
+}
+.metric-completed {
+  color: #0c7850;
+}
+.metric-spend {
+  color: #265b9d;
 }
 .resource-workspace h2 {
   text-wrap: balance;
@@ -679,6 +805,9 @@ watch(
   }
 }
 @media (max-width: 575px) {
-  .resource-month-nav { width: 100%; margin-top: .5rem; }
+  .resource-month-nav {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
 }
 </style>

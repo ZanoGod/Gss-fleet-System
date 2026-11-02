@@ -32,6 +32,26 @@ class MaintenanceController extends Controller
         $data = ['total' => (clone $q)->count()];
         foreach (VehicleMaintenance::STATUSES as $status) $data[strtolower(str_replace(' ', '_', $status))] = (clone $q)->where('status', $status)->count();
         $data['actual_costs'] = (clone $q)->reorder()->selectRaw('currency, SUM(actual_cost) AS total')->whereNotNull('actual_cost')->where('status', '!=', 'Cancelled')->groupBy('currency')->get()->map(fn ($r) => ['currency' => $r->currency, 'total' => number_format((float) $r->total, 2, '.', '')]);
+        $today = now()->toDateString();
+        $weekEnd = now()->endOfWeek()->toDateString();
+        $monthStart = now()->startOfMonth()->toDateString();
+        $monthEnd = now()->endOfMonth()->toDateString();
+        $previousMonthStart = now()->subMonthNoOverflow()->startOfMonth()->toDateString();
+        $previousMonthEnd = now()->subMonthNoOverflow()->endOfMonth()->toDateString();
+        $dashboard = VehicleMaintenance::query();
+        $data['dashboard'] = [
+            'due_this_week' => (clone $dashboard)->where('status', 'Scheduled')->whereDate('scheduled_date', '<=', $weekEnd)->count(),
+            'overdue' => (clone $dashboard)->where('status', 'Scheduled')->whereDate('scheduled_date', '<', $today)->count(),
+            'in_workshop' => (clone $dashboard)->where('status', 'In Progress')->count(),
+            'completed_this_month' => (clone $dashboard)->where('status', 'Completed')->whereBetween('completed_at', [$monthStart, $monthEnd])->count(),
+            'completed_previous_month' => (clone $dashboard)->where('status', 'Completed')->whereBetween('completed_at', [$previousMonthStart, $previousMonthEnd])->count(),
+            'spend_this_month' => (clone $dashboard)->reorder()->selectRaw('currency, SUM(actual_cost) AS total')
+                ->where('status', 'Completed')->whereBetween('completed_at', [$monthStart, $monthEnd])
+                ->whereNotNull('actual_cost')->groupBy('currency')->get()
+                ->map(fn ($r) => ['currency' => $r->currency, 'total' => number_format((float) $r->total, 2, '.', '')]),
+            'month_label' => now()->format('F'),
+            'previous_month_label' => now()->subMonthNoOverflow()->format('F'),
+        ];
         return response()->json(['data' => $data]);
     }
     public function options()

@@ -90,5 +90,23 @@ class MaintenanceApiTest extends TestCase
         $this->getJson('/api/cars/'.$this->car->id)->assertJsonPath('data.effective_status', 'Maintenance');
         $this->assertSame('Maintenance', $this->car->fresh()->availability_status);
     }
+
+    public function test_dashboard_summary_uses_work_order_dates_and_separates_currencies(): void
+    {
+        $this->actingAs($this->user);
+        VehicleMaintenance::create($this->data(['title' => 'Overdue service', 'scheduled_date' => now()->subWeek()->toDateString()]));
+        VehicleMaintenance::create($this->data(['title' => 'Workshop service', 'status' => 'In Progress', 'started_at' => now()->toDateString()]));
+        VehicleMaintenance::create($this->data(['title' => 'Finished MMK', 'status' => 'Completed', 'completed_at' => now()->toDateString(), 'actual_cost' => '250000.00']));
+        VehicleMaintenance::create($this->data(['title' => 'Finished USD', 'status' => 'Completed', 'completed_at' => now()->toDateString(), 'currency' => 'USD', 'actual_cost' => '40.00']));
+        VehicleMaintenance::create($this->data(['title' => 'Last month', 'status' => 'Completed', 'completed_at' => now()->subMonthNoOverflow()->toDateString(), 'actual_cost' => '15.00']));
+
+        $summary = $this->getJson('/api/maintenances/summary')->assertOk()
+            ->assertJsonPath('data.dashboard.due_this_week', 1)
+            ->assertJsonPath('data.dashboard.overdue', 1)
+            ->assertJsonPath('data.dashboard.in_workshop', 1)
+            ->assertJsonPath('data.dashboard.completed_this_month', 2)
+            ->assertJsonPath('data.dashboard.completed_previous_month', 1);
+        $this->assertSame(['MMK' => '250000.00', 'USD' => '40.00'], collect($summary->json('data.dashboard.spend_this_month'))->pluck('total', 'currency')->all());
+    }
 }
 

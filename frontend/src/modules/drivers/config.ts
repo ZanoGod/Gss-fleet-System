@@ -1,4 +1,4 @@
-import type { ResourceConfig } from '../fleet/config'
+import type { ResourceConfig } from '@/components/common/resourceTypes'
 export const driverConfig: ResourceConfig = {
   key: 'drivers',
   title: 'Drivers',
