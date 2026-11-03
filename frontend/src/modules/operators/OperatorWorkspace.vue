@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StatusCard from '@/components/common/StatusCard.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -241,19 +242,6 @@ watch(
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
     <header class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i :class="`bi ${config.icon}`" aria-hidden="true" /></span>
-        <div>
-          <h2 class="h4 mb-1">
-            {{
-              mode === 'list'
-                ? config.title
-                : `${mode === 'create' ? 'Add' : mode === 'edit' ? 'Edit' : ''} ${config.singular}`
-            }}
-          </h2>
-          <p>{{ config.description }}</p>
-        </div>
-      </div>
       <RouterLink
         :to="link(mode === 'list' ? `${config.path}/create` : config.path)"
         class="btn-gold"
@@ -293,11 +281,13 @@ watch(
     </div>
     <template v-if="mode === 'list'">
       <div class="row g-3 mb-4">
-        <div v-for="(value, key) in metrics" :key="key" class="col-sm-6 col-xl-3">
-          <div class="card-shell p-4">
-            <span class="text-muted metric-label">{{ String(key).replaceAll('_', ' ') }}</span>
-            <div class="fs-3 fw-bold numeric">{{ value }}</div>
-          </div>
+        <div v-for="(value, key) in metrics" :key="key" class="col-12 col-md-6 col-xl-3">
+          <StatusCard
+            :label="String(key).replaceAll('_', ' ')"
+            :value="value"
+            :icon="config.icon"
+            :loading="loading"
+          />
         </div>
       </div>
       <section class="card-shell p-4 mb-4" aria-label="Search and filters">
@@ -631,9 +621,6 @@ watch(
 .numeric,
 .table {
   font-variant-numeric: tabular-nums;
-}
-.metric-label {
-  text-transform: capitalize;
 }
 .resource-workspace h2 {
   text-wrap: balance;

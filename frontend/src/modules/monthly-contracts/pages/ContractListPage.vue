@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StatusCard from '@/components/common/StatusCard.vue'
 import { onMounted, reactive, ref, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { monthlyContractApi } from '../api'
@@ -107,44 +108,27 @@ onMounted(async () => {
   </main>
   <main v-else class="fleet-module page-content contract-report">
     <div class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i class="bi bi-calendar3" aria-hidden="true" /></span>
-        <div>
-          <h2>Contract overview</h2>
-          <p>Track agreements, rental periods and upcoming renewals.</p>
-        </div>
-      </div>
       <div class="d-flex flex-wrap gap-2 report-actions">
         <button class="btn btn-outline-secondary" @click="printReport">
-          <i class="bi bi-file-earmark-pdf me-1" /> Print / Save PDF</button
+          <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true" /> Print / Save PDF</button
         ><button class="btn btn-outline-primary" @click="exportExcel">
-          <i class="bi bi-file-earmark-spreadsheet me-1" /> Excel CSV</button
+          <i class="bi bi-file-earmark-spreadsheet me-1" aria-hidden="true" /> Excel CSV</button
         ><RouterLink to="/monthly-contracts/create" class="btn btn-primary"
-          ><i class="bi bi-plus-lg me-1" /> New contract</RouterLink
+          ><i class="bi bi-plus-lg me-1" aria-hidden="true" /> Add Monthly Contract</RouterLink
         >
       </div>
     </div>
     <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
     <div v-if="summary" class="row g-3 mb-4">
-      <div class="col-6 col-xl-2">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <span class="small text-muted">Total</span>
-            <div class="fs-4 fw-semibold">{{ summary.total }}</div>
-          </div>
-        </div>
+      <div class="col-12 col-md-6 col-xl-3">
+        <StatusCard label="Total" :value="summary.total" icon="bi-file-earmark-text" />
       </div>
       <div
         v-for="s in ['Draft', 'Active', 'Expired', 'Renewed', 'Cancelled']"
         :key="s"
-        class="col-6 col-xl-2"
+        class="col-12 col-md-6 col-xl-3"
       >
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <span class="small text-muted">{{ s }}</span>
-            <div class="fs-4 fw-semibold">{{ summary.statuses[s] || 0 }}</div>
-          </div>
-        </div>
+        <StatusCard :label="s" :value="summary.statuses[s] || 0" icon="bi-file-earmark-text" />
       </div>
     </div>
     <section class="card shadow-sm">

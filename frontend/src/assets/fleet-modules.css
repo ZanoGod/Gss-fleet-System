@@ -9,37 +9,10 @@
 .fleet-module .page-heading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 20px;
   margin-bottom: 24px;
-}
-.fleet-intro {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.fleet-intro-icon {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
-  border: 1px solid var(--gss-palette-ead7a7);
-  border-radius: 15px;
-  background: var(--gss-palette-fff3cd);
-  color: var(--cocoa);
-  font-size: 1.35rem;
-}
-.fleet-intro h2 {
-  font-size: 1.25rem;
-  margin: 0 0 5px;
-  font-weight: 800;
-}
-.fleet-intro p {
-  color: var(--gss-palette-806957);
-  font-size: 0.86rem;
-  margin: 0;
 }
 .fleet-module .card {
   --bs-card-border-color: var(--line);
@@ -272,12 +245,6 @@
   .fleet-module .card-footer {
     padding: 14px 16px;
   }
-  .fleet-intro {
-    align-items: flex-start;
-  }
-  .fleet-intro p {
-    line-height: 1.6;
-  }
   .fleet-module .page-heading > .d-flex {
     width: 100%;
   }
@@ -296,5 +263,20 @@
   }
   .fleet-module .card {
     box-shadow: none !important;
+  }
+}
+
+.fleet-module .page-heading {
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.fleet-module .page-heading > .d-flex {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+@media (max-width: 575px) {
+  .fleet-module .page-heading > .btn-gold {
+    width: 100%;
+    text-align: center;
   }
 }

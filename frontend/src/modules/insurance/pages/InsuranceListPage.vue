@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StatusCard from '@/components/common/StatusCard.vue'
 import { onMounted, ref } from 'vue'
 import { useInsuranceStore } from '../stores/insurance'
 import { insuranceApi } from '../api'
@@ -107,18 +108,11 @@ onMounted(load)
 <template>
   <main class="fleet-module page-content">
     <div class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i class="bi bi-shield-check" aria-hidden="true" /></span>
-        <div>
-          <h2>Fleet coverage</h2>
-          <p>Keep policies, claims and insurance providers in one place.</p>
-        </div>
-      </div>
       <div class="d-flex gap-2">
         <button class="btn btn-outline-primary" @click="newProvider">
-          <i class="bi bi-building-add me-1" /> Add provider</button
+          <i class="bi bi-building-add me-1" aria-hidden="true" /> Add provider</button
         ><RouterLink to="/insurance/create" class="btn btn-primary"
-          ><i class="bi bi-plus-lg me-1" /> New policy</RouterLink
+          ><i class="bi bi-plus-lg me-1" aria-hidden="true" /> Add Insurance</RouterLink
         >
       </div>
     </div>
@@ -149,17 +143,9 @@ onMounted(load)
             },
           ]"
           :key="item.label"
-          class="col-6 col-xl-3"
+          class="col-12 col-md-6 col-xl-3"
         >
-          <div class="card h-100 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between">
-              <div>
-                <div class="text-muted small">{{ item.label }}</div>
-                <div class="fs-3 fw-semibold">{{ item.value }}</div>
-              </div>
-              <i class="bi fs-2 text-primary" :class="item.icon" />
-            </div>
-          </div>
+          <StatusCard :label="item.label" :value="item.value" :icon="item.icon" />
         </div>
       </div>
       <div class="fleet-tabs d-flex gap-2 mb-3">
@@ -259,7 +245,11 @@ onMounted(load)
           <button
             class="btn btn-sm btn-primary"
             :disabled="!store.policies.length"
-            @click="claim.policy_id = store.policies[0]?.id || 0; claimModal = true">
+            @click="
+              claim.policy_id = store.policies[0]?.id || 0;
+              claimModal = true
+            "
+          >
             New claim
           </button>
         </div>

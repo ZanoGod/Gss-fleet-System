@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StatusCard from '@/components/common/StatusCard.vue'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseLoading from '@/components/common/BaseLoading.vue'
@@ -138,13 +139,6 @@ onMounted(() => {
 <template>
   <main class="fleet-module page-content">
     <header class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i class="bi bi-people" aria-hidden="true" /></span>
-        <div>
-          <h2>Customer directory</h2>
-          <p>Customer profiles and their monthly contract assignments.</p>
-        </div>
-      </div>
       <RouterLink to="/customers/create" class="btn-gold">+ Add Customer</RouterLink>
     </header>
     <div v-if="success" class="alert alert-success" role="status">
@@ -160,11 +154,8 @@ onMounted(() => {
       <button class="btn-outline-warm" @click="loadSummary">Retry</button>
     </div>
     <div class="row g-3 mb-4">
-      <div v-for="metric in metrics" :key="metric.label" class="col-md-4">
-        <div class="card-shell p-4">
-          <span class="text-muted">{{ metric.label }}</span>
-          <div class="fs-3 fw-bold mt-2">{{ metric.value }}</div>
-        </div>
+      <div v-for="metric in metrics" :key="metric.label" class="col-12 col-md-6 col-xl-3">
+        <StatusCard :label="metric.label" :value="metric.value" icon="bi-people" />
       </div>
     </div>
     <section class="card-shell p-4 mb-4" aria-label="Customer filters">
