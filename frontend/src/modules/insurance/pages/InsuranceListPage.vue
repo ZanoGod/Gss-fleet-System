@@ -26,6 +26,15 @@ const claim = ref({
   status: 'submitted',
   notes: '',
 })
+function providerErrorMessage(error: unknown, fallback: string) {
+  if (typeof error !== 'object' || error === null) return fallback
+  const response = Reflect.get(error, 'response')
+  if (typeof response !== 'object' || response === null) return fallback
+  const data = Reflect.get(response, 'data')
+  if (typeof data !== 'object' || data === null) return fallback
+  const message = Reflect.get(data, 'message')
+  return typeof message === 'string' ? message : fallback
+}
 async function load() {
   error.value = ''
   try {
@@ -54,8 +63,8 @@ async function editProvider(id: number) {
       notes: p.notes || '',
     }
     providerModal.value = true
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Unable to load provider.'
+  } catch (e: unknown) {
+    error.value = providerErrorMessage(e, 'Unable to load provider.')
   }
 }
 async function saveProvider() {
@@ -65,8 +74,8 @@ async function saveProvider() {
     providerModal.value = false
     success.value = providerId.value ? 'Provider updated.' : 'Provider created.'
     await load()
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Unable to save provider.'
+  } catch (e: unknown) {
+    error.value = providerErrorMessage(e, 'Unable to save provider.')
   }
 }
 async function deleteProvider(id: number, name: string, count: number) {
@@ -79,8 +88,8 @@ async function deleteProvider(id: number, name: string, count: number) {
     await insuranceApi.deleteProvider(id)
     success.value = 'Provider deleted.'
     await load()
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Unable to delete provider.'
+  } catch (e: unknown) {
+    error.value = providerErrorMessage(e, 'Unable to delete provider.')
   }
 }
 async function createClaim() {
@@ -89,8 +98,8 @@ async function createClaim() {
     claimModal.value = false
     success.value = 'Claim created and its status recorded.'
     await load()
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Unable to create claim.'
+  } catch (e: unknown) {
+    error.value = providerErrorMessage(e, 'Unable to create claim.')
   }
 }
 onMounted(load)
@@ -250,11 +259,7 @@ onMounted(load)
           <button
             class="btn btn-sm btn-primary"
             :disabled="!store.policies.length"
-            @click="
-              claim.policy_id = store.policies[0]?.id || 0
-              claimModal = true
-            "
-          >
+            @click="claim.policy_id = store.policies[0]?.id || 0; claimModal = true">
             New claim
           </button>
         </div>
