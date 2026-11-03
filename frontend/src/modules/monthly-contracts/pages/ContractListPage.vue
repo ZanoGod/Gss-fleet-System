@@ -119,7 +119,7 @@ onMounted(async () => {
       </div>
     </div>
     <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-if="summary" class="row g-3 mb-4">
+    <div v-if="summary" class="row g-3 mb-4 status-card-grid">
       <div class="col-12 col-md-6 col-xl-3">
         <StatusCard label="Total" :value="summary.total" icon="bi-file-earmark-text" />
       </div>

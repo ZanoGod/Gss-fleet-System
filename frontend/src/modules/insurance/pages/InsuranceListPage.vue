@@ -122,7 +122,7 @@ onMounted(load)
     </div>
     <div v-if="store.loading" class="alert alert-light border">Loading insurance recordsâ€¦</div>
     <template v-else-if="store.dashboard">
-      <div class="row g-3 mb-4">
+      <div class="row g-3 mb-4 status-card-grid">
         <div
           v-for="item in [
             {

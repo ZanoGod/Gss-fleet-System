@@ -280,7 +280,7 @@ watch(
       <button v-if="!saving" class="btn-outline-warm" @click="load(page)">Reload</button>
     </div>
     <template v-if="mode === 'list'">
-      <div class="row g-3 mb-4">
+      <div class="row g-3 mb-4 status-card-grid">
         <div v-for="(value, key) in metrics" :key="key" class="col-12 col-md-6 col-xl-3">
           <StatusCard
             :label="String(key).replaceAll('_', ' ')"

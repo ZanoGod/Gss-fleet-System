@@ -153,7 +153,7 @@ onMounted(() => {
       Summary: {{ summaryError }}
       <button class="btn-outline-warm" @click="loadSummary">Retry</button>
     </div>
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4 status-card-grid">
       <div v-for="metric in metrics" :key="metric.label" class="col-12 col-md-6 col-xl-3">
         <StatusCard :label="metric.label" :value="metric.value" icon="bi-people" />
       </div>

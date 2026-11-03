@@ -297,7 +297,7 @@ watch(
       <button v-if="!saving" class="btn-outline-warm" @click="load(page)">Reload</button>
     </div>
     <template v-if="mode === 'list'">
-      <div class="row g-3 mb-4" aria-label="Maintenance status summary">
+      <div class="row g-3 mb-4 status-card-grid" aria-label="Maintenance status summary">
         <div class="col-12 col-md-6 col-xl-3">
           <StatusCard
             label="Due this week"

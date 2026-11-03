@@ -10,7 +10,7 @@ const metrics = [
 ]
 </script>
 <template>
-  <section class="row g-3 mb-4" aria-label="Fleet overview">
+  <section class="row g-3 mb-4 status-card-grid" aria-label="Fleet overview">
     <div v-for="metric in metrics" :key="metric.label" class="col-12 col-md-6 col-xl-3">
       <StatusCard :label="metric.label" icon="bi-bar-chart" />
     </div>

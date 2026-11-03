@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onMounted, reactive } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useDailyBookingStore } from '../stores/dailyBookings'
+import StatusCard from '@/components/common/StatusCard.vue'
+import { dailyBookingApi } from '../api'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 const store = useDailyBookingStore(),
   filters = reactive({
@@ -11,10 +13,36 @@ const store = useDailyBookingStore(),
     car_id: '',
     driver_id: '',
   })
+const summaryCards = [
+  { label: 'Total bookings', status: '', icon: 'bi-calendar-check' },
+  { label: 'Pending', status: 'Pending', icon: 'bi-hourglass-split' },
+  { label: 'Confirmed', status: 'Confirm', icon: 'bi-check-circle' },
+  { label: 'Completed', status: 'Completed', icon: 'bi-calendar2-check' },
+  { label: 'Cancelled', status: 'Cancelled', icon: 'bi-x-circle' },
+]
+const summary = ref<(number | null)[]>(summaryCards.map(() => null))
+const summaryLoading = ref(false)
+let summaryGeneration = 0
+async function loadSummary() {
+  const generation = ++summaryGeneration
+  summaryLoading.value = true
+  summary.value = summaryCards.map(() => null)
+  // API paginator totals cover all matching bookings, not just the visible page.
+  // The status selector filters the table; the summary keeps all statuses visible.
+  const query = { ...filters, page: 1, per_page: 1 }
+  const results = await Promise.allSettled(summaryCards.map(card =>
+    dailyBookingApi.list({ ...query, status: card.status }),
+  ))
+  if (generation !== summaryGeneration) return
+  summary.value = results.map(result => result.status === 'fulfilled' && Number.isFinite(result.value.total)
+    ? result.value.total : null)
+  summaryLoading.value = false
+}
 async function load(page = 1) {
-  try {
-    await store.load({ ...filters, page, per_page: 15 })
-  } catch {}
+  await Promise.all([
+    store.load({ ...filters, page, per_page: 15 }).catch(() => {}),
+    loadSummary(),
+  ])
 }
 onMounted(async () => {
   try {
@@ -33,6 +61,12 @@ onMounted(async () => {
       >
     </div>
     <div v-if="store.error" class="alert alert-danger" role="alert">{{ store.error }}</div>
+    <div class="row g-3 mb-4 status-card-grid" aria-label="Daily booking status summary">
+      <div v-for="(card, index) in summaryCards" :key="card.label" class="col-12 col-md-6 col-xl-3">
+        <StatusCard :label="card.label" :value="summary[index]" :icon="card.icon"
+          :loading="summaryLoading" description="Across search, vehicle, driver and date filters" />
+      </div>
+    </div>
     <section class="card shadow-sm">
       <div class="card-header bg-white">
         <form class="row g-2" @submit.prevent="load()">

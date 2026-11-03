@@ -280,3 +280,12 @@
     text-align: center;
   }
 }
+
+/* Summary rows grow to fit up to five cards, without leaving a gap for four. */
+.status-card-grid > * { flex: 0 0 100%; width: 100%; }
+@media (min-width: 768px) {
+  .status-card-grid > * { flex: 0 0 50%; width: 50%; }
+}
+@media (min-width: 1200px) {
+  .status-card-grid > * { flex: 1 0 20%; width: auto; max-width: 100%; }
+}
