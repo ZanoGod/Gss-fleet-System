@@ -27,7 +27,7 @@ onMounted(async () => {
 </script>
 <template>
   <main class="fleet-module page-content">
-    <div class="page-heading">
+    <div class="page-heading d-flex flex-wrap justify-content-end">
       <RouterLink to="/daily-bookings/create" class="btn btn-primary"
         ><i class="bi bi-plus-lg me-1" /> New booking</RouterLink
       >

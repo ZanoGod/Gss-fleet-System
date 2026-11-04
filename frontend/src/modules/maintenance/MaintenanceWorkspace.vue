@@ -235,7 +235,7 @@ watch(
 
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <PageHeader
+    <PageHeader class="d-flex flex-wrap justify-content-end"
       :title="
         mode === 'list'
           ? config.title

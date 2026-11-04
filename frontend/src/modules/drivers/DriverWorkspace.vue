@@ -235,21 +235,7 @@ watch(
 
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <PageHeader
-      :title="
-        mode === 'list'
-          ? config.title
-          : `${mode === 'create' ? 'Add' : mode === 'edit' ? 'Edit' : ''} ${config.singular}`
-      "
-      :description="config.description"
-      :icon="config.icon"
-    >
-      <RouterLink
-        :to="link(mode === 'list' ? `${config.path}/create` : config.path)"
-        class="btn btn-primary"
-        >{{ mode === 'list' ? `+ Add ${config.singular}` : `All ${config.title}` }}</RouterLink
-      >
-    </PageHeader>
+    <div class="d-flex flex-wrap justify-content-end">
     <div v-if="notice" class="alert alert-success" role="status">
       {{ notice
       }}<button
@@ -277,6 +263,22 @@ watch(
         }}</RouterLink
       >
     </nav>
+    <PageHeader
+      :title="
+        mode === 'list'
+          ? config.title
+          : `${mode === 'create' ? 'Add' : mode === 'edit' ? 'Edit' : ''} ${config.singular}`
+      "
+      :description="config.description"
+      :icon="config.icon"
+    >
+      <RouterLink
+        :to="link(mode === 'list' ? `${config.path}/create` : config.path)"
+        class="btn btn-primary"
+        >{{ mode === 'list' ? `+ Add ${config.singular}` : `All ${config.title}` }}</RouterLink
+      >
+    </PageHeader>
+  </div>
     <div v-if="error" class="alert alert-danger" role="alert">
       {{ error }}
       <button v-if="!saving" class="btn-outline-warm" @click="load(page)">Reload</button>

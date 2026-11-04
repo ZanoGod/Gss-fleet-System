@@ -136,8 +136,8 @@ onMounted(() => {
 </script>
 <template>
   <main class="fleet-module page-content">
-    <PageHeader v-bind="customerHeader">
-      <RouterLink to="/customers/create" class="btn btn-primary">Add Customer</RouterLink>
+    <PageHeader v-bind="customerHeader" class="d-flex flex-wrap justify-content-end">
+      <RouterLink to="/customers/create" class="btn btn-primary">+ Add Customer</RouterLink>
     </PageHeader>
     <div v-if="success" class="alert alert-success" role="status">
       {{ success

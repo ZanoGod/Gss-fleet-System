@@ -113,7 +113,7 @@ onMounted(load)
 </script>
 <template>
   <main class="fleet-module page-content">
-    <PageHeader v-bind="insuranceHeader">
+    <PageHeader v-bind="insuranceHeader" class="d-flex flex-wrap justify-content-end">
       <div class="d-flex gap-2">
         <button class="btn btn-outline-primary" @click="newProvider">
           <i class="bi bi-building-add me-1" /> Add provider</button

@@ -13,7 +13,7 @@ const props = defineProps<{
 </script>
 <template>
   <section class="card-shell section-card gss-module-page">
-    <div class="section-head">
+    <div class="section-head d-flex flex-wrap justify-content-end ">
       <RouterLink v-if="mode === 'list'" :to="basePath + '/create'" class="btn-gold"
         ><i class="bi bi-plus-lg me-2"></i>New {{ entity }}</RouterLink
       ><RouterLink v-else :to="basePath" class="btn btn-outline-secondary"

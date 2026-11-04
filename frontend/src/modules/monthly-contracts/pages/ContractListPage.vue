@@ -109,13 +109,13 @@ onMounted(async () => {
     <p>Total contracts: {{ printRows.length }}</p>
   </main>
   <main v-else class="fleet-module page-content contract-report">
-    <PageHeader v-bind="contractHeader">
+    <PageHeader v-bind="contractHeader" class="d-flex flex-wrap justify-content-end">
       <div class="d-flex flex-wrap gap-2 report-actions">
-        <button class="btn btn-outline-secondary" @click="printReport">
+        <!-- <button class="btn btn-outline-secondary" @click="printReport">
           <i class="bi bi-file-earmark-pdf me-1" /> Print / Save PDF</button
         ><button class="btn btn-outline-primary" @click="exportExcel">
-          <i class="bi bi-file-earmark-spreadsheet me-1" /> Excel CSV</button
-        ><RouterLink to="/monthly-contracts/create" class="btn btn-primary"
+          <i class="bi bi-file-earmark-spreadsheet me-1" /> Excel CSV</button> -->
+        <RouterLink to="/monthly-contracts/create" class="btn btn-primary"
           ><i class="bi bi-plus-lg me-1" /> New contract</RouterLink
         >
       </div>

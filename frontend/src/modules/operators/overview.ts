@@ -13,7 +13,6 @@ export function operatorsMetrics(summary: OverviewSummary | null): StatusMetric[
       label: 'Total Operators',
       icon: 'bi-headset',
       tone: 'info',
-      description: 'Operators matching the current filters',
       value: summary?.total,
     },
     {
@@ -21,7 +20,6 @@ export function operatorsMetrics(summary: OverviewSummary | null): StatusMetric[
       label: 'Active Operators',
       icon: 'bi-person-check',
       tone: 'success',
-      description: 'Active operators matching the current filters',
       value: summary?.active,
     },
     {
@@ -29,7 +27,6 @@ export function operatorsMetrics(summary: OverviewSummary | null): StatusMetric[
       label: 'Inactive Operators',
       icon: 'bi-person-dash',
       tone: 'warning',
-      description: 'Inactive operators matching the current filters',
       value: summary?.inactive,
     },
   ]
