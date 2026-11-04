@@ -137,7 +137,7 @@ onMounted(() => {
 <template>
   <main class="fleet-module page-content">
     <PageHeader v-bind="customerHeader">
-      <RouterLink to="/customers/create" class="btn-gold">+ Add Customer</RouterLink>
+      <RouterLink to="/customers/create" class="btn btn-primary">Add Customer</RouterLink>
     </PageHeader>
     <div v-if="success" class="alert alert-success" role="status">
       {{ success
@@ -200,15 +200,15 @@ onMounted(() => {
           </select>
         </div>
         <div class="col-lg-9 d-flex align-items-end gap-2 flex-wrap">
-          <button class="btn-gold" :disabled="loading">Filter</button
-          ><button type="button" class="btn-outline-warm" :disabled="loading" @click="reset">
+          <button class="btn btn-primary" :disabled="loading">Filter</button
+          ><button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="reset">
             Reset
           </button>
           <div class="d-flex gap-2 align-items-center ms-lg-auto">
             <span class="small">Contract month</span
             ><button
               type="button"
-              class="btn-outline-warm"
+              class="btn btn-outline-secondary"
               aria-label="Previous month"
               @click="month = shiftMonth(month, -1)"
             >
@@ -216,14 +216,14 @@ onMounted(() => {
             ><span>{{ month }}</span
             ><button
               type="button"
-              class="btn-outline-warm"
+              class="btn btn-outline-secondary"
               aria-label="Next month"
               @click="month = shiftMonth(month, 1)"
             >
               ›</button
             ><button
               type="button"
-              class="btn-outline-warm"
+              class="btn btn-outline-secondary"
               :disabled="month === currentMonth()"
               @click="month = currentMonth()"
             >

@@ -10,7 +10,6 @@ export const contractHeader = {
 export function contractMetrics(summary: ContractSummary | null): StatusMetric[] {
   // The API summary follows the date range, independently of table status/search filters.
   const statuses: { key: string; icon: string; tone: StatusMetric['tone'] }[] = [
-    { key: 'Draft', icon: 'bi-file-earmark', tone: 'info' },
     { key: 'Active', icon: 'bi-check-circle', tone: 'success' },
     { key: 'Expired', icon: 'bi-calendar-x', tone: 'danger' },
     { key: 'Renewed', icon: 'bi-arrow-repeat', tone: 'success' },

@@ -14,7 +14,6 @@ export function customersMetrics(summary: CustomerSummary | null): StatusMetric[
       label: 'Total Customers',
       icon: 'bi-people',
       tone: 'info',
-      description: 'All customer profiles',
       value: summary?.total,
     },
     {
@@ -22,7 +21,6 @@ export function customersMetrics(summary: CustomerSummary | null): StatusMetric[
       label: 'Active Customers',
       icon: 'bi-person-check',
       tone: 'success',
-      description: 'Profiles with Active customer status',
       value: summary?.active,
     },
     {
@@ -30,7 +28,6 @@ export function customersMetrics(summary: CustomerSummary | null): StatusMetric[
       label: 'With Contracts',
       icon: 'bi-file-earmark-text',
       tone: 'info',
-      description: 'Customers with at least one monthly contract',
       value: summary?.with_contracts,
     },
   ]

@@ -246,7 +246,7 @@ watch(
     >
       <RouterLink
         :to="link(mode === 'list' ? `${config.path}/create` : config.path)"
-        class="btn-gold"
+        class="btn btn-primary"
         >{{ mode === 'list' ? `+ Add ${config.singular}` : `All ${config.title}` }}</RouterLink
       >
     </PageHeader>
@@ -325,8 +325,8 @@ watch(
             />
           </div>
           <div class="col-12 d-flex flex-wrap align-items-center gap-2">
-            <button class="btn-gold" :disabled="loading">Filter</button
-            ><button type="button" class="btn-outline-warm" :disabled="loading" @click="reset">
+            <button class="btn btn-primary" :disabled="loading">Filter</button
+            ><button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="reset">
               Reset
             </button>
             <div
@@ -586,8 +586,8 @@ watch(
             </div>
           </div>
           <div class="col-12">
-            <button class="btn-gold">{{ saving ? 'Saving…' : `Save ${config.singular}` }}</button
-            ><RouterLink :to="link(config.path)" class="btn-outline-warm ms-2">Cancel</RouterLink>
+            <button class="btn btn-primary">{{ saving ? 'Saving…' : `Save ${config.singular}` }}</button
+            ><RouterLink :to="link(config.path)" class="btn btn-outline-secondary ms-2">Cancel</RouterLink>
           </div>
         </fieldset>
       </form>

@@ -3,6 +3,5 @@ export interface StatusMetric {
   label: string
   value: number | string | null | undefined
   icon: string
-  description: string
   tone: 'info' | 'success' | 'warning' | 'danger'
 }

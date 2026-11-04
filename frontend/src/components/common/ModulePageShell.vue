@@ -16,7 +16,7 @@ const props = defineProps<{
     <div class="section-head">
       <RouterLink v-if="mode === 'list'" :to="basePath + '/create'" class="btn-gold"
         ><i class="bi bi-plus-lg me-2"></i>New {{ entity }}</RouterLink
-      ><RouterLink v-else :to="basePath" class="btn-outline-warm"
+      ><RouterLink v-else :to="basePath" class="btn btn-outline-secondary"
         ><i class="bi bi-arrow-left me-2"></i>Back to {{ entity }} list</RouterLink
       >
     </div>

@@ -15,7 +15,6 @@ export function fleetMetrics(summary: OverviewSummary | null, scope: string): St
       label: 'Total Cars',
       icon: 'bi-car-front',
       tone: 'info',
-      description: 'Vehicles matching the current filters',
       value: summary?.total,
     },
     {
@@ -23,7 +22,6 @@ export function fleetMetrics(summary: OverviewSummary | null, scope: string): St
       label: 'Available',
       icon: 'bi-check-circle',
       tone: 'success',
-      description: 'Stored as available; date availability is checked on assignment',
       value: summary?.available,
     },
     {
@@ -31,7 +29,6 @@ export function fleetMetrics(summary: OverviewSummary | null, scope: string): St
       label: 'Assigned',
       icon: 'bi-calendar-check',
       tone: 'info',
-      description: 'Vehicles with Assigned stored status',
       value: summary?.assigned,
     },
     {
@@ -39,7 +36,6 @@ export function fleetMetrics(summary: OverviewSummary | null, scope: string): St
       label: 'Maintenance',
       icon: 'bi-wrench-adjustable',
       tone: 'warning',
-      description: 'Vehicles with Maintenance stored status',
       value: summary?.maintenance,
     },
     {
@@ -47,7 +43,6 @@ export function fleetMetrics(summary: OverviewSummary | null, scope: string): St
       label: 'Inactive',
       icon: 'bi-pause-circle',
       tone: 'danger',
-      description: 'Inactive monthly vehicles',
       value: summary?.inactive,
     },
   ]

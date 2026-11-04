@@ -28,13 +28,6 @@ onMounted(async () => {
 <template>
   <main class="fleet-module page-content">
     <div class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i class="bi bi-calendar-check" aria-hidden="true" /></span>
-        <div>
-          <h2>Daily dispatch</h2>
-          <p>Manage guests, vehicle assignments and daily schedules.</p>
-        </div>
-      </div>
       <RouterLink to="/daily-bookings/create" class="btn btn-primary"
         ><i class="bi bi-plus-lg me-1" /> New booking</RouterLink
       >
