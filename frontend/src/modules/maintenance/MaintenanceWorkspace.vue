@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import { maintenanceMetrics, type MaintenanceDashboard } from './overview'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -13,32 +16,7 @@ const route = useRoute(),
   router = useRouter()
 const rows = ref<ResourceRow[]>([]),
   record = ref<ResourceRow | null>(null)
-interface MaintenanceDashboard {
-  due_this_week: number
-  overdue: number
-  in_workshop: number
-  completed_this_month: number
-  completed_previous_month: number
-  spend_this_month: { currency: string; total: string }[]
-  month_label: string
-  previous_month_label: string
-}
 const dashboard = ref<MaintenanceDashboard | null>(null)
-const spend = computed(() => dashboard.value?.spend_this_month || [])
-const spendValue = computed(() =>
-  spend.value.length === 1
-    ? Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(
-      Number(spend.value[0]?.total),
-    )
-    : spend.value.length > 1
-      ? '—'
-      : '0',
-)
-const completionChange = computed(() =>
-  dashboard.value
-    ? dashboard.value.completed_this_month - dashboard.value.completed_previous_month
-    : 0,
-)
 const total = ref(0),
   page = ref(1),
   loading = ref(false),
@@ -257,23 +235,21 @@ watch(
 
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <header class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i :class="`bi ${config.icon}`" aria-hidden="true" /></span>
-        <div>
-          <h2 class="h4 mb-1">
-            {{
-              mode === 'list'
-                ? config.title
-                : `${mode === 'create' ? 'Add' : mode === 'edit' ? 'Edit' : ''} ${config.singular}`
-            }}
-          </h2>
-          <p>{{ config.description }}</p>
-        </div>
-      </div>
-      <RouterLink :to="link(mode === 'list' ? `${config.path}/create` : config.path)" class="btn-gold">{{ mode ===
-        'list' ? `+ Add ${config.singular}` : `All ${config.title}` }}</RouterLink>
-    </header>
+    <PageHeader
+      :title="
+        mode === 'list'
+          ? config.title
+          : `${mode === 'create' ? 'Add' : mode === 'edit' ? 'Edit' : ''} ${config.singular}`
+      "
+      :description="config.description"
+      :icon="config.icon"
+    >
+      <RouterLink
+        :to="link(mode === 'list' ? `${config.path}/create` : config.path)"
+        class="btn-gold"
+        >{{ mode === 'list' ? `+ Add ${config.singular}` : `All ${config.title}` }}</RouterLink
+      >
+    </PageHeader>
     <div v-if="notice" class="alert alert-success" role="status">
       {{ notice
       }}<button class="btn-close float-end" aria-label="Dismiss notification" @click="notice = ''" />
@@ -294,61 +270,11 @@ watch(
       <button v-if="!saving" class="btn-outline-warm" @click="load(page)">Reload</button>
     </div>
     <template v-if="mode === 'list'">
-      <div class="row g-3 mb-4" aria-label="Maintenance status summary">
-        <div class="col-sm-6 col-xl-3">
-          <article class="card-shell maintenance-metric">
-            <span class="maintenance-metric-icon icon-due"
-              ><i class="bi bi-calendar-event" aria-hidden="true"
-            /></span>
-            <h3>Due this week</h3>
-            <strong class="numeric">{{ dashboard?.due_this_week ?? '—' }}</strong>
-            <p class="metric-due">{{ dashboard?.overdue ?? 0 }} services overdue</p>
-          </article>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-          <article class="card-shell maintenance-metric">
-            <span class="maintenance-metric-icon icon-due"
-              ><i class="bi bi-wrench-adjustable" aria-hidden="true"
-            /></span>
-            <h3>In workshop</h3>
-            <strong class="numeric">{{ dashboard?.in_workshop ?? '—' }}</strong>
-            <p class="metric-workshop">Vehicles unavailable</p>
-          </article>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-          <article class="card-shell maintenance-metric">
-            <span class="maintenance-metric-icon icon-due"
-              ><i class="bi bi-calendar2-minus-fill" aria-hidden="true"
-            /></span>
-            <h3>Completed this month</h3>
-            <strong class="numeric">{{ dashboard?.completed_this_month ?? '—' }}</strong>
-            <p class="metric-completed">
-              {{ completionChange >= 0 ? '↑' : '↓' }} {{ Math.abs(completionChange) }} vs
-              {{ dashboard?.previous_month_label || 'previous month' }}
-            </p>
-          </article>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-          <article class="card-shell maintenance-metric">
-            <span class="maintenance-metric-icon icon-due"><i class="bi bi-cash" aria-hidden="true" /></span>
-            <h3>Maintenance spend</h3>
-            <strong class="numeric" :title="spend.length === 1 ? spend[0]?.total : undefined">{{
-              spendValue
-              }}</strong>
-            <p class="metric-spend" v-if="spend.length <= 1">
-              {{ spend[0]?.currency || 'No spend' }} ·
-              {{ dashboard?.month_label || 'This month' }} to date
-            </p>
-            <p class="metric-spend" v-else>
-              {{
-                spend
-                  .map((item) => `${item.currency} ${Number(item.total).toLocaleString()}`)
-                  .join(' · ')
-              }}
-            </p>
-          </article>
-        </div>
-      </div>
+      <StatusSummary
+        :items="maintenanceMetrics(dashboard)"
+        :loading="loading"
+        label="Maintenance status summary"
+      />
       <section class="card-shell p-4 mb-4" aria-label="Search and filters">
         <form class="row g-3" @submit.prevent="apply">
           <div v-for="filter in config.filters" :key="filter.key" class="col-sm-6 col-lg-3">
@@ -584,86 +510,6 @@ watch(
 .numeric,
 .table {
   font-variant-numeric: tabular-nums;
-}
-
-.maintenance-metric {
-  position: relative;
-  min-height: 124px;
-  height: 100%;
-  padding: 18px;
-  border-radius: 14px;
-  box-shadow: 0 1px 2px var(--gss-shadow-tint-subtle);
-}
-
-.maintenance-metric h3 {
-  margin: 0 40px 12px 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.maintenance-metric strong {
-  display: block;
-  color: var(--ink);
-  font-size: 1.85rem;
-  line-height: 1.1;
-}
-
-.maintenance-metric p {
-  margin: 10px 0 0;
-  font-size: 0.7rem;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
-.maintenance-metric-icon {
-  position: absolute;
-  top: 17px;
-  right: 17px;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  font-size: 1rem;
-}
-
-.icon-due {
-  color: var(--cocoa);
-  background: #fff4e5;
-}
-
-
-/* .icon-workshop {
-  color: #6849b3;
-  background: #eee8fa;
-}
-
-.icon-completed {
-  color: #0c7850;
-  background: #ddf4e9;
-}
-
-.icon-spend {
-  color: #265b9d;
-  background: #e6effb;
-} */
-
-.metric-due {
-  color: #a75a00;
-}
-
-.metric-workshop {
-  color: #6849b3;
-}
-
-.metric-completed {
-  color: #0c7850;
-}
-
-.metric-spend {
-  color: #265b9d;
 }
 
 .resource-workspace h2 {

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import { driversMetrics, type OverviewSummary } from './overview'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -13,7 +16,7 @@ const route = useRoute(),
   router = useRouter()
 const rows = ref<ResourceRow[]>([]),
   record = ref<ResourceRow | null>(null),
-  metrics = ref<Record<string, number | string>>({})
+  summary = ref<OverviewSummary | null>(null)
 const total = ref(0),
   page = ref(1),
   loading = ref(false),
@@ -72,7 +75,7 @@ async function load(next = 1) {
   errors.value = {}
   record.value = null
   rows.value = []
-  metrics.value = {}
+  summary.value = null
   try {
     if (config.key === 'drivers') {
       const response = await api.get(`${config.endpoint}/options`, { params: params.value })
@@ -81,7 +84,7 @@ async function load(next = 1) {
     }
     if (mode.value === 'list') {
       const query = { ...params.value, ...filters, page: next, per_page: 10 }
-      const [list, summary] = await Promise.all([
+      const [list, stats] = await Promise.all([
         api.get(config.endpoint, { params: query }),
         api.get(`${config.endpoint}/summary`, { params: query }),
       ])
@@ -101,15 +104,7 @@ async function load(next = 1) {
           label: `${v.plate_no} · ${v.model_name} (${v.resource_type})`,
         }))
       }
-      for (const [key, value] of Object.entries(summary.data.data)) {
-        if (typeof value === 'number' || typeof value === 'string') metrics.value[key] = value
-        else if (key === 'actual_costs' && Array.isArray(value))
-          for (const item of value)
-            metrics.value[`Actual cost (${item.currency})`] = Number(item.total).toLocaleString(
-              undefined,
-              { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-            )
-      }
+      summary.value = stats.data.data
     } else {
       let value: ResourceRow | null = null
       if (mode.value !== 'create')
@@ -240,26 +235,21 @@ watch(
 
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <header class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i :class="`bi ${config.icon}`" aria-hidden="true" /></span>
-        <div>
-          <h2 class="h4 mb-1">
-            {{
-              mode === 'list'
-                ? config.title
-                : `${mode === 'create' ? 'Add' : mode === 'edit' ? 'Edit' : ''} ${config.singular}`
-            }}
-          </h2>
-          <p>{{ config.description }}</p>
-        </div>
-      </div>
+    <PageHeader
+      :title="
+        mode === 'list'
+          ? config.title
+          : `${mode === 'create' ? 'Add' : mode === 'edit' ? 'Edit' : ''} ${config.singular}`
+      "
+      :description="config.description"
+      :icon="config.icon"
+    >
       <RouterLink
         :to="link(mode === 'list' ? `${config.path}/create` : config.path)"
         class="btn-gold"
         >{{ mode === 'list' ? `+ Add ${config.singular}` : `All ${config.title}` }}</RouterLink
       >
-    </header>
+    </PageHeader>
     <div v-if="notice" class="alert alert-success" role="status">
       {{ notice
       }}<button
@@ -292,14 +282,11 @@ watch(
       <button v-if="!saving" class="btn-outline-warm" @click="load(page)">Reload</button>
     </div>
     <template v-if="mode === 'list'">
-      <div class="row g-3 mb-4">
-        <div v-for="(value, key) in metrics" :key="key" class="col-sm-6 col-xl-3">
-          <div class="card-shell p-4">
-            <span class="text-muted metric-label">{{ String(key).replaceAll('_', ' ') }}</span>
-            <div class="fs-3 fw-bold numeric">{{ value }}</div>
-          </div>
-        </div>
-      </div>
+      <StatusSummary
+        :items="driversMetrics(summary)"
+        :loading="loading"
+        label="drivers status summary"
+      />
       <section class="card-shell p-4 mb-4" aria-label="Search and filters">
         <form class="row g-3" @submit.prevent="apply">
           <div v-for="filter in config.filters" :key="filter.key" class="col-sm-6 col-lg-3">
@@ -631,9 +618,6 @@ watch(
 .numeric,
 .table {
   font-variant-numeric: tabular-nums;
-}
-.metric-label {
-  text-transform: capitalize;
 }
 .resource-workspace h2 {
   text-wrap: balance;

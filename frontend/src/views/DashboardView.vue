@@ -1,21 +1,33 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-const metrics = [
-  { label: 'Total Bookings', hint: 'All trip records in the system' },
-  { label: 'Available Cars', hint: 'Ready for assignment' },
-  { label: 'Available Drivers', hint: 'Ready for assignment' },
-  { label: 'Ongoing', hint: 'Confirmed bookings not yet ended' },
-  { label: 'Monthly Contracts', hint: 'Expiring soon' },
-]
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import api from '@/services/api'
+import { getApiErrorMessage } from '@/services/apiErrors'
+import { dashboardMetrics, type DashboardSummary } from '@/modules/dashboard/overview'
+const summary = ref<DashboardSummary | null>(null)
+const loading = ref(false)
+const error = ref('')
+async function load() {
+  loading.value = true
+  summary.value = null
+  error.value = ''
+  try {
+    summary.value = (await api.get<{ data: DashboardSummary }>('/api/dashboard')).data.data
+  } catch (cause) {
+    error.value = getApiErrorMessage(cause)
+  } finally {
+    loading.value = false
+  }
+}
+onMounted(load)
 </script>
 <template>
-  <section class="overview-grid" aria-label="Fleet overview">
-    <div v-for="metric in metrics" :key="metric.label" class="card-shell metric">
-      <div class="metric-label">{{ metric.label }}</div>
-      <div class="metric-value" aria-label="Data not connected">—</div>
-      <small>{{ metric.hint }}</small>
-    </div>
-  </section>
+  <div v-if="error" class="alert alert-danger" role="alert">
+    {{ error }} <button class="btn-outline-warm" @click="load">Retry</button>
+  </div>
+  <StatusSummary :items="dashboardMetrics(summary)" :loading="loading" label="Fleet overview" />
   <section class="card-shell section-card">
     <div class="section-head">
       <div>
@@ -38,12 +50,30 @@ const metrics = [
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <tr v-for="booking in summary?.recent_bookings || []" :key="booking.id">
+            <td>
+              <RouterLink :to="`/daily-bookings/${booking.id}`">{{
+                booking.guest_company_name
+              }}</RouterLink>
+            </td>
+            <td>
+              {{ booking.car?.plate_no || booking.custom_car_name || '—'
+              }}<span v-if="booking.secondary_car"> / {{ booking.secondary_car.plate_no }}</span>
+            </td>
+            <td>{{ booking.driver?.full_name || booking.custom_driver_name || '—' }}</td>
+            <td>{{ booking.start_date }} – {{ booking.end_date }}</td>
+            <td><BaseStatusBadge :status="booking.status" /></td>
+          </tr>
+          <tr v-if="!summary?.recent_bookings.length">
             <td colspan="5">
               <div class="empty-state">
-                <i class="bi bi-calendar2-week" aria-hidden="true"></i>
-                <div class="fw-bold mt-2">Bookings data not connected yet</div>
-                <p class="mb-0">The dashboard is ready for the Laravel bookings API.</p>
+                {{
+                  loading
+                    ? 'Loading recent bookings…'
+                    : error
+                      ? 'Recent bookings unavailable.'
+                      : 'No bookings recorded yet.'
+                }}
               </div>
             </td>
           </tr>

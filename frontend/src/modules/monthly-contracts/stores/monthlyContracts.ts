@@ -1,11 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { monthlyContractApi } from '../api'
-import type { ContractOptions, ContractPage, MonthlyContract } from '../types'
-interface ContractSummary {
-  total: number
-  statuses: Record<string, number>
-}
+import type { ContractOptions, ContractSummary, MonthlyContract } from '../types'
 export const useMonthlyContractsStore = defineStore('monthlyContracts', () => {
   const rows = ref<MonthlyContract[]>([]),
     options = ref<ContractOptions | null>(null),
@@ -18,6 +14,7 @@ export const useMonthlyContractsStore = defineStore('monthlyContracts', () => {
   async function load(params: Record<string, string | number | undefined> = {}) {
     loading.value = true
     error.value = ''
+    summary.value = null
     try {
       const [result, stats] = await Promise.all([
         monthlyContractApi.list(params),

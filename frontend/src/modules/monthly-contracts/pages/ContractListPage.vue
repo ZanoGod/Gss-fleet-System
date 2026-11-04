@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import { contractMetrics, contractHeader } from '../overview'
 import { onMounted, reactive, ref, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { monthlyContractApi } from '../api'
@@ -106,14 +109,7 @@ onMounted(async () => {
     <p>Total contracts: {{ printRows.length }}</p>
   </main>
   <main v-else class="fleet-module page-content contract-report">
-    <div class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i class="bi bi-calendar3" aria-hidden="true" /></span>
-        <div>
-          <h2>Contract overview</h2>
-          <p>Track agreements, rental periods and upcoming renewals.</p>
-        </div>
-      </div>
+    <PageHeader v-bind="contractHeader">
       <div class="d-flex flex-wrap gap-2 report-actions">
         <button class="btn btn-outline-secondary" @click="printReport">
           <i class="bi bi-file-earmark-pdf me-1" /> Print / Save PDF</button
@@ -123,30 +119,13 @@ onMounted(async () => {
           ><i class="bi bi-plus-lg me-1" /> New contract</RouterLink
         >
       </div>
-    </div>
+    </PageHeader>
     <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-if="summary" class="row g-3 mb-4">
-      <div class="col-6 col-xl-2">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <span class="small text-muted">Total</span>
-            <div class="fs-4 fw-semibold">{{ summary.total }}</div>
-          </div>
-        </div>
-      </div>
-      <div
-        v-for="s in ['Draft', 'Active', 'Expired', 'Renewed', 'Cancelled']"
-        :key="s"
-        class="col-6 col-xl-2"
-      >
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <span class="small text-muted">{{ s }}</span>
-            <div class="fs-4 fw-semibold">{{ summary.statuses[s] || 0 }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <StatusSummary
+      :items="contractMetrics(summary)"
+      :loading="loading"
+      label="contract status summary"
+    />
     <section class="card shadow-sm">
       <div class="card-header bg-white report-actions">
         <form class="row g-2" @submit.prevent="load()">

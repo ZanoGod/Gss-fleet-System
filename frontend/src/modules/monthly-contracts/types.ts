@@ -111,3 +111,7 @@ export interface ContractPage {
   last_page: number
   total: number
 }
+export interface ContractSummary {
+  total: number
+  statuses: Record<string, number>
+}

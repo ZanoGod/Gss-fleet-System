@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import { insuranceMetrics, insuranceHeader } from '../overview'
 import { onMounted, ref } from 'vue'
 import { useInsuranceStore } from '../stores/insurance'
 import { insuranceApi } from '../api'
@@ -92,6 +95,10 @@ async function deleteProvider(id: number, name: string, count: number) {
     error.value = providerErrorMessage(e, 'Unable to delete provider.')
   }
 }
+function newClaim() {
+  claim.value.policy_id = store.policies[0]?.id || 0
+  claimModal.value = true
+}
 async function createClaim() {
   try {
     await insuranceApi.createClaim(claim.value)
@@ -106,14 +113,7 @@ onMounted(load)
 </script>
 <template>
   <main class="fleet-module page-content">
-    <div class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i class="bi bi-shield-check" aria-hidden="true" /></span>
-        <div>
-          <h2>Fleet coverage</h2>
-          <p>Keep policies, claims and insurance providers in one place.</p>
-        </div>
-      </div>
+    <PageHeader v-bind="insuranceHeader">
       <div class="d-flex gap-2">
         <button class="btn btn-outline-primary" @click="newProvider">
           <i class="bi bi-building-add me-1" /> Add provider</button
@@ -121,47 +121,18 @@ onMounted(load)
           ><i class="bi bi-plus-lg me-1" /> New policy</RouterLink
         >
       </div>
-    </div>
+    </PageHeader>
     <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
     <div v-if="success" class="alert alert-success" role="status">
       {{ success }}<button class="btn-close float-end" aria-label="Dismiss" @click="success = ''" />
     </div>
     <div v-if="store.loading" class="alert alert-light border">Loading insurance recordsâ€¦</div>
-    <template v-else-if="store.dashboard">
-      <div class="row g-3 mb-4">
-        <div
-          v-for="item in [
-            {
-              label: 'Total policies',
-              value: store.dashboard.total_policies,
-              icon: 'bi-shield-check',
-            },
-            { label: 'Active', value: store.dashboard.active_policies, icon: 'bi-check-circle' },
-            {
-              label: 'Expiring soon',
-              value: store.dashboard.expiring_soon_policies,
-              icon: 'bi-alarm',
-            },
-            {
-              label: 'Open claims',
-              value: store.dashboard.claims.open,
-              icon: 'bi-clipboard2-pulse',
-            },
-          ]"
-          :key="item.label"
-          class="col-6 col-xl-3"
-        >
-          <div class="card h-100 shadow-sm">
-            <div class="card-body d-flex align-items-center justify-content-between">
-              <div>
-                <div class="text-muted small">{{ item.label }}</div>
-                <div class="fs-3 fw-semibold">{{ item.value }}</div>
-              </div>
-              <i class="bi fs-2 text-primary" :class="item.icon" />
-            </div>
-          </div>
-        </div>
-      </div>
+    <StatusSummary
+      :items="insuranceMetrics(store.dashboard)"
+      :loading="store.loading"
+      label="Insurance status summary"
+    />
+    <template v-if="!store.loading && store.dashboard">
       <div class="fleet-tabs d-flex gap-2 mb-3">
         <button
           v-for="tab in [
@@ -259,7 +230,8 @@ onMounted(load)
           <button
             class="btn btn-sm btn-primary"
             :disabled="!store.policies.length"
-            @click="claim.policy_id = store.policies[0]?.id || 0; claimModal = true">
+            @click="newClaim"
+          >
             New claim
           </button>
         </div>
@@ -337,7 +309,9 @@ onMounted(load)
         <div v-else class="p-4 text-center text-muted">No providers yet.</div>
       </section>
     </template>
-    <div v-else class="alert alert-light border">Insurance dashboard is not available.</div>
+    <div v-else-if="!store.loading" class="alert alert-light border">
+      Insurance dashboard is not available.
+    </div>
     <BaseModal
       :open="providerModal"
       :title="providerId ? 'Insurance provider details' : 'Add insurance provider'"

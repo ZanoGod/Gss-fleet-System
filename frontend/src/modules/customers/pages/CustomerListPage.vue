@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import { customersMetrics, customerHeader } from '../overview'
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import BaseEmptyState from '@/components/common/BaseEmptyState.vue'
@@ -31,7 +34,8 @@ const rows = ref<Customer[]>([]),
   summary = ref<CustomerSummary | null>(null),
   loading = ref(false),
   error = ref(''),
-  summaryError = ref('')
+  summaryError = ref(''),
+  summaryLoading = ref(false)
 const page = ref(1),
   total = ref(0),
   selected = ref<number | null>(null),
@@ -47,15 +51,6 @@ const success = ref(
       deleted: 'Customer deleted successfully.',
     } as Record<string, string>
   )[textQuery('notice')] || '',
-)
-const metrics = computed(() =>
-  summary.value
-    ? [
-        { label: 'Total Customers', value: summary.value.total },
-        { label: 'Active Customers', value: summary.value.active },
-        { label: 'With Contracts', value: summary.value.with_contracts },
-      ]
-    : [],
 )
 let request = 0,
   summaryRequest = 0
@@ -90,11 +85,15 @@ async function load(next = 1) {
 async function loadSummary() {
   const version = ++summaryRequest
   summaryError.value = ''
+  summary.value = null
+  summaryLoading.value = true
   try {
     const value = await customerApi.summary()
     if (version === summaryRequest) summary.value = value
   } catch (cause) {
     if (version === summaryRequest) summaryError.value = customerError(cause)
+  } finally {
+    if (version === summaryRequest) summaryLoading.value = false
   }
 }
 async function apply() {
@@ -137,16 +136,9 @@ onMounted(() => {
 </script>
 <template>
   <main class="fleet-module page-content">
-    <header class="page-heading">
-      <div class="fleet-intro">
-        <span class="fleet-intro-icon"><i class="bi bi-people" aria-hidden="true" /></span>
-        <div>
-          <h2>Customer directory</h2>
-          <p>Customer profiles and their monthly contract assignments.</p>
-        </div>
-      </div>
+    <PageHeader v-bind="customerHeader">
       <RouterLink to="/customers/create" class="btn-gold">+ Add Customer</RouterLink>
-    </header>
+    </PageHeader>
     <div v-if="success" class="alert alert-success" role="status">
       {{ success
       }}<button
@@ -159,14 +151,11 @@ onMounted(() => {
       Summary: {{ summaryError }}
       <button class="btn-outline-warm" @click="loadSummary">Retry</button>
     </div>
-    <div class="row g-3 mb-4">
-      <div v-for="metric in metrics" :key="metric.label" class="col-md-4">
-        <div class="card-shell p-4">
-          <span class="text-muted">{{ metric.label }}</span>
-          <div class="fs-3 fw-bold mt-2">{{ metric.value }}</div>
-        </div>
-      </div>
-    </div>
+    <StatusSummary
+      :items="customersMetrics(summary)"
+      :loading="summaryLoading"
+      label="customer status summary"
+    />
     <section class="card-shell p-4 mb-4" aria-label="Customer filters">
       <form class="row g-3" @submit.prevent="apply">
         <div class="col-lg-4">

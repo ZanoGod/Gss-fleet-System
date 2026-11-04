@@ -12,6 +12,7 @@ export const useInsuranceStore = defineStore('insurance', () => {
   async function load(params: Record<string, string | number | undefined> = {}) {
     loading.value = true
     error.value = ''
+    dashboard.value = null
     try {
       const [stats, rows, providerRows] = await Promise.all([
         insuranceApi.dashboard(),

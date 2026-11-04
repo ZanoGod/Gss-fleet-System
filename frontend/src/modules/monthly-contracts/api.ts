@@ -1,6 +1,6 @@
 import api from '@/services/api'
 import type { AxiosResponse } from 'axios'
-import type { ContractInput, ContractOptions, ContractPage, MonthlyContract } from './types'
+import type { ContractInput, ContractOptions, ContractPage, ContractSummary, MonthlyContract } from './types'
 const unwrap = <T>(r: AxiosResponse<{ data: T }>): T => r.data.data
 export const monthlyContractApi = {
   async list(params: Record<string, string | number | undefined> = {}) {
@@ -14,10 +14,7 @@ export const monthlyContractApi = {
   },
   async summary(params: Record<string, string | undefined> = {}) {
     return unwrap(
-      await api.get<{ data: { total: number; statuses: Record<string, number> } }>(
-        '/api/monthly-contracts/summary',
-        { params },
-      ),
+      await api.get<{ data: ContractSummary }>('/api/monthly-contracts/summary', { params }),
     )
   },
   async save(input: ContractInput, id?: number) {
