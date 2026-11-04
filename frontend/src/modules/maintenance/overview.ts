@@ -21,7 +21,6 @@ export function maintenanceMetrics(summary: MaintenanceDashboard | null): Status
       value: summary?.due_this_week,
       icon: 'bi-calendar-event',
       tone: 'warning',
-      description: `${summary?.overdue ?? 0} services overdue (included)`,
     },
     {
       key: 'workshop',
@@ -29,7 +28,6 @@ export function maintenanceMetrics(summary: MaintenanceDashboard | null): Status
       value: summary?.in_workshop,
       icon: 'bi-wrench-adjustable',
       tone: 'danger',
-      description: 'Maintenance jobs in progress; vehicles unavailable',
     },
     {
       key: 'completed',
@@ -37,7 +35,6 @@ export function maintenanceMetrics(summary: MaintenanceDashboard | null): Status
       value: summary?.completed_this_month,
       icon: 'bi-calendar2-check',
       tone: 'success',
-      description: `${change >= 0 ? '↑' : '↓'} ${Math.abs(change)} vs ${summary?.previous_month_label ?? 'previous month'}`,
     },
     {
       key: 'spend',
@@ -55,7 +52,6 @@ export function maintenanceMetrics(summary: MaintenanceDashboard | null): Status
               )
               .join(' · ')
           : 0,
-      description: `${summary?.month_label ?? 'This month'} to date`,
     },
   ]
 }

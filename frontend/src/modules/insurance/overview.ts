@@ -15,7 +15,6 @@ export function insuranceMetrics(summary: InsuranceDashboard | null): StatusMetr
       value: summary?.total_policies,
       icon: 'bi-shield-check',
       tone: 'info',
-      description: 'All recorded insurance policies',
     },
     {
       key: 'active',
@@ -23,7 +22,6 @@ export function insuranceMetrics(summary: InsuranceDashboard | null): StatusMetr
       value: summary?.active_policies,
       icon: 'bi-check-circle',
       tone: 'success',
-      description: 'Policies currently providing coverage',
     },
     {
       key: 'expiring',
@@ -31,7 +29,6 @@ export function insuranceMetrics(summary: InsuranceDashboard | null): StatusMetr
       value: summary?.expiring_soon_policies,
       icon: 'bi-alarm',
       tone: 'warning',
-      description: 'Coverage within the configured renewal window',
     },
     {
       key: 'claims',
@@ -39,7 +36,6 @@ export function insuranceMetrics(summary: InsuranceDashboard | null): StatusMetr
       value: summary?.claims.open,
       icon: 'bi-clipboard2-pulse',
       tone: 'danger',
-      description: 'Submitted claims and claims under review',
     },
   ]
 }

@@ -22,7 +22,6 @@ export function contractMetrics(summary: ContractSummary | null): StatusMetric[]
       value: summary?.total,
       icon: 'bi-file-earmark-text',
       tone: 'info',
-      description: 'All contracts in the selected date range',
     },
     ...statuses.map(({ key, icon, tone }) => ({
       key,

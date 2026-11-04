@@ -15,7 +15,6 @@ export function driversMetrics(summary: OverviewSummary | null): StatusMetric[] 
       label: 'Total Drivers',
       icon: 'bi-person-vcard',
       tone: 'info',
-      description: 'All drivers in the selected daily or monthly pool',
       value: summary?.total,
     },
     {
@@ -23,7 +22,6 @@ export function driversMetrics(summary: OverviewSummary | null): StatusMetric[] 
       label: 'Available',
       icon: 'bi-person-check',
       tone: 'success',
-      description: 'Stored as available; date availability is checked on assignment',
       value: summary?.available,
     },
     {
@@ -31,7 +29,6 @@ export function driversMetrics(summary: OverviewSummary | null): StatusMetric[] 
       label: 'Assigned / On Trip',
       icon: 'bi-calendar-check',
       tone: 'info',
-      description: 'Assigned and legacy On Trip stored statuses',
       value: summary?.assigned,
     },
     {
@@ -39,7 +36,6 @@ export function driversMetrics(summary: OverviewSummary | null): StatusMetric[] 
       label: 'On Leave',
       icon: 'bi-calendar-x',
       tone: 'warning',
-      description: 'Drivers with Leave stored status',
       value: summary?.leave,
     },
     {
@@ -47,7 +43,6 @@ export function driversMetrics(summary: OverviewSummary | null): StatusMetric[] 
       label: 'Inactive',
       icon: 'bi-person-dash',
       tone: 'danger',
-      description: 'Drivers with Inactive stored status',
       value: summary?.inactive,
     },
   ]

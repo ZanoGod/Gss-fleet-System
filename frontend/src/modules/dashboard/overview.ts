@@ -18,7 +18,6 @@ export function dashboardMetrics(summary: DashboardSummary | null): StatusMetric
       value: summary?.total_bookings,
       icon: 'bi-calendar2-week',
       tone: 'info',
-      description: 'All daily booking records',
     },
     {
       key: 'cars',
@@ -26,7 +25,6 @@ export function dashboardMetrics(summary: DashboardSummary | null): StatusMetric
       value: summary?.available_cars,
       icon: 'bi-car-front',
       tone: 'success',
-      description: 'Daily cars free today, excluding reservations and workshop jobs',
     },
     {
       key: 'drivers',
@@ -34,7 +32,6 @@ export function dashboardMetrics(summary: DashboardSummary | null): StatusMetric
       value: summary?.available_drivers,
       icon: 'bi-person-check',
       tone: 'success',
-      description: 'Daily drivers available with no reservation today',
     },
     {
       key: 'ongoing',
@@ -42,7 +39,6 @@ export function dashboardMetrics(summary: DashboardSummary | null): StatusMetric
       value: summary?.ongoing_bookings,
       icon: 'bi-arrow-repeat',
       tone: 'info',
-      description: 'Confirmed daily bookings covering today',
     },
     {
       key: 'contracts',
@@ -50,7 +46,6 @@ export function dashboardMetrics(summary: DashboardSummary | null): StatusMetric
       value: summary?.expiring_contracts,
       icon: 'bi-calendar-event',
       tone: 'warning',
-      description: 'Current active contracts expiring within 30 days',
     },
   ]
 }
