@@ -1,20 +1,38 @@
 <script setup lang="ts">
-import StatusCard from '@/components/common/StatusCard.vue'
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-const metrics = [
-  { label: 'Total Bookings', hint: 'All trip records in the system' },
-  { label: 'Available Cars', hint: 'Ready for assignment' },
-  { label: 'Available Drivers', hint: 'Ready for assignment' },
-  { label: 'Ongoing', hint: 'Confirmed bookings not yet ended' },
-  { label: 'Monthly Contracts', hint: 'Expiring soon' },
-]
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import api from '@/services/api'
+import { getApiErrorMessage } from '@/services/apiErrors'
+import { toast } from '@/services/toast'
+import { dashboardMetrics, type DashboardSummary } from '@/modules/dashboard/overview'
+const summary = ref<DashboardSummary | null>(null)
+const loading = ref(true)
+const initial = ref(true)
+const error = ref('')
+async function load() {
+  loading.value = true
+  try {
+    summary.value = (await api.get<{ data: DashboardSummary }>('/api/dashboard')).data.data
+    error.value = ''
+  } catch (cause) {
+    error.value = getApiErrorMessage(cause)
+    toast.error(error.value)
+  } finally {
+    loading.value = false
+    initial.value = false
+  }
+}
+onMounted(load)
 </script>
 <template>
-  <section class="row g-3 mb-4 status-card-grid" aria-label="Fleet overview">
-    <div v-for="metric in metrics" :key="metric.label" class="col-12 col-md-6 col-xl-3">
-      <StatusCard :label="metric.label" icon="bi-bar-chart" />
-    </div>
-  </section>
+  <button v-if="error" class="btn-outline-warm mb-3" :disabled="loading" @click="load">
+    <BaseLoading v-if="loading" label="Retrying…" /><template v-else>Retry dashboard</template>
+  </button>
+  <StatusSummary :items="dashboardMetrics(summary)" :loading="initial" label="Fleet overview" />
   <section class="card-shell section-card">
     <div class="section-head">
       <div>
@@ -25,7 +43,8 @@ const metrics = [
         >View All <i class="bi bi-arrow-right ms-2"></i
       ></RouterLink>
     </div>
-    <div class="table-responsive">
+    <PageSkeleton v-if="initial" label="Loading recent bookings" />
+    <div v-else class="table-responsive">
       <table class="table data-table">
         <thead>
           <tr>
@@ -37,12 +56,24 @@ const metrics = [
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <tr v-for="booking in summary?.recent_bookings || []" :key="booking.id">
+            <td>
+              <RouterLink :to="`/daily-bookings/${booking.id}`">{{
+                booking.guest_company_name
+              }}</RouterLink>
+            </td>
+            <td>
+              {{ booking.car?.plate_no || booking.custom_car_name || '—'
+              }}<span v-if="booking.secondary_car"> / {{ booking.secondary_car.plate_no }}</span>
+            </td>
+            <td>{{ booking.driver?.full_name || booking.custom_driver_name || '—' }}</td>
+            <td>{{ booking.start_date }} – {{ booking.end_date }}</td>
+            <td><BaseStatusBadge :status="booking.status" /></td>
+          </tr>
+          <tr v-if="!summary?.recent_bookings.length">
             <td colspan="5">
               <div class="empty-state">
-                <i class="bi bi-calendar2-week" aria-hidden="true"></i>
-                <div class="fw-bold mt-2">Bookings data not connected yet</div>
-                <p class="mb-0">The dashboard is ready for the Laravel bookings API.</p>
+                {{ error ? 'Recent bookings unavailable.' : 'No bookings recorded yet.' }}
               </div>
             </td>
           </tr>

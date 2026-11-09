@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -61,6 +63,54 @@ class AuthenticationTest extends TestCase
         $this->postJson('/login', [], ['X-CSRF-TOKEN' => $token])->assertUnprocessable()->assertJsonValidationErrors(['login', 'password']);
         $this->postJson('/login', ['login' => 'nobody', 'password' => 'wrong'], ['X-CSRF-TOKEN' => $token])->assertUnprocessable()->assertJsonPath('code', 'VALIDATION_ERROR')->assertJsonPath('errors.login.0', 'Incorrect username or password.');
         $this->getJson('/api/user')->assertUnauthorized();
+    }
+
+    public function test_login_accepts_username_and_email(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'fleet-login',
+            'email' => 'fleet-login@example.test',
+            'password' => Hash::make('test-password'),
+        ]);
+
+        $usernameToken = $this->csrf();
+        $this->postJson('/login', ['login' => 'fleet-login', 'password' => 'test-password'], ['X-CSRF-TOKEN' => $usernameToken])
+            ->assertOk()
+            ->assertJsonPath('user.id', $user->id);
+
+        $this->postJson('/logout', [], ['X-CSRF-TOKEN' => session()->token()])->assertOk();
+
+        $emailToken = $this->csrf();
+        $this->postJson('/login', ['login' => 'fleet-login@example.test', 'password' => 'test-password'], ['X-CSRF-TOKEN' => $emailToken])
+            ->assertOk()
+            ->assertJsonPath('user.id', $user->id);
+    }
+
+    public function test_username_is_unique_in_the_database(): void
+    {
+        $this->assertTrue(Schema::hasIndex('users', ['username'], 'unique'));
+
+        User::factory()->create(['username' => 'unique-login']);
+
+        $this->expectException(QueryException::class);
+        User::factory()->create(['username' => 'unique-login']);
+    }
+
+    public function test_forward_migration_repairs_username_index_on_existing_installations(): void
+    {
+        Schema::table('users', function ($table): void {
+            $table->dropUnique('users_username_unique');
+        });
+
+        User::factory()->create(['username' => 'existing-login']);
+
+        $migration = require database_path('migrations/2026_11_09_000000_ensure_unique_username_index.php');
+        $migration->up();
+
+        $this->assertTrue(Schema::hasIndex('users', ['username'], 'unique'));
+
+        $this->expectException(QueryException::class);
+        User::factory()->create(['username' => 'existing-login']);
     }
 
     public function test_database_expiration_and_activity_renewal(): void

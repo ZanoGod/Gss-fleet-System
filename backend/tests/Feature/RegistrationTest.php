@@ -27,4 +27,30 @@ class RegistrationTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('password');
         $this->assertDatabaseCount('users', 0);
     }
+
+    public function test_registration_rejects_duplicate_username_and_email(): void
+    {
+        User::factory()->create([
+            'username' => 'fleet-user',
+            'email' => 'fleet@example.test',
+        ]);
+
+        $this->postJson('/register', [
+            'name' => 'Another Fleet User',
+            'username' => 'fleet-user',
+            'email' => 'another@example.test',
+            'password' => 'long-test-password',
+            'password_confirmation' => 'long-test-password',
+        ])->assertUnprocessable()->assertJsonValidationErrors('username');
+
+        $this->postJson('/register', [
+            'name' => 'Another Fleet User',
+            'username' => 'another-user',
+            'email' => 'fleet@example.test',
+            'password' => 'long-test-password',
+            'password_confirmation' => 'long-test-password',
+        ])->assertUnprocessable()->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseCount('users', 1);
+    }
 }

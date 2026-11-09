@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { insuranceApi } from '../api'
@@ -8,12 +10,12 @@ import type {
   InsuranceProvider,
   InsuranceVehicle,
 } from '../types'
+import { toast } from '@/services/toast'
 
 const props = defineProps<{ policyId?: number; renewalFromId?: number }>()
 const router = useRouter()
-const loading = ref(false),
+const loading = ref(true),
   saving = ref(false),
-  message = ref(''),
   error = ref('')
 const vehicles = ref<InsuranceVehicle[]>([]),
   providers = ref<InsuranceProvider[]>([])
@@ -83,26 +85,26 @@ onMounted(async () => {
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Unable to load policy form.'
+    toast.error(error.value)
   } finally {
     loading.value = false
   }
 })
 async function submit() {
+  if (saving.value) return
   saving.value = true
   errors.value = {}
   error.value = ''
-  message.value = ''
   try {
     const saved = props.renewalFromId
       ? await insuranceApi.renewPolicy(props.renewalFromId, fields)
       : await insuranceApi.savePolicy(fields, props.policyId)
-    message.value = props.renewalFromId
-      ? 'Policy renewed successfully.'
-      : 'Policy saved successfully.'
+    toast.success(props.renewalFromId ? 'Policy renewed successfully.' : props.policyId ? 'Policy updated successfully.' : 'Policy created successfully.')
     await router.push(`/insurance/${saved.id}`)
   } catch (e: any) {
     errors.value = e?.response?.data?.errors || {}
     error.value = e?.response?.data?.message || e?.message || 'Unable to save policy.'
+    toast.error(error.value)
   } finally {
     saving.value = false
   }
@@ -110,10 +112,8 @@ async function submit() {
 </script>
 
 <template>
-  <div v-if="loading" class="alert alert-light border">Loading policy information…</div>
+  <PageSkeleton v-if="loading" kind="form" label="Loading policy information…" />
   <div v-else>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-if="message" class="alert alert-success">{{ message }}</div>
     <form class="card shadow-sm" @submit.prevent="submit">
       <div class="card-body">
         <div v-if="renewalFromId" class="alert alert-info">
@@ -266,7 +266,7 @@ async function submit() {
       <div class="card-footer bg-white d-flex justify-content-end gap-2">
         <RouterLink class="btn btn-outline-secondary" to="/insurance">Cancel</RouterLink
         ><button class="btn btn-primary" :disabled="saving">
-          {{ saving ? 'Saving…' : 'Save policy' }}
+          <BaseLoading v-if="saving" label="Saving…" /><template v-else>Save policy</template>
         </button>
       </div>
     </form>

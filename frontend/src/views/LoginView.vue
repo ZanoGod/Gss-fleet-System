@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import BaseLoading from '@/components/common/BaseLoading.vue'
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { authError } from '@/services/auth'
 import { API_ERROR_MESSAGES } from '@/services/apiErrors'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from '@/services/toast'
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
@@ -22,7 +24,9 @@ const error = ref(
           ? API_ERROR_MESSAGES.offline
           : '',
 )
+if (error.value) toast.error(error.value)
 async function signIn() {
+  if (submitting.value) return
   error.value = ''
   submitting.value = true
   try {
@@ -30,6 +34,7 @@ async function signIn() {
     await router.replace('/dashboard')
   } catch (e) {
     error.value = authError(e)
+    toast.error(error.value)
   } finally {
     submitting.value = false
   }
@@ -43,7 +48,6 @@ async function signIn() {
         <h1>Fleet Management</h1>
         <p>Sign in to the admin panel</p>
       </div>
-      <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
       <form @submit.prevent="signIn">
         <div class="mb-4">
           <label for="username" class="field-label">Username or email</label>
@@ -86,13 +90,15 @@ async function signIn() {
             </button>
           </div>
         </div>
-        <button class="btn-gold login-submit" :disabled="submitting" type="submit">
-          <span
-            v-if="submitting"
-            class="spinner-border spinner-border-sm me-2"
-            aria-hidden="true"
-          ></span
-          >{{ submitting ? 'Signing in…' : 'Secure Login' }}
+        <button
+          class="btn-gold login-submit"
+          :disabled="submitting"
+          :aria-busy="submitting"
+          type="submit"
+        >
+          <BaseLoading v-if="submitting" label="Signing in…" /><template v-else
+            >Secure Login</template
+          >
         </button>
       </form>
       <p class="mt-3 text-center">

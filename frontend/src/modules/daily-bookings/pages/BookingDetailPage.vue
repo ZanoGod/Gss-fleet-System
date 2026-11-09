@@ -1,31 +1,42 @@
 <script setup lang="ts">
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { dailyBookingApi } from '../api'
 import type { DailyBooking } from '../types'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import { toast } from '@/services/toast'
 const route = useRoute(),
   router = useRouter(),
   booking = ref<DailyBooking | null>(null),
   loading = ref(true),
-  error = ref('')
+  error = ref(''),
+  deleting = ref(false)
 async function load() {
   loading.value = true
   try {
     booking.value = await dailyBookingApi.get(Number(route.params.id))
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to load booking.'
+    toast.error(error.value)
   } finally {
     loading.value = false
   }
 }
 async function remove() {
+  if (deleting.value) return
   if (!booking.value || !window.confirm('Delete this booking permanently?')) return
+  deleting.value = true
   try {
     await dailyBookingApi.remove(booking.value.id)
+    toast.success('Booking deleted successfully.')
     await router.push('/daily-bookings')
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to delete booking.'
+    toast.error(error.value)
+  } finally {
+    deleting.value = false
   }
 }
 onMounted(load)
@@ -36,12 +47,14 @@ onMounted(load)
       <div v-if="booking" class="d-flex gap-2">
         <RouterLink :to="`/daily-bookings/${booking.id}/edit`" class="btn btn-outline-primary"
           >Edit booking</RouterLink
-        ><button class="btn btn-outline-danger" @click="remove">Delete</button
+        ><button class="btn btn-outline-danger" :disabled="deleting" @click="remove">
+          <BaseLoading v-if="deleting" label="Deleting…" /><template v-else
+            >Delete</template
+          ></button
         ><RouterLink to="/daily-bookings" class="btn btn-outline-secondary">Back</RouterLink>
       </div>
     </div>
-    <div v-if="error" class="alert alert-danger">{{ error }}</div>
-    <div v-if="loading" class="alert alert-light border">Loading booking…</div>
+    <PageSkeleton v-if="loading" kind="detail" label="Loading booking…" />
     <section v-else-if="booking" class="card shadow-sm">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h2 class="h5 mb-0">Booking #{{ booking.id }} · {{ booking.guest_company_name }}</h2>

@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import StatusCard from '@/components/common/StatusCard.vue'
+import { usePendingAction } from '@/components/common/usePendingAction'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import { maintenanceMetrics, type MaintenanceDashboard } from './overview'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -9,49 +14,21 @@ import BasePagination from '@/components/common/BasePagination.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import type { ResourceRow } from '@/components/common/resourceTypes'
 import { maintenanceConfig } from './config'
+import { toast } from '@/services/toast'
 const config = maintenanceConfig
 const route = useRoute(),
   router = useRouter()
 const rows = ref<ResourceRow[]>([]),
   record = ref<ResourceRow | null>(null)
-interface MaintenanceDashboard {
-  due_this_week: number
-  overdue: number
-  in_workshop: number
-  completed_this_month: number
-  completed_previous_month: number
-  spend_this_month: { currency: string; total: string }[]
-  month_label: string
-  previous_month_label: string
-}
 const dashboard = ref<MaintenanceDashboard | null>(null)
-const spend = computed(() => dashboard.value?.spend_this_month || [])
-const spendValue = computed(() =>
-  spend.value.length === 1
-    ? Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(
-        Number(spend.value[0]?.total),
-      )
-    : spend.value.length > 1
-      ? '—'
-      : '0',
-)
-const completionChange = computed(() =>
-  dashboard.value
-    ? dashboard.value.completed_this_month - dashboard.value.completed_previous_month
-    : 0,
-)
 const total = ref(0),
   page = ref(1),
   loading = ref(false),
+  initial = ref(true),
   saving = ref(false),
-  error = ref(''),
-  notice = ref(
-    route.query.notice === 'saved'
-      ? `${config.singular} saved successfully.`
-      : route.query.notice === 'deleted'
-        ? `${config.singular} deleted.`
-        : '',
-  )
+  error = ref('')
+if (route.query.notice === 'saved') toast.success(`${config.singular} saved successfully.`)
+if (route.query.notice === 'deleted') toast.success(`${config.singular} deleted.`)
 const errors = ref<Record<string, string[]>>({}),
   form = reactive<Record<string, string | number>>({})
 const options = ref<{ value: string; label: string }[]>([])
@@ -91,14 +68,17 @@ const assignmentPath = computed(() =>
   scopedResource.value && scope.value === 'monthly' ? '/monthly-contracts' : '/daily-bookings',
 )
 let generation = 0
+const { pending, run } = usePendingAction()
 async function load(next = 1) {
   const version = ++generation
   loading.value = true
-  error.value = ''
+  if (!pending('reload')) error.value = ''
   errors.value = {}
-  record.value = null
-  rows.value = []
-  dashboard.value = null
+  if (initial.value) {
+    record.value = null
+    rows.value = []
+    dashboard.value = null
+  }
   try {
     if (config.key === 'drivers') {
       const response = await api.get(`${config.endpoint}/options`, { params: params.value })
@@ -153,10 +133,17 @@ async function load(next = 1) {
         }))
       }
     }
+    if (version === generation) error.value = ''
   } catch (cause) {
-    if (version === generation) error.value = getApiErrorMessage(cause)
+    if (version === generation) {
+      error.value = getApiErrorMessage(cause)
+      toast.error(error.value)
+    }
   } finally {
-    if (version === generation) loading.value = false
+    if (version === generation) {
+      loading.value = false
+      initial.value = false
+    }
   }
 }
 async function apply() {
@@ -212,10 +199,11 @@ async function save() {
       params: params.value,
       data: payload,
     })
-    notice.value = `${config.singular} saved successfully.`
-    await router.push({ path: config.path, query: { ...params.value, notice: 'saved' } })
+    toast.success(`${config.singular} saved successfully.`)
+    await router.push({ path: config.path, query: params.value })
   } catch (cause) {
     error.value = getApiErrorMessage(cause)
+    toast.error(error.value)
     if (axios.isAxiosError(cause)) {
       errors.value = cause.response?.data?.errors || cause.response?.data?.error?.errors || {}
       if (config.key === 'maintenance' && (errors.value.car_id || errors.value.monthly_car_id))
@@ -236,10 +224,12 @@ async function remove() {
   try {
     await api.delete(`${config.endpoint}/${route.params.id}`, { params: params.value })
     confirmDialog.value?.close()
-    await router.push({ path: config.path, query: { ...params.value, notice: 'deleted' } })
+    toast.success(`${config.singular} deleted.`)
+    await router.push({ path: config.path, query: params.value })
   } catch (cause) {
     confirmDialog.value?.close()
     error.value = getApiErrorMessage(cause)
+    toast.error(error.value)
   } finally {
     saving.value = false
   }
@@ -247,6 +237,7 @@ async function remove() {
 watch(
   () => [route.path, route.query.resource_type],
   () => {
+    initial.value = true
     for (const key of Object.keys(filters)) delete filters[key]
     for (const field of config.filters)
       filters[field.key] = String(route.query[field.key] || field.default || '')
@@ -258,21 +249,22 @@ watch(
 
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <header class="page-heading">
+    <PageHeader
+      class="d-flex flex-wrap justify-content-end"
+      :title="
+        mode === 'list'
+          ? config.title
+          : `${mode === 'create' ? 'Add' : mode === 'edit' ? 'Edit' : ''} ${config.singular}`
+      "
+      :description="config.description"
+      :icon="config.icon"
+    >
       <RouterLink
         :to="link(mode === 'list' ? `${config.path}/create` : config.path)"
-        class="btn-gold"
+        class="btn btn-primary"
         >{{ mode === 'list' ? `+ Add ${config.singular}` : `All ${config.title}` }}</RouterLink
       >
-    </header>
-    <div v-if="notice" class="alert alert-success" role="status">
-      {{ notice
-      }}<button
-        class="btn-close float-end"
-        aria-label="Dismiss notification"
-        @click="notice = ''"
-      />
-    </div>
+    </PageHeader>
     <nav
       v-if="scopedResource"
       class="fleet-tabs d-flex gap-2 mb-4"
@@ -292,69 +284,17 @@ watch(
         }}</RouterLink
       >
     </nav>
-    <div v-if="error" class="alert alert-danger" role="alert">
-      {{ error }}
-      <button v-if="!saving" class="btn-outline-warm" @click="load(page)">Reload</button>
-    </div>
+    <button v-if="error && !saving && (mode === 'list' || mode === 'detail')" class="btn-outline-warm mb-3" :disabled="pending('reload')" @click="run('reload', () => load(page))">
+      <BaseLoading v-if="pending('reload')" label="Reloading…" /><template v-else>Retry loading</template>
+    </button>
     <template v-if="mode === 'list'">
-      <div class="row g-3 mb-4 status-card-grid" aria-label="Maintenance status summary">
-        <div class="col-12 col-md-6 col-xl-3">
-          <StatusCard
-            label="Due this week"
-            :value="dashboard?.due_this_week"
-            icon="bi-calendar-event"
-            :loading="loading"
-            :description="dashboard ? `${dashboard.overdue} services overdue` : undefined"
-          />
-        </div>
-        <div class="col-12 col-md-6 col-xl-3">
-          <StatusCard
-            label="In workshop"
-            :value="dashboard?.in_workshop"
-            icon="bi-wrench-adjustable"
-            :loading="loading"
-            description="Vehicles unavailable"
-          />
-        </div>
-        <div class="col-12 col-md-6 col-xl-3">
-          <StatusCard
-            label="Completed this month"
-            :value="dashboard?.completed_this_month"
-            icon="bi-calendar-check"
-            :loading="loading"
-            :description="
-              dashboard &&
-              Number.isFinite(dashboard.completed_this_month) &&
-              Number.isFinite(dashboard.completed_previous_month)
-                ? completionChange === 0
-                  ? 'No change from previous month'
-                  : `${Math.abs(completionChange)} ${completionChange > 0 ? 'more' : 'fewer'} than ${dashboard.previous_month_label}`
-                : undefined
-            "
-          />
-        </div>
-        <div class="col-12 col-md-6 col-xl-3">
-          <StatusCard
-            label="Maintenance spend"
-            :value="dashboard ? spendValue : null"
-            icon="bi-cash"
-            :loading="loading"
-            :title="spend.length === 1 ? spend[0]?.total : undefined"
-          >
-            <template v-if="spend.length <= 1"
-              >{{ spend[0]?.currency || 'No spend' }} · {{ dashboard?.month_label }} to
-              date</template
-            >
-            <template v-else
-              ><span v-for="item in spend" :key="item.currency"
-                >{{ item.currency }} {{ Number(item.total).toLocaleString() }} ·
-              </span></template
-            >
-          </StatusCard>
-        </div>
-      </div>
+      <StatusSummary
+        :items="maintenanceMetrics(dashboard)"
+        :loading="initial"
+        label="Maintenance status summary"
+      />
       <section class="card-shell p-4 mb-4" aria-label="Search and filters">
-        <form class="row g-3" @submit.prevent="apply">
+        <form class="row g-3" @submit.prevent="run('filter', apply)">
           <div v-for="filter in config.filters" :key="filter.key" class="col-sm-6 col-lg-3">
             <label :for="`filter-${filter.key}`" class="form-label">{{ filter.label }}</label
             ><select
@@ -391,9 +331,17 @@ watch(
             />
           </div>
           <div class="col-12 d-flex flex-wrap align-items-center gap-2">
-            <button class="btn-gold" :disabled="loading">Filter</button
-            ><button type="button" class="btn-outline-warm" :disabled="loading" @click="reset">
-              Reset
+            <button class="btn btn-primary" :disabled="initial || pending('filter')">
+              <BaseLoading v-if="pending('filter')" label="Filtering…" /><template v-else
+                >Filter</template
+              ></button
+            ><button
+              type="button"
+              class="btn btn-outline-secondary"
+              :disabled="initial || pending('reset')"
+              @click="run('reset', reset)"
+            >
+              <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else>Reset</template>
             </button>
             <div
               v-if="config.key === 'drivers'"
@@ -402,42 +350,58 @@ watch(
             >
               <button
                 type="button"
-                class="btn-outline-warm"
+                class="btn btn-outline-secondary"
                 aria-label="Previous assignment month"
-                :disabled="loading"
-                @click="shiftMonth(-1)"
+                :disabled="initial || pending('previousMonth')"
+                @click="run('previousMonth', () => shiftMonth(-1))"
               >
-                ‹ Previous month
+                <BaseLoading v-if="pending('previousMonth')" label="Loading…" /><template v-else
+                  >‹ Previous month</template
+                >
               </button>
               <span class="numeric">{{ filters.month || 'Current month' }}</span>
               <button
                 type="button"
-                class="btn-outline-warm"
+                class="btn btn-outline-secondary"
                 aria-label="Next assignment month"
-                :disabled="loading"
-                @click="shiftMonth(1)"
+                :disabled="initial || pending('nextMonth')"
+                @click="run('nextMonth', () => shiftMonth(1))"
               >
-                Next month ›
+                <BaseLoading v-if="pending('nextMonth')" label="Loading…" /><template v-else
+                  >Next month ›</template
+                >
               </button>
               <button
                 type="button"
-                class="btn-outline-warm"
-                :disabled="loading"
-                @click="currentMonth"
+                class="btn btn-outline-secondary"
+                :disabled="initial || pending('currentMonth')"
+                @click="run('currentMonth', currentMonth)"
               >
-                Today
+                <BaseLoading v-if="pending('currentMonth')" label="Refreshing…" /><template
+                  v-else
+                  >Today</template
+                >
               </button>
             </div>
           </div>
         </form>
       </section>
-      <section class="card-shell" aria-label="Results" :aria-busy="loading">
+      <section class="card-shell" aria-label="Results">
         <div class="p-4">
           <h2 class="h5 mb-0">
             {{ config.title }} <span class="text-muted">({{ total }})</span>
           </h2>
         </div>
-        <p v-if="loading" class="p-4" role="status">Loading {{ config.title.toLowerCase() }}…</p>
+        <BaseLoading
+          v-if="loading && !initial"
+          class="d-block px-3 py-2"
+          :label="`Updating ${config.title.toLowerCase()}…`"
+        />
+        <PageSkeleton
+          v-if="initial"
+          :label="`Loading ${config.title.toLowerCase()}`"
+          :columns="config.columns.length + (scopedResource ? 2 : 1)"
+        />
         <div v-else-if="rows.length" class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <caption class="visually-hidden">
@@ -502,13 +466,17 @@ watch(
             :page="page"
             :per-page="10"
             :total="total"
-            :disabled="loading"
-            @update:page="load"
+            :pending-page="(target) => pending(`page:${target}`)"
+            @update:page="run(`page:${$event}`, () => load($event))"
           />
         </div>
       </section>
     </template>
-    <p v-else-if="loading" role="status">Loading…</p>
+    <PageSkeleton
+      v-else-if="initial"
+      :kind="mode === 'detail' ? 'detail' : 'form'"
+      :label="`Loading ${config.singular.toLowerCase()}`"
+    />
     <section v-else-if="mode === 'create' || record" class="card-shell p-4">
       <template v-if="mode === 'detail' && record">
         <h2 class="h5">Record details</h2>
@@ -599,7 +567,7 @@ watch(
       </template>
       <form v-else class="row g-3" @submit.prevent="save">
         <p class="text-muted mb-0">{{ config.formHelp }}</p>
-        <fieldset class="row g-3 border-0 m-0 p-0" :disabled="saving">
+        <fieldset class="row g-3 border-0 m-0 p-0">
           <div
             v-for="field in fields"
             :key="field.key"
@@ -657,8 +625,14 @@ watch(
             </div>
           </div>
           <div class="col-12">
-            <button class="btn-gold">{{ saving ? 'Saving…' : `Save ${config.singular}` }}</button>
-            <RouterLink :to="link(config.path)" class="btn-outline-warm ms-2">Cancel</RouterLink>
+            <button class="btn btn-primary" :disabled="saving">
+              <BaseLoading v-if="saving" label="Saving…" /><template v-else
+                >Save {{ config.singular }}</template
+              >
+            </button>
+            <RouterLink :to="link(config.path)" class="btn btn-outline-secondary ms-2"
+              >Cancel</RouterLink
+            >
           </div>
         </fieldset>
       </form>
@@ -674,12 +648,11 @@ watch(
         <button
           autofocus
           class="btn-outline-warm"
-          :disabled="saving"
           @click="confirmDialog?.close()"
         >
           Keep record</button
         ><button class="btn-gold" :disabled="saving" @click="remove">
-          {{ saving ? 'Deleting…' : 'Delete record' }}
+          <BaseLoading v-if="saving" label="Deleting…" /><template v-else>Delete record</template>
         </button>
       </div>
     </dialog>

@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import StatusCard from '@/components/common/StatusCard.vue'
+import { usePendingAction } from '@/components/common/usePendingAction'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import { contractMetrics, contractHeader } from '../overview'
 import { onMounted, reactive, ref, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { monthlyContractApi } from '../api'
@@ -7,6 +12,8 @@ import api from '@/services/api'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import { useMonthlyContractsStore } from '../stores/monthlyContracts'
 import type { MonthlyContract } from '../types'
+import { toast } from '@/services/toast'
+import BasePagination from '@/components/common/BasePagination.vue'
 const store = useMonthlyContractsStore(),
   { rows, loading, error, page, lastPage, total, summary, options } = storeToRefs(store),
   filters = reactive({
@@ -20,10 +27,14 @@ const store = useMonthlyContractsStore(),
   }),
   printing = ref(false),
   printRows = ref<MonthlyContract[]>([])
+const initial = ref(true)
+const { pending, run } = usePendingAction()
 async function load(next = 1) {
   try {
     await store.load({ ...filters, page: next, per_page: 15 })
-  } catch {}
+  } catch {
+    toast.error(store.error || 'Unable to load contracts.')
+  }
 }
 async function exportExcel() {
   try {
@@ -37,8 +48,10 @@ async function exportExcel() {
     a.download = 'monthly-contracts.csv'
     a.click()
     URL.revokeObjectURL(href)
+    toast.success('Contracts exported successfully.')
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to export contracts.'
+    toast.error(error.value)
   }
 }
 async function printReport() {
@@ -55,8 +68,10 @@ async function printReport() {
     } while (pageNo <= last)
     await nextTick()
     window.print()
+    toast.success('Contract report prepared for printing.')
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to prepare the PDF report.'
+    toast.error(error.value)
   } finally {
     printing.value = false
   }
@@ -66,8 +81,10 @@ onMounted(async () => {
     await store.loadOptions()
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to load filters.'
+    toast.error(error.value)
   }
   await load()
+  initial.value = false
 })
 </script>
 <template>
@@ -107,34 +124,26 @@ onMounted(async () => {
     <p>Total contracts: {{ printRows.length }}</p>
   </main>
   <main v-else class="fleet-module page-content contract-report">
-    <div class="page-heading">
+    <PageHeader v-bind="contractHeader" class="d-flex flex-wrap justify-content-end">
       <div class="d-flex flex-wrap gap-2 report-actions">
-        <button class="btn btn-outline-secondary" @click="printReport">
-          <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true" /> Print / Save PDF</button
+        <!-- <button class="btn btn-outline-secondary" @click="printReport">
+          <i class="bi bi-file-earmark-pdf me-1" /> Print / Save PDF</button
         ><button class="btn btn-outline-primary" @click="exportExcel">
-          <i class="bi bi-file-earmark-spreadsheet me-1" aria-hidden="true" /> Excel CSV</button
-        ><RouterLink to="/monthly-contracts/create" class="btn btn-primary"
-          ><i class="bi bi-plus-lg me-1" aria-hidden="true" /> Add Monthly Contract</RouterLink
+          <i class="bi bi-file-earmark-spreadsheet me-1" /> Excel CSV</button> -->
+        <RouterLink to="/monthly-contracts/create" class="btn btn-primary"
+          ><i class="bi bi-plus-lg me-1" /> New contract</RouterLink
         >
       </div>
-    </div>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-if="summary" class="row g-3 mb-4 status-card-grid">
-      <div class="col-12 col-md-6 col-xl-3">
-        <StatusCard label="Total" :value="summary.total" icon="bi-file-earmark-text" />
-      </div>
-      <div
-        v-for="s in ['Draft', 'Active', 'Expired', 'Renewed', 'Cancelled']"
-        :key="s"
-        class="col-12 col-md-6 col-xl-3"
-      >
-        <StatusCard :label="s" :value="summary.statuses[s] || 0" icon="bi-file-earmark-text" />
-      </div>
-    </div>
+    </PageHeader>
+    <StatusSummary
+      :items="contractMetrics(summary)"
+      :loading="initial"
+      label="contract status summary"
+    />
     <section class="card shadow-sm">
       <div class="card-header bg-white report-actions">
-        <form class="row g-2" @submit.prevent="load()">
-          <div class="col-lg-3">
+        <form class="fleet-filter-grid" @submit.prevent="run('search', () => load())">
+          <div class="fleet-filter-field fleet-filter-field--wide">
             <label class="form-label" for="contract-search">Search contracts</label
             ><input
               id="contract-search"
@@ -143,7 +152,7 @@ onMounted(async () => {
               placeholder="Contract, customer, vehicleâ€¦"
             />
           </div>
-          <div class="col-sm-6 col-lg-2">
+          <div class="fleet-filter-field">
             <label class="form-label" for="contract-status">Status</label
             ><select id="contract-status" v-model="filters.status" class="form-select">
               <option value="">All statuses</option>
@@ -152,7 +161,7 @@ onMounted(async () => {
               </option>
             </select>
           </div>
-          <div class="col-sm-6 col-lg-2">
+          <div class="fleet-filter-field">
             <label class="form-label" for="contract-car">Monthly vehicle</label
             ><select id="contract-car" v-model="filters.car_id" class="form-select">
               <option value="">All monthly vehicles</option>
@@ -161,7 +170,7 @@ onMounted(async () => {
               </option>
             </select>
           </div>
-          <div class="col-sm-6 col-lg-2">
+          <div class="fleet-filter-field">
             <label class="form-label" for="contract-driver">Monthly driver</label
             ><select id="contract-driver" v-model="filters.driver_id" class="form-select">
               <option value="">All monthly drivers</option>
@@ -170,7 +179,7 @@ onMounted(async () => {
               </option>
             </select>
           </div>
-          <div class="col-sm-6 col-lg-2">
+          <div class="fleet-filter-field">
             <label class="form-label" for="contract-customer">Customer</label
             ><select id="contract-customer" v-model="filters.customer_id" class="form-select">
               <option value="">All customers</option>
@@ -179,7 +188,7 @@ onMounted(async () => {
               </option>
             </select>
           </div>
-          <div class="col-sm-6 col-lg-2">
+          <div class="fleet-filter-field">
             <label class="form-label" for="contract-from">Start date from</label
             ><input
               id="contract-from"
@@ -189,7 +198,7 @@ onMounted(async () => {
               aria-label="Contract start from"
             />
           </div>
-          <div class="col-sm-6 col-lg-2">
+          <div class="fleet-filter-field">
             <label class="form-label" for="contract-to">End date to</label
             ><input
               id="contract-to"
@@ -199,12 +208,24 @@ onMounted(async () => {
               aria-label="Contract end to"
             />
           </div>
-          <div class="col-sm-6 col-lg-1">
-            <button class="btn btn-outline-primary w-100 fleet-filter-submit">Search</button>
+          <div class="fleet-filter-actions">
+            <button
+              class="btn btn-outline-primary w-100 fleet-filter-submit"
+              :disabled="initial || pending('search')"
+            >
+              <BaseLoading v-if="pending('search')" label="Searching…" /><template v-else
+                >Search</template
+              >
+            </button>
           </div>
         </form>
       </div>
-      <div v-if="loading" class="p-4 text-center">Loading contractsâ€¦</div>
+      <BaseLoading
+        v-if="!initial && store.loading"
+        class="px-3 py-2 d-block"
+        label="Updating contracts…"
+      />
+      <PageSkeleton v-if="initial" label="Loading contracts" :columns="9" />
       <div v-else-if="rows.length" class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead>
@@ -249,24 +270,14 @@ onMounted(async () => {
         </table>
       </div>
       <div v-else class="p-4 text-center text-muted">No contracts match your filters.</div>
-      <div class="card-footer bg-white d-flex justify-content-between">
-        <span class="small text-muted">{{ total }} contracts</span>
-        <div class="btn-group">
-          <button
-            class="btn btn-sm btn-outline-secondary"
-            :disabled="page <= 1 || loading"
-            @click="load(page - 1)"
-          >
-            Previous</button
-          ><span class="btn btn-sm btn-outline-secondary disabled">{{ page }} / {{ lastPage }}</span
-          ><button
-            class="btn btn-sm btn-outline-secondary"
-            :disabled="page >= lastPage || loading"
-            @click="load(page + 1)"
-          >
-            Next
-          </button>
-        </div>
+      <div class="card-footer bg-white">
+        <BasePagination
+          :page="page"
+          :per-page="15"
+          :total="total"
+          :pending-page="(target) => pending(`page:${target}`)"
+          @update:page="run(`page:${$event}`, () => load($event))"
+        />
       </div>
     </section>
   </main>

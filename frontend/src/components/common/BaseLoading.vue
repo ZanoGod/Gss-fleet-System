@@ -1,18 +1,11 @@
 <script setup lang="ts">
-defineProps<{ label?: string }>()
+import { Classic } from '@/components/loading-ui/classic'
+withDefaults(defineProps<{ label: string; showText?: boolean }>(), { showText: true })
 </script>
+
 <template>
-  <div class="gss-loading" role="status">
-    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span
-    ><span>{{ label || 'Loading…' }}</span>
-  </div>
+  <span class="gss-inline-loading" role="status" aria-live="polite">
+    <Classic />
+    <span :class="{ 'visually-hidden': !showText }">{{ label }}</span>
+  </span>
 </template>
-<style scoped>
-.gss-loading {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 1.5rem;
-  color: var(--muted);
-}
-</style>

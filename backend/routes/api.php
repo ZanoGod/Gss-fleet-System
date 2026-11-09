@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\CarController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyBookingController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\InsuranceClaimController;
 use App\Http\Controllers\Api\InsuranceDashboardController;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 // Only the session guard is accepted: legacy bearer tokens cannot authenticate.
 Route::middleware('auth:web')->group(function (): void {
     Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/dashboard', DashboardController::class);
     Route::get('/drivers/options', [DriverController::class, 'options']);
     Route::get('/drivers/summary', [DriverController::class, 'summary']);
     Route::apiResource('drivers', DriverController::class);
