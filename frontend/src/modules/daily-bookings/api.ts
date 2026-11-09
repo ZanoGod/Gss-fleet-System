@@ -4,8 +4,8 @@ import type { DailyBooking, DailyBookingInput, DailyOptions, Paginated } from '.
 const unwrap = <T>(response: AxiosResponse<{ data: T }>): T => response.data.data
 export const dailyBookingApi = {
   async list(params: Record<string, string | number | undefined> = {}) {
-    const response = await api.get<Paginated<DailyBooking>>('/api/daily-bookings', { params })
-    return response.data
+    const response = await api.get<Paginated<DailyBooking> & { meta?: Omit<Paginated<DailyBooking>, 'data'> }>('/api/daily-bookings', { params })
+    return { ...response.data, ...response.data.meta }
   },
   async get(id: number) {
     return unwrap(await api.get<{ data: DailyBooking }>(`/api/daily-bookings/${id}`))

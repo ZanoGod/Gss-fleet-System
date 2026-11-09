@@ -138,9 +138,9 @@ onMounted(load)
     <PageHeader v-bind="insuranceHeader" class="d-flex flex-wrap justify-content-end">
       <div class="d-flex gap-2">
         <button class="btn btn-outline-primary" @click="newProvider">
-          <i class="bi bi-building-add me-1" /> Add provider</button
+          <i class="bi bi-building-add me-1" aria-hidden="true" /> Add provider</button
         ><RouterLink to="/insurance/create" class="btn btn-primary"
-          ><i class="bi bi-plus-lg me-1" /> New policy</RouterLink
+          ><i class="bi bi-plus-lg me-1" aria-hidden="true" /> Add Insurance</RouterLink
         >
       </div>
     </PageHeader>

@@ -4,6 +4,8 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import { onMounted, reactive, ref } from 'vue'
 import { useDailyBookingStore } from '../stores/dailyBookings'
+import StatusCard from '@/components/common/StatusCard.vue'
+import { dailyBookingApi } from '../api'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
 import { toast } from '@/services/toast'
@@ -40,7 +42,7 @@ onMounted(async () => {
   <main class="fleet-module page-content">
     <div class="page-heading d-flex flex-wrap justify-content-end">
       <RouterLink to="/daily-bookings/create" class="btn btn-primary"
-        ><i class="bi bi-plus-lg me-1" /> New booking</RouterLink
+        ><i class="bi bi-plus-lg me-1" aria-hidden="true" /> Add Booking</RouterLink
       >
     </div>
     <section class="card shadow-sm">
