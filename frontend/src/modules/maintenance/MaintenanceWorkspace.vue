@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { usePendingAction } from '@/components/common/usePendingAction'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import { maintenanceMetrics, type MaintenanceDashboard } from './overview'
@@ -11,6 +14,7 @@ import BasePagination from '@/components/common/BasePagination.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import type { ResourceRow } from '@/components/common/resourceTypes'
 import { maintenanceConfig } from './config'
+import { toast } from '@/services/toast'
 const config = maintenanceConfig
 const route = useRoute(),
   router = useRouter()
@@ -20,15 +24,11 @@ const dashboard = ref<MaintenanceDashboard | null>(null)
 const total = ref(0),
   page = ref(1),
   loading = ref(false),
+  initial = ref(true),
   saving = ref(false),
-  error = ref(''),
-  notice = ref(
-    route.query.notice === 'saved'
-      ? `${config.singular} saved successfully.`
-      : route.query.notice === 'deleted'
-        ? `${config.singular} deleted.`
-        : '',
-  )
+  error = ref('')
+if (route.query.notice === 'saved') toast.success(`${config.singular} saved successfully.`)
+if (route.query.notice === 'deleted') toast.success(`${config.singular} deleted.`)
 const errors = ref<Record<string, string[]>>({}),
   form = reactive<Record<string, string | number>>({})
 const options = ref<{ value: string; label: string }[]>([])
@@ -68,14 +68,17 @@ const assignmentPath = computed(() =>
   scopedResource.value && scope.value === 'monthly' ? '/monthly-contracts' : '/daily-bookings',
 )
 let generation = 0
+const { pending, run } = usePendingAction()
 async function load(next = 1) {
   const version = ++generation
   loading.value = true
-  error.value = ''
+  if (!pending('reload')) error.value = ''
   errors.value = {}
-  record.value = null
-  rows.value = []
-  dashboard.value = null
+  if (initial.value) {
+    record.value = null
+    rows.value = []
+    dashboard.value = null
+  }
   try {
     if (config.key === 'drivers') {
       const response = await api.get(`${config.endpoint}/options`, { params: params.value })
@@ -130,10 +133,17 @@ async function load(next = 1) {
         }))
       }
     }
+    if (version === generation) error.value = ''
   } catch (cause) {
-    if (version === generation) error.value = getApiErrorMessage(cause)
+    if (version === generation) {
+      error.value = getApiErrorMessage(cause)
+      toast.error(error.value)
+    }
   } finally {
-    if (version === generation) loading.value = false
+    if (version === generation) {
+      loading.value = false
+      initial.value = false
+    }
   }
 }
 async function apply() {
@@ -189,10 +199,11 @@ async function save() {
       params: params.value,
       data: payload,
     })
-    notice.value = `${config.singular} saved successfully.`
-    await router.push({ path: config.path, query: { ...params.value, notice: 'saved' } })
+    toast.success(`${config.singular} saved successfully.`)
+    await router.push({ path: config.path, query: params.value })
   } catch (cause) {
     error.value = getApiErrorMessage(cause)
+    toast.error(error.value)
     if (axios.isAxiosError(cause)) {
       errors.value = cause.response?.data?.errors || cause.response?.data?.error?.errors || {}
       if (config.key === 'maintenance' && (errors.value.car_id || errors.value.monthly_car_id))
@@ -213,10 +224,12 @@ async function remove() {
   try {
     await api.delete(`${config.endpoint}/${route.params.id}`, { params: params.value })
     confirmDialog.value?.close()
-    await router.push({ path: config.path, query: { ...params.value, notice: 'deleted' } })
+    toast.success(`${config.singular} deleted.`)
+    await router.push({ path: config.path, query: params.value })
   } catch (cause) {
     confirmDialog.value?.close()
     error.value = getApiErrorMessage(cause)
+    toast.error(error.value)
   } finally {
     saving.value = false
   }
@@ -224,6 +237,7 @@ async function remove() {
 watch(
   () => [route.path, route.query.resource_type],
   () => {
+    initial.value = true
     for (const key of Object.keys(filters)) delete filters[key]
     for (const field of config.filters)
       filters[field.key] = String(route.query[field.key] || field.default || '')
@@ -235,7 +249,8 @@ watch(
 
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <PageHeader class="d-flex flex-wrap justify-content-end"
+    <PageHeader
+      class="d-flex flex-wrap justify-content-end"
       :title="
         mode === 'list'
           ? config.title
@@ -250,81 +265,143 @@ watch(
         >{{ mode === 'list' ? `+ Add ${config.singular}` : `All ${config.title}` }}</RouterLink
       >
     </PageHeader>
-    <div v-if="notice" class="alert alert-success" role="status">
-      {{ notice
-      }}<button class="btn-close float-end" aria-label="Dismiss notification" @click="notice = ''" />
-    </div>
-    <nav v-if="scopedResource" class="fleet-tabs d-flex gap-2 mb-4"
-      :aria-label="config.key === 'drivers' ? 'Driver resource' : 'Vehicle resource'">
-      <RouterLink v-for="type in ['daily', 'monthly']" :key="type"
-        :to="{ path: config.path, query: { resource_type: type } }" class="btn"
+    <nav
+      v-if="scopedResource"
+      class="fleet-tabs d-flex gap-2 mb-4"
+      :aria-label="config.key === 'drivers' ? 'Driver resource' : 'Vehicle resource'"
+    >
+      <RouterLink
+        v-for="type in ['daily', 'monthly']"
+        :key="type"
+        :to="{ path: config.path, query: { resource_type: type } }"
+        class="btn"
         :class="scope === type ? 'btn-primary' : 'btn-outline-secondary'"
-        :aria-current="scope === type ? 'page' : undefined">{{
+        :aria-current="scope === type ? 'page' : undefined"
+        >{{
           type === 'daily'
             ? `Daily booking ${config.key === 'drivers' ? 'drivers' : 'vehicles'}`
             : `Monthly contract ${config.key === 'drivers' ? 'drivers' : 'vehicles'}`
-        }}</RouterLink>
+        }}</RouterLink
+      >
     </nav>
-    <div v-if="error" class="alert alert-danger" role="alert">
-      {{ error }}
-      <button v-if="!saving" class="btn-outline-warm" @click="load(page)">Reload</button>
-    </div>
+    <button v-if="error && !saving && (mode === 'list' || mode === 'detail')" class="btn-outline-warm mb-3" :disabled="pending('reload')" @click="run('reload', () => load(page))">
+      <BaseLoading v-if="pending('reload')" label="Reloading…" /><template v-else>Retry loading</template>
+    </button>
     <template v-if="mode === 'list'">
       <StatusSummary
         :items="maintenanceMetrics(dashboard)"
-        :loading="loading"
+        :loading="initial"
         label="Maintenance status summary"
       />
       <section class="card-shell p-4 mb-4" aria-label="Search and filters">
-        <form class="row g-3" @submit.prevent="apply">
+        <form class="row g-3" @submit.prevent="run('filter', apply)">
           <div v-for="filter in config.filters" :key="filter.key" class="col-sm-6 col-lg-3">
-            <label :for="`filter-${filter.key}`" class="form-label">{{ filter.label }}</label><select
-              v-if="filter.key === 'vehicle'" :id="`filter-${filter.key}`" v-model="filters[filter.key]"
-              class="form-select">
+            <label :for="`filter-${filter.key}`" class="form-label">{{ filter.label }}</label
+            ><select
+              v-if="filter.key === 'vehicle'"
+              :id="`filter-${filter.key}`"
+              v-model="filters[filter.key]"
+              class="form-select"
+            >
               <option value="">All vehicles</option>
               <option v-for="option in options" :key="option.value" :value="option.value">
                 {{ option.label }}
-              </option>
-            </select><select v-else-if="filter.options" :id="`filter-${filter.key}`" v-model="filters[filter.key]"
-              class="form-select">
+              </option></select
+            ><select
+              v-else-if="filter.options"
+              :id="`filter-${filter.key}`"
+              v-model="filters[filter.key]"
+              class="form-select"
+            >
               <option value="">All</option>
-              <option v-for="option in filter.key === 'status' ? statuses : filter.options" :key="option">
+              <option
+                v-for="option in filter.key === 'status' ? statuses : filter.options"
+                :key="option"
+              >
                 {{ option }}
-              </option>
-            </select><input v-else :id="`filter-${filter.key}`" v-model="filters[filter.key]"
-              :type="filter.type || 'search'" class="form-control" :placeholder="filter.placeholder" maxlength="500" />
+              </option></select
+            ><input
+              v-else
+              :id="`filter-${filter.key}`"
+              v-model="filters[filter.key]"
+              :type="filter.type || 'search'"
+              class="form-control"
+              :placeholder="filter.placeholder"
+              maxlength="500"
+            />
           </div>
           <div class="col-12 d-flex flex-wrap align-items-center gap-2">
-            <button class="btn btn-primary" :disabled="loading">Filter</button><button type="button" class="btn btn-outline-secondary"
-              :disabled="loading" @click="reset">
-              Reset
+            <button class="btn btn-primary" :disabled="initial || pending('filter')">
+              <BaseLoading v-if="pending('filter')" label="Filtering…" /><template v-else
+                >Filter</template
+              ></button
+            ><button
+              type="button"
+              class="btn btn-outline-secondary"
+              :disabled="initial || pending('reset')"
+              @click="run('reset', reset)"
+            >
+              <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else>Reset</template>
             </button>
-            <div v-if="config.key === 'drivers'"
+            <div
+              v-if="config.key === 'drivers'"
               class="resource-month-nav d-flex flex-wrap align-items-center gap-2 ms-sm-auto"
-              aria-label="Assignment month navigation">
-              <button type="button" class="btn btn-outline-secondary" aria-label="Previous assignment month" :disabled="loading"
-                @click="shiftMonth(-1)">
-                ‹ Previous month
+              aria-label="Assignment month navigation"
+            >
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                aria-label="Previous assignment month"
+                :disabled="initial || pending('previousMonth')"
+                @click="run('previousMonth', () => shiftMonth(-1))"
+              >
+                <BaseLoading v-if="pending('previousMonth')" label="Loading…" /><template v-else
+                  >‹ Previous month</template
+                >
               </button>
               <span class="numeric">{{ filters.month || 'Current month' }}</span>
-              <button type="button" class="btn btn-outline-secondary" aria-label="Next assignment month" :disabled="loading"
-                @click="shiftMonth(1)">
-                Next month ›
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                aria-label="Next assignment month"
+                :disabled="initial || pending('nextMonth')"
+                @click="run('nextMonth', () => shiftMonth(1))"
+              >
+                <BaseLoading v-if="pending('nextMonth')" label="Loading…" /><template v-else
+                  >Next month ›</template
+                >
               </button>
-              <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="currentMonth">
-                Today
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                :disabled="initial || pending('currentMonth')"
+                @click="run('currentMonth', currentMonth)"
+              >
+                <BaseLoading v-if="pending('currentMonth')" label="Refreshing…" /><template
+                  v-else
+                  >Today</template
+                >
               </button>
             </div>
           </div>
         </form>
       </section>
-      <section class="card-shell" aria-label="Results" :aria-busy="loading">
+      <section class="card-shell" aria-label="Results">
         <div class="p-4">
           <h2 class="h5 mb-0">
             {{ config.title }} <span class="text-muted">({{ total }})</span>
           </h2>
         </div>
-        <p v-if="loading" class="p-4" role="status">Loading {{ config.title.toLowerCase() }}…</p>
+        <BaseLoading
+          v-if="loading && !initial"
+          class="d-block px-3 py-2"
+          :label="`Updating ${config.title.toLowerCase()}…`"
+        />
+        <PageSkeleton
+          v-if="initial"
+          :label="`Loading ${config.title.toLowerCase()}`"
+          :columns="config.columns.length + (scopedResource ? 2 : 1)"
+        />
         <div v-else-if="rows.length" class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <caption class="visually-hidden">
@@ -345,14 +422,16 @@ watch(
             <tbody>
               <tr v-for="row in rows" :key="row.id">
                 <td v-for="column in config.columns" :key="column.key">
-                  <BaseStatusBadge v-if="column.key === config.statusKey || column.key === 'effective_status'"
-                    :status="text(row[column.key])" /><span v-else>{{ text(row[column.key]) }}</span>
+                  <BaseStatusBadge
+                    v-if="column.key === config.statusKey || column.key === 'effective_status'"
+                    :status="text(row[column.key])"
+                  /><span v-else>{{ text(row[column.key]) }}</span>
                 </td>
                 <td v-if="scopedResource">
                   <div v-for="assignment in row.assignments" :key="assignment.id" class="mb-2">
                     <RouterLink :to="`${assignmentPath}/${assignment.id}`">{{
                       assignment.name
-                      }}</RouterLink>
+                    }}</RouterLink>
                     <div class="small">
                       {{ assignment.start_date }} – {{ assignment.end_date }} ·
                       {{ assignment.status }}
@@ -366,8 +445,13 @@ watch(
                   <span v-if="!row.assignments?.length" class="text-muted">No assignments</span>
                 </td>
                 <td>
-                  <RouterLink :to="link(`${config.path}/${row.id}`)" class="btn-outline-warm">View</RouterLink>
-                  <RouterLink :to="link(`${config.path}/${row.id}/edit`)" class="btn-outline-warm ms-2">Edit
+                  <RouterLink :to="link(`${config.path}/${row.id}`)" class="btn-outline-warm"
+                    >View</RouterLink
+                  >
+                  <RouterLink
+                    :to="link(`${config.path}/${row.id}/edit`)"
+                    class="btn-outline-warm ms-2"
+                    >Edit
                   </RouterLink>
                 </td>
               </tr>
@@ -378,11 +462,21 @@ watch(
           No {{ config.title.toLowerCase() }} found. Add a record or adjust your filters.
         </p>
         <div class="p-3">
-          <BasePagination :page="page" :per-page="10" :total="total" :disabled="loading" @update:page="load" />
+          <BasePagination
+            :page="page"
+            :per-page="10"
+            :total="total"
+            :pending-page="(target) => pending(`page:${target}`)"
+            @update:page="run(`page:${$event}`, () => load($event))"
+          />
         </div>
       </section>
     </template>
-    <p v-else-if="loading" role="status">Loading…</p>
+    <PageSkeleton
+      v-else-if="initial"
+      :kind="mode === 'detail' ? 'detail' : 'form'"
+      :label="`Loading ${config.singular.toLowerCase()}`"
+    />
     <section v-else-if="mode === 'create' || record" class="card-shell p-4">
       <template v-if="mode === 'detail' && record">
         <h2 class="h5">Record details</h2>
@@ -399,18 +493,23 @@ watch(
           </template>
           <template v-for="field in details" :key="field.key">
             <dt class="col-sm-4">{{ field.label }}</dt>
-            <dd class="col-sm-8 preserve-lines">{{ text(record[field.key]) }}</dd>
-          </template><template v-if="config.key === 'maintenance'">
+            <dd class="col-sm-8 preserve-lines">{{ text(record[field.key]) }}</dd> </template
+          ><template v-if="config.key === 'maintenance'">
             <dt class="col-sm-4">Vehicle</dt>
             <dd class="col-sm-8">
-              <RouterLink :to="{
-                path: `/fleet/${record.car_id || record.monthly_car_id}`,
-                query: { resource_type: record.car_id ? 'daily' : 'monthly' },
-              }">{{ record.vehicle_label }}</RouterLink>
+              <RouterLink
+                :to="{
+                  path: `/fleet/${record.car_id || record.monthly_car_id}`,
+                  query: { resource_type: record.car_id ? 'daily' : 'monthly' },
+                }"
+                >{{ record.vehicle_label }}</RouterLink
+              >
             </dd>
           </template>
         </dl>
-        <template v-if="scopedResource || config.key === 'operators' || config.key === 'maintenance'">
+        <template
+          v-if="scopedResource || config.key === 'operators' || config.key === 'maintenance'"
+        >
           <h2 class="h5 mt-4">
             {{
               config.key === 'maintenance'
@@ -420,9 +519,15 @@ watch(
           </h2>
           <p v-if="!assignments.length" class="text-muted">No assignment history.</p>
           <ul class="list-group list-group-flush">
-            <li v-for="a in assignments" :key="`${a.resource_type}-${a.id}`" class="list-group-item">
-              <RouterLink :to="`${a.resource_type === 'monthly' ? '/monthly-contracts' : assignmentPath}/${a.id}`">{{
-                a.name }}</RouterLink>
+            <li
+              v-for="a in assignments"
+              :key="`${a.resource_type}-${a.id}`"
+              class="list-group-item"
+            >
+              <RouterLink
+                :to="`${a.resource_type === 'monthly' ? '/monthly-contracts' : assignmentPath}/${a.id}`"
+                >{{ a.name }}</RouterLink
+              >
               · {{ a.start_date }} – {{ a.end_date }} · {{ a.status }}
               <div v-if="a.vehicle || a.driver" class="small text-muted">
                 {{ a.vehicle }}{{ a.secondary_vehicle ? ` / ${a.secondary_vehicle}` : ''
@@ -440,8 +545,11 @@ watch(
               {{ m.scheduled_date }} · {{ m.status }}
             </li>
           </ul>
-          <RouterLink :to="{ path: '/maintenance/create', query: { vehicle: `${scope}:${record.id}` } }"
-            class="btn-outline-warm mt-3">Schedule maintenance</RouterLink>
+          <RouterLink
+            :to="{ path: '/maintenance/create', query: { vehicle: `${scope}:${record.id}` } }"
+            class="btn-outline-warm mt-3"
+            >Schedule maintenance</RouterLink
+          >
           <h2 class="h5 mt-4">Insurance history</h2>
           <p v-if="!record.insurance_policies?.length" class="text-muted">No insurance history.</p>
           <ul class="list-group list-group-flush">
@@ -451,56 +559,100 @@ watch(
           </ul>
         </template>
         <div class="d-flex gap-2 mt-4">
-          <RouterLink :to="link(`${config.path}/${record.id}/edit`)" class="btn-gold">Edit {{ config.singular }}
+          <RouterLink :to="link(`${config.path}/${record.id}/edit`)" class="btn-gold"
+            >Edit {{ config.singular }}
           </RouterLink>
           <button class="btn-outline-warm" @click="confirmDialog?.showModal()">Delete</button>
         </div>
       </template>
       <form v-else class="row g-3" @submit.prevent="save">
         <p class="text-muted mb-0">{{ config.formHelp }}</p>
-        <fieldset class="row g-3 border-0 m-0 p-0" :disabled="saving">
-          <div v-for="field in fields" :key="field.key" :class="field.type === 'textarea' ? 'col-12' : 'col-md-6'">
-            <label :for="`field-${field.key}`" class="form-label">{{ field.label }}<span v-if="field.required"
-                aria-hidden="true"> *</span></label><select v-if="field.options || field.key === 'vehicle_key'"
-              :id="`field-${field.key}`" v-model="form[field.key]" class="form-select" :required="field.required"
-              :class="{ 'is-invalid': errors[field.key] }" :aria-invalid="!!errors[field.key]"
-              :aria-describedby="`error-${field.key}`">
+        <fieldset class="row g-3 border-0 m-0 p-0">
+          <div
+            v-for="field in fields"
+            :key="field.key"
+            :class="field.type === 'textarea' ? 'col-12' : 'col-md-6'"
+          >
+            <label :for="`field-${field.key}`" class="form-label"
+              >{{ field.label }}<span v-if="field.required" aria-hidden="true"> *</span></label
+            ><select
+              v-if="field.options || field.key === 'vehicle_key'"
+              :id="`field-${field.key}`"
+              v-model="form[field.key]"
+              class="form-select"
+              :required="field.required"
+              :class="{ 'is-invalid': errors[field.key] }"
+              :aria-invalid="!!errors[field.key]"
+              :aria-describedby="`error-${field.key}`"
+            >
               <option value="">Select {{ field.label.toLowerCase() }}</option>
               <template v-if="field.key === 'vehicle_key'">
                 <option v-for="option in options" :key="option.value" :value="option.value">
                   {{ option.label }}
-                </option>
-              </template><template v-else>
+                </option> </template
+              ><template v-else>
                 <option v-for="option in field.options" :key="option">
                   {{ option }}
                 </option>
-              </template>
-            </select><textarea v-else-if="field.type === 'textarea'" :id="`field-${field.key}`"
-              v-model="form[field.key]" class="form-control" rows="4" :maxlength="field.max || 20000"
-              :class="{ 'is-invalid': errors[field.key] }" :aria-invalid="!!errors[field.key]"
-              :aria-describedby="`error-${field.key}`" /><input v-else :id="`field-${field.key}`"
-              v-model="form[field.key]" :type="field.type || 'text'" :required="field.required" :maxlength="field.max"
-              :min="field.min" :max="field.maxNumber" :step="field.step" class="form-control"
-              :class="{ 'is-invalid': errors[field.key] }" :aria-invalid="!!errors[field.key]"
-              :aria-describedby="`error-${field.key}`" />
+              </template></select
+            ><textarea
+              v-else-if="field.type === 'textarea'"
+              :id="`field-${field.key}`"
+              v-model="form[field.key]"
+              class="form-control"
+              rows="4"
+              :maxlength="field.max || 20000"
+              :class="{ 'is-invalid': errors[field.key] }"
+              :aria-invalid="!!errors[field.key]"
+              :aria-describedby="`error-${field.key}`"
+            /><input
+              v-else
+              :id="`field-${field.key}`"
+              v-model="form[field.key]"
+              :type="field.type || 'text'"
+              :required="field.required"
+              :maxlength="field.max"
+              :min="field.min"
+              :max="field.maxNumber"
+              :step="field.step"
+              class="form-control"
+              :class="{ 'is-invalid': errors[field.key] }"
+              :aria-invalid="!!errors[field.key]"
+              :aria-describedby="`error-${field.key}`"
+            />
             <div :id="`error-${field.key}`" class="invalid-feedback">
               {{ errors[field.key]?.join(' ') }}
             </div>
           </div>
           <div class="col-12">
-            <button class="btn btn-primary">{{ saving ? 'Saving…' : `Save ${config.singular}` }}</button>
-            <RouterLink :to="link(config.path)" class="btn btn-outline-secondary ms-2">Cancel</RouterLink>
+            <button class="btn btn-primary" :disabled="saving">
+              <BaseLoading v-if="saving" label="Saving…" /><template v-else
+                >Save {{ config.singular }}</template
+              >
+            </button>
+            <RouterLink :to="link(config.path)" class="btn btn-outline-secondary ms-2"
+              >Cancel</RouterLink
+            >
           </div>
         </fieldset>
       </form>
     </section>
-    <dialog ref="confirmDialog" class="resource-confirm card-shell p-4" aria-labelledby="delete-title">
+    <dialog
+      ref="confirmDialog"
+      class="resource-confirm card-shell p-4"
+      aria-labelledby="delete-title"
+    >
       <h2 id="delete-title" class="h5">Delete {{ config.singular }}?</h2>
       <p>Referenced records and maintenance service history are protected.</p>
       <div class="d-flex gap-2">
-        <button autofocus class="btn-outline-warm" :disabled="saving" @click="confirmDialog?.close()">
-          Keep record</button><button class="btn-gold" :disabled="saving" @click="remove">
-          {{ saving ? 'Deleting…' : 'Delete record' }}
+        <button
+          autofocus
+          class="btn-outline-warm"
+          @click="confirmDialog?.close()"
+        >
+          Keep record</button
+        ><button class="btn-gold" :disabled="saving" @click="remove">
+          <BaseLoading v-if="saving" label="Deleting…" /><template v-else>Delete record</template>
         </button>
       </div>
     </dialog>

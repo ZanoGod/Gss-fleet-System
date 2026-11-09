@@ -1,34 +1,45 @@
 <script setup lang="ts">
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { monthlyContractApi } from '../api'
 import type { MonthlyContract } from '../types'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import { toast } from '@/services/toast'
 const route = useRoute(),
   router = useRouter(),
   contract = ref<MonthlyContract | null>(null),
   loading = ref(true),
-  error = ref('')
+  error = ref(''),
+  deleting = ref(false)
 async function load() {
   try {
     contract.value = await monthlyContractApi.get(Number(route.params.id))
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to load contract.'
+    toast.error(error.value)
   } finally {
     loading.value = false
   }
 }
 async function remove() {
+  if (deleting.value) return
   if (
     !contract.value ||
     !window.confirm('Delete this contract? Contracts with renewal history cannot be deleted.')
   )
     return
+  deleting.value = true
   try {
     await monthlyContractApi.remove(contract.value.id)
+    toast.success('Contract deleted successfully.')
     await router.push('/monthly-contracts')
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to delete contract.'
+    toast.error(error.value)
+  } finally {
+    deleting.value = false
   }
 }
 onMounted(load)
@@ -51,12 +62,14 @@ onMounted(load)
           :to="`/monthly-contracts/${contract.id}/renew`"
           class="btn btn-outline-warning"
           >Renew</RouterLink
-        ><button class="btn btn-outline-danger" @click="remove">Delete</button
+        ><button class="btn btn-outline-danger" :disabled="deleting" @click="remove">
+          <BaseLoading v-if="deleting" label="Deleting…" /><template v-else
+            >Delete</template
+          ></button
         ><RouterLink to="/monthly-contracts" class="btn btn-outline-secondary">Back</RouterLink>
       </div>
     </div>
-    <div v-if="error" class="alert alert-danger">{{ error }}</div>
-    <div v-if="loading" class="alert alert-light border">Loading contract…</div>
+    <PageSkeleton v-if="loading" kind="detail" label="Loading contract…" />
     <template v-else-if="contract"
       ><div class="row g-3">
         <div class="col-lg-8">
@@ -157,6 +170,6 @@ onMounted(load)
         </div>
       </section></template
     >
-    <div v-else-if="!loading" class="alert alert-warning">Contract is unavailable.</div>
+    <div v-else-if="!loading" class="empty-state">Contract is unavailable.</div>
   </main>
 </template>

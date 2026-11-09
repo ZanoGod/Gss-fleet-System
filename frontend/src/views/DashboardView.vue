@@ -1,33 +1,38 @@
 <script setup lang="ts">
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import api from '@/services/api'
 import { getApiErrorMessage } from '@/services/apiErrors'
+import { toast } from '@/services/toast'
 import { dashboardMetrics, type DashboardSummary } from '@/modules/dashboard/overview'
 const summary = ref<DashboardSummary | null>(null)
-const loading = ref(false)
+const loading = ref(true)
+const initial = ref(true)
 const error = ref('')
 async function load() {
   loading.value = true
-  summary.value = null
-  error.value = ''
   try {
     summary.value = (await api.get<{ data: DashboardSummary }>('/api/dashboard')).data.data
+    error.value = ''
   } catch (cause) {
     error.value = getApiErrorMessage(cause)
+    toast.error(error.value)
   } finally {
     loading.value = false
+    initial.value = false
   }
 }
 onMounted(load)
 </script>
 <template>
-  <div v-if="error" class="alert alert-danger" role="alert">
-    {{ error }} <button class="btn-outline-warm" @click="load">Retry</button>
-  </div>
-  <StatusSummary :items="dashboardMetrics(summary)" :loading="loading" label="Fleet overview" />
+  <button v-if="error" class="btn-outline-warm mb-3" :disabled="loading" @click="load">
+    <BaseLoading v-if="loading" label="Retrying…" /><template v-else>Retry dashboard</template>
+  </button>
+  <StatusSummary :items="dashboardMetrics(summary)" :loading="initial" label="Fleet overview" />
   <section class="card-shell section-card">
     <div class="section-head">
       <div>
@@ -38,7 +43,8 @@ onMounted(load)
         >View All <i class="bi bi-arrow-right ms-2"></i
       ></RouterLink>
     </div>
-    <div class="table-responsive">
+    <PageSkeleton v-if="initial" label="Loading recent bookings" />
+    <div v-else class="table-responsive">
       <table class="table data-table">
         <thead>
           <tr>
@@ -67,13 +73,7 @@ onMounted(load)
           <tr v-if="!summary?.recent_bookings.length">
             <td colspan="5">
               <div class="empty-state">
-                {{
-                  loading
-                    ? 'Loading recent bookings…'
-                    : error
-                      ? 'Recent bookings unavailable.'
-                      : 'No bookings recorded yet.'
-                }}
+                {{ error ? 'Recent bookings unavailable.' : 'No bookings recorded yet.' }}
               </div>
             </td>
           </tr>

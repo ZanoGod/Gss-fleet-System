@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { dailyBookingApi } from '../api'
 import api from '@/services/api'
 import type { DailyBooking, DailyBookingInput, DailyOptions } from '../types'
+import { toast } from '@/services/toast'
 const props = defineProps<{ bookingId?: number }>(),
   router = useRouter()
 const options = ref<DailyOptions | null>(null),
-  loading = ref(false),
+  loading = ref(true),
   saving = ref(false),
   error = ref(''),
   errors = ref<Record<string, string[]>>({})
@@ -57,30 +60,36 @@ onMounted(async () => {
     if (props.bookingId) assign(await dailyBookingApi.get(props.bookingId))
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to load booking form.'
+    toast.error(error.value)
   } finally {
     loading.value = false
   }
 })
 async function submit() {
+  if (saving.value) return
   saving.value = true
   errors.value = {}
   error.value = ''
   try {
     const saved = await dailyBookingApi.save(form, props.bookingId)
+    toast.success(props.bookingId ? 'Booking updated successfully.' : 'Booking created successfully.')
     await router.push(`/daily-bookings/${saved.id}`)
   } catch (e: any) {
     errors.value = e?.response?.data?.errors || {}
     error.value = e?.response?.data?.message || 'Unable to save booking.'
+    toast.error(error.value)
   } finally {
     saving.value = false
   }
 }
+const loadingDrivers = ref(false)
 let driverRequest = 0
 watch(
   () => [form.start_date, form.end_date],
   async ([start, end]) => {
     const version = ++driverRequest
-    if (!start || !end || end < start) return
+    loadingDrivers.value = Boolean(start && end && end >= start)
+    if (!loadingDrivers.value) return
     try {
       const response = await api.get('/api/drivers/options', {
         params: { date_from: start, date_to: end, except_id: props.bookingId },
@@ -89,14 +98,15 @@ watch(
         options.value.drivers = response.data.data.drivers
     } catch {
       /* Submission revalidates availability; retain existing options if lookup is unavailable. */
+    } finally {
+      if (version === driverRequest) loadingDrivers.value = false
     }
   },
 )
 </script>
 <template>
-  <div v-if="loading" class="alert alert-light border">Loading booking information…</div>
+  <PageSkeleton v-if="loading" kind="form" label="Loading booking information…" />
   <div v-else>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
     <form class="card shadow-sm" @submit.prevent="submit">
       <div class="card-body">
         <div class="row g-3">
@@ -167,7 +177,12 @@ watch(
           </div>
           <div class="col-md-6">
             <label for="booking-driver" class="form-label">Driver</label
-            ><select id="booking-driver" v-model="form.driver_id" class="form-select">
+            ><select
+              id="booking-driver"
+              v-model="form.driver_id"
+              :disabled="loadingDrivers"
+              class="form-select"
+            >
               <option :value="null">No registered driver</option>
               <option
                 v-for="d in options?.drivers || []"
@@ -183,6 +198,7 @@ watch(
                 }}{{ d.available === false ? ' · Unavailable for selected dates' : '' }})
               </option>
             </select>
+            <BaseLoading v-if="loadingDrivers" label="Checking driver availability…" />
             <div v-if="errors.driver_id" class="text-danger small">{{ errors.driver_id[0] }}</div>
           </div>
           <div class="col-md-6">
@@ -243,7 +259,7 @@ watch(
       <div class="card-footer bg-white d-flex justify-content-end gap-2">
         <RouterLink to="/daily-bookings" class="btn btn-outline-secondary">Cancel</RouterLink
         ><button class="btn btn-primary" :disabled="saving">
-          {{ saving ? 'Saving…' : 'Save booking' }}
+          <BaseLoading v-if="saving" label="Saving…" /><template v-else>Save booking</template>
         </button>
       </div>
     </form>

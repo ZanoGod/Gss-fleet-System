@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { usePendingAction } from '@/components/common/usePendingAction'
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/services/api'
@@ -6,50 +9,60 @@ import { insuranceApi } from '../api'
 import type { InsuranceClaim, InsurancePolicy } from '../types'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import InsurancePolicyForm from '../components/InsurancePolicyForm.vue'
+import { toast } from '@/services/toast'
 
 const route = useRoute()
 const policy = ref<InsurancePolicy | null>(null)
 const loading = ref(true)
 const error = ref('')
-const notice = ref('')
 const showRenewal = ref(false)
 const uploading = ref(false)
 const file = ref<File | null>(null)
 const id = computed(() => Number(route.params.id))
 
+const { pending, run } = usePendingAction()
+let request = 0
 async function load() {
+  const version = ++request
   loading.value = true
   error.value = ''
   try {
-    policy.value = await insuranceApi.policy(id.value)
+    const result = await insuranceApi.policy(id.value)
+    if (version === request) policy.value = result
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Unable to load policy.'
+    if (version === request) {
+      error.value = e instanceof Error ? e.message : 'Unable to load policy.'
+      toast.error(error.value)
+    }
   } finally {
-    loading.value = false
+    if (version === request) loading.value = false
   }
 }
 async function transition(action: 'cancel' | 'archive') {
   if (!policy.value || !window.confirm(`Are you sure you want to ${action} this policy?`)) return
   try {
-    policy.value = await insuranceApi.transition(id.value, action)
-    notice.value = `Policy ${action}d.`
+    await insuranceApi.transition(id.value, action)
+    await load()
+    toast.success(`Policy ${action}d.`)
   } catch (e: any) {
     error.value = e?.response?.data?.message || `Unable to ${action} policy.`
+    toast.error(error.value)
   }
 }
 async function upload() {
-  if (!file.value) return
+  if (!file.value || uploading.value) return
   uploading.value = true
   error.value = ''
   const body = new FormData()
   body.append('document', file.value)
   try {
     await api.post(`/api/insurance/policies/${id.value}/documents`, body)
-    notice.value = 'Document uploaded securely.'
+    toast.success('Document uploaded securely.')
     file.value = null
     await load()
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Document upload failed.'
+    toast.error(error.value)
   } finally {
     uploading.value = false
   }
@@ -59,14 +72,34 @@ async function archiveDocument(documentId: number) {
     return
   try {
     await insuranceApi.archiveDocument(documentId)
-    notice.value = 'Document archived.'
+    toast.success('Document archived.')
     await load()
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to archive document.'
+    toast.error(error.value)
+  }
+}
+async function downloadDocument(downloadUrl: string, filename: string) {
+  try {
+    const response = await api.get(downloadUrl, { responseType: 'blob' })
+    const href = URL.createObjectURL(response.data)
+    const link = document.createElement('a')
+    link.href = href
+    link.download = filename
+    link.hidden = true
+    document.body.append(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(href), 0)
+    toast.success('Document downloaded.')
+  } catch (e: any) {
+    error.value = e?.response?.data?.message || 'Unable to download document.'
+    toast.error(error.value)
   }
 }
 async function changeClaimStatus(claim: InsuranceClaim, event: Event) {
-  const status = (event.target as HTMLSelectElement).value
+  const select = event.target as HTMLSelectElement
+  const status = select.value
   try {
     await insuranceApi.updateClaim(claim.id, {
       policy_id: claim.policy_id,
@@ -76,10 +109,12 @@ async function changeClaimStatus(claim: InsuranceClaim, event: Event) {
       status,
       notes: claim.notes || '',
     })
-    notice.value = 'Claim status updated and history recorded.'
+    toast.success('Claim status updated and history recorded.')
     await load()
   } catch (e: any) {
+    select.value = claim.status
     error.value = e?.response?.data?.message || 'Unable to update claim.'
+    toast.error(error.value)
   }
 }
 onMounted(load)
@@ -105,23 +140,27 @@ onMounted(load)
         <button
           v-if="!policy.cancelled_at && !policy.archived_at"
           class="btn btn-outline-secondary"
-          @click="transition('cancel')"
+          :disabled="pending('cancel')"
+          @click="run('cancel', () => transition('cancel'))"
         >
-          Cancel
+          <BaseLoading v-if="pending('cancel')" label="Cancelling…" /><template v-else
+            >Cancel</template
+          >
         </button>
         <button
           v-if="!policy.archived_at"
           class="btn btn-outline-danger"
-          @click="transition('archive')"
+          :disabled="pending('archive')"
+          @click="run('archive', () => transition('archive'))"
         >
-          Archive
+          <BaseLoading v-if="pending('archive')" label="Archiving…" /><template v-else
+            >Archive</template
+          >
         </button>
         <RouterLink to="/insurance" class="btn btn-outline-secondary">Back to insurance</RouterLink>
       </div>
     </div>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-if="notice" class="alert alert-success" role="status">{{ notice }}</div>
-    <div v-if="loading" class="alert alert-light border">Loading policy…</div>
+    <PageSkeleton v-if="loading && !policy" kind="detail" label="Loading policy…" />
     <template v-else-if="policy">
       <div v-if="showRenewal" class="mb-4">
         <h2 class="h4">Renew policy</h2>
@@ -189,7 +228,9 @@ onMounted(load)
               aria-label="Choose policy document"
               @change="file = ($event.target as HTMLInputElement).files?.[0] || null"
             /><button class="btn btn-primary" :disabled="!file || uploading">
-              {{ uploading ? 'Uploading…' : 'Upload document' }}</button
+              <BaseLoading v-if="uploading" label="Uploading…" /><template v-else
+                >Upload document</template
+              ></button
             ><span class="small text-muted">PDF, JPEG, or PNG up to 10 MB</span>
           </form>
           <div v-if="policy.documents?.length" class="list-group list-group-flush">
@@ -207,13 +248,25 @@ onMounted(load)
                 >
               </div>
               <div class="d-flex gap-2">
-                <a class="btn btn-sm btn-outline-secondary" :href="doc.download_url">Download</a
+                <button
+                  class="btn btn-sm btn-outline-secondary"
+                  :disabled="pending(`download:${doc.id}`)"
+                  @click="run(`download:${doc.id}`, () => downloadDocument(doc.download_url, doc.original_name))"
+                >
+                  <BaseLoading v-if="pending(`download:${doc.id}`)" label="Downloading…" /><template
+                    v-else
+                    >Download</template
+                  ></button
                 ><button
                   v-if="!doc.archived_at"
                   class="btn btn-sm btn-outline-danger"
-                  @click="archiveDocument(doc.id)"
+                  :disabled="pending(`document:${doc.id}`)"
+                  @click="run(`document:${doc.id}`, () => archiveDocument(doc.id))"
                 >
-                  Archive
+                  <BaseLoading v-if="pending(`document:${doc.id}`)" label="Archiving…" /><template
+                    v-else
+                    >Archive</template
+                  >
                 </button>
               </div>
             </div>
@@ -247,7 +300,8 @@ onMounted(load)
                     class="form-select form-select-sm"
                     :value="claim.status"
                     aria-label="Update claim status"
-                    @change="changeClaimStatus(claim, $event)"
+                    :disabled="pending(`claim:${claim.id}`)"
+                    @change="run(`claim:${claim.id}`, () => changeClaimStatus(claim, $event))"
                   >
                     <option
                       v-for="status in [
@@ -263,6 +317,10 @@ onMounted(load)
                       {{ status }}
                     </option>
                   </select>
+                  <BaseLoading
+                    v-if="pending(`claim:${claim.id}`)"
+                    label="Updating claim status…"
+                  />
                 </td>
                 <td>
                   <ul class="small mb-0 ps-3">
@@ -279,6 +337,6 @@ onMounted(load)
         <div v-else class="p-3 text-muted">No claims have been recorded for this policy.</div>
       </section>
     </template>
-    <div v-else-if="!loading" class="alert alert-warning">Policy is unavailable.</div>
+    <div v-else-if="!loading" class="empty-state">Policy is unavailable.</div>
   </main>
 </template>

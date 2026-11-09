@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import BaseLoading from '@/components/common/BaseLoading.vue'
 import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { customerApi, customerError, customerFieldErrors } from '../api'
 import { offDays, type Customer, type CustomerInput } from '../types'
+import { toast } from '@/services/toast'
 const props = defineProps<{ customer?: Customer }>()
 const router = useRouter()
 const busy = ref(false)
@@ -65,12 +67,13 @@ async function submit() {
       ) as unknown as CustomerInput,
       props.customer?.id,
     )
+    toast.success(props.customer ? 'Customer updated successfully.' : 'Customer created successfully.')
     await router.push({
       path: '/customers',
-      query: { notice: props.customer ? 'updated' : 'created' },
     })
   } catch (cause) {
     error.value = customerError(cause)
+    toast.error(error.value)
     errors.value = customerFieldErrors(cause)
   } finally {
     busy.value = false
@@ -87,9 +90,8 @@ async function submit() {
       Contract assignments, vehicles, drivers, and billing stay in
       <RouterLink to="/monthly-contracts">Monthly Contracts</RouterLink>.
     </p>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
     <form class="row g-3" @submit.prevent="submit">
-      <fieldset :disabled="busy" class="row g-3 m-0 p-0 border-0">
+      <fieldset class="row g-3 m-0 p-0 border-0">
         <div v-for="field in fields" :key="field.key" class="col-md-6">
           <label :for="`customer-${field.key}`" class="form-label"
             >{{ field.label }} <span v-if="field.required" aria-hidden="true">*</span></label
@@ -158,16 +160,11 @@ async function submit() {
                 : 'New customers start Inactive. Saving an Active contract activates the linked customer.'
             }}
           </p>
-          <button class="btn-gold" type="submit">
-            {{ busy ? 'Saving…' : customer ? 'Update Customer' : 'Save Customer' }}</button
-          ><RouterLink
-            to="/customers"
-            class="btn-outline-warm ms-2"
-            :class="{ disabled: busy }"
-            :tabindex="busy ? -1 : undefined"
-            @click="busy && $event.preventDefault()"
-            >Cancel</RouterLink
-          >
+          <button class="btn-gold" type="submit" :disabled="busy">
+            <BaseLoading v-if="busy" label="Saving…" /><template v-else>{{
+              customer ? 'Update Customer' : 'Save Customer'
+            }}</template></button
+          ><RouterLink to="/customers" class="btn-outline-warm ms-2">Cancel</RouterLink>
         </div>
       </fieldset>
     </form>

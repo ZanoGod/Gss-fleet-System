@@ -4,6 +4,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import './assets/styles/theme.css'
 import './assets/main.css'
 import './assets/fleet-modules.css'
+import './assets/classic-loader.css'
+import './assets/toast.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

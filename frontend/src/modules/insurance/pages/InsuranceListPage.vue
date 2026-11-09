@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { usePendingAction } from '@/components/common/usePendingAction'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import { insuranceMetrics, insuranceHeader } from '../overview'
@@ -8,15 +11,17 @@ import { insuranceApi } from '../api'
 import type { InsuranceClaim } from '../types'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import { toast } from '@/services/toast'
 
 const store = useInsuranceStore(),
   search = ref(''),
   status = ref(''),
   activeTab = ref('policies'),
   claims = ref<InsuranceClaim[]>([]),
-  providers = ref(store.providers)
+  initial = ref(true),
+  claimsReady = ref(false)
+let request = 0
 const error = ref(''),
-  success = ref(''),
   providerModal = ref(false),
   providerId = ref<number | null>(null),
   providerForm = ref({ name: '', contact_name: '', email: '', phone: '', address: '', notes: '' }),
@@ -38,14 +43,26 @@ function providerErrorMessage(error: unknown, fallback: string) {
   const message = Reflect.get(data, 'message')
   return typeof message === 'string' ? message : fallback
 }
+const { pending, run } = usePendingAction()
 async function load() {
+  const version = ++request
   error.value = ''
   try {
     await store.load({ search: search.value || undefined, status: status.value || undefined })
-    providers.value = store.providers
-    claims.value = await insuranceApi.claims({ per_page: 10 })
+    if (version !== request) return
+    initial.value = false
+    const result = await insuranceApi.claims({ per_page: 10 })
+    if (version === request) claims.value = result
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Unable to load insurance data.'
+    if (version === request) {
+      error.value = e instanceof Error ? e.message : 'Unable to load insurance data.'
+      toast.error(error.value)
+    }
+  } finally {
+    if (version === request) {
+      initial.value = false
+      claimsReady.value = true
+    }
   }
 }
 function newProvider() {
@@ -68,6 +85,7 @@ async function editProvider(id: number) {
     providerModal.value = true
   } catch (e: unknown) {
     error.value = providerErrorMessage(e, 'Unable to load provider.')
+    toast.error(error.value)
   }
 }
 async function saveProvider() {
@@ -75,24 +93,27 @@ async function saveProvider() {
     if (providerId.value) await insuranceApi.updateProvider(providerId.value, providerForm.value)
     else await insuranceApi.createProvider(providerForm.value)
     providerModal.value = false
-    success.value = providerId.value ? 'Provider updated.' : 'Provider created.'
+    toast.success(providerId.value ? 'Provider updated.' : 'Provider created.')
     await load()
   } catch (e: unknown) {
     error.value = providerErrorMessage(e, 'Unable to save provider.')
+    toast.error(error.value)
   }
 }
 async function deleteProvider(id: number, name: string, count: number) {
   if (count > 0) {
     error.value = 'This provider has policies and cannot be deleted.'
+    toast.error(error.value)
     return
   }
   if (!window.confirm(`Delete provider ${name}?`)) return
   try {
     await insuranceApi.deleteProvider(id)
-    success.value = 'Provider deleted.'
+    toast.success('Provider deleted.')
     await load()
   } catch (e: unknown) {
     error.value = providerErrorMessage(e, 'Unable to delete provider.')
+    toast.error(error.value)
   }
 }
 function newClaim() {
@@ -103,10 +124,11 @@ async function createClaim() {
   try {
     await insuranceApi.createClaim(claim.value)
     claimModal.value = false
-    success.value = 'Claim created and its status recorded.'
+    toast.success('Claim created and its status recorded.')
     await load()
   } catch (e: unknown) {
     error.value = providerErrorMessage(e, 'Unable to create claim.')
+    toast.error(error.value)
   }
 }
 onMounted(load)
@@ -122,17 +144,13 @@ onMounted(load)
         >
       </div>
     </PageHeader>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-if="success" class="alert alert-success" role="status">
-      {{ success }}<button class="btn-close float-end" aria-label="Dismiss" @click="success = ''" />
-    </div>
-    <div v-if="store.loading" class="alert alert-light border">Loading insurance recordsâ€¦</div>
     <StatusSummary
       :items="insuranceMetrics(store.dashboard)"
-      :loading="store.loading"
+      :loading="initial"
       label="Insurance status summary"
     />
-    <template v-if="!store.loading && store.dashboard">
+    <PageSkeleton v-if="initial" label="Loading insurance policies" :columns="7" />
+    <template v-else-if="store.dashboard">
       <div class="fleet-tabs d-flex gap-2 mb-3">
         <button
           v-for="tab in [
@@ -158,7 +176,7 @@ onMounted(load)
               class="form-control"
               placeholder="Search policy or provider"
               aria-label="Search policies"
-              @keyup.enter="load"
+              @keyup.enter="run('search', load)"
             /><select
               v-model="status"
               class="form-select"
@@ -173,7 +191,15 @@ onMounted(load)
               >
                 {{ s }}
               </option></select
-            ><button class="btn btn-outline-primary" @click="load">Search</button>
+            ><button
+              class="btn btn-outline-primary"
+              :disabled="pending('search')"
+              @click="run('search', load)"
+            >
+              <BaseLoading v-if="pending('search')" label="Searching…" /><template v-else
+                >Search</template
+              >
+            </button>
           </div>
         </div>
         <div v-if="store.policies.length" class="table-responsive">
@@ -224,6 +250,11 @@ onMounted(load)
           No insurance policies match these filters.
         </div>
       </section>
+      <PageSkeleton
+        v-else-if="activeTab === 'claims' && !claimsReady"
+        label="Loading insurance claims"
+        :columns="6"
+      />
       <section v-else-if="activeTab === 'claims'" class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between">
           <h2 class="h5 mb-0">Recent claims</h2>
@@ -272,7 +303,7 @@ onMounted(load)
           <h2 class="h5 mb-0">Insurance providers</h2>
           <button class="btn btn-sm btn-primary" @click="newProvider">Add provider</button>
         </div>
-        <div v-if="providers.length" class="table-responsive">
+        <div v-if="store.providers.length" class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <thead>
               <tr>
@@ -284,21 +315,35 @@ onMounted(load)
               </tr>
             </thead>
             <tbody>
-              <tr v-for="p in providers" :key="p.id">
+              <tr v-for="p in store.providers" :key="p.id">
                 <td class="fw-semibold">{{ p.name }}</td>
                 <td>{{ p.contact_name || p.email || 'â€”' }}</td>
                 <td>{{ p.phone || 'â€”' }}</td>
                 <td>{{ p.policies_count ?? 'â€”' }}</td>
                 <td>
                   <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-outline-primary" @click="editProvider(p.id)">
-                      Details / Edit</button
+                    <button
+                      class="btn btn-sm btn-outline-primary"
+                      :disabled="pending(`edit:${p.id}`)"
+                      @click="run(`edit:${p.id}`, () => editProvider(p.id))"
+                    >
+                      <BaseLoading
+                        v-if="pending(`edit:${p.id}`)"
+                        label="Loading provider…"
+                      /><template v-else>Details / Edit</template></button
                     ><button
                       class="btn btn-sm btn-outline-danger"
-                      :disabled="(p.policies_count || 0) > 0"
-                      @click="deleteProvider(p.id, p.name, p.policies_count || 0)"
+                      :disabled="pending(`delete:${p.id}`) || (p.policies_count || 0) > 0"
+                      @click="
+                        run(`delete:${p.id}`, () =>
+                          deleteProvider(p.id, p.name, p.policies_count || 0),
+                        )
+                      "
                     >
-                      Delete
+                      <BaseLoading v-if="pending(`delete:${p.id}`)" label="Deleting…" /><template
+                        v-else
+                        >Delete</template
+                      >
                     </button>
                   </div>
                 </td>
@@ -309,12 +354,11 @@ onMounted(load)
         <div v-else class="p-4 text-center text-muted">No providers yet.</div>
       </section>
     </template>
-    <div v-else-if="!store.loading" class="alert alert-light border">
-      Insurance dashboard is not available.
-    </div>
+    <div v-else class="empty-state">Insurance dashboard is not available.</div>
     <BaseModal
       :open="providerModal"
       :title="providerId ? 'Insurance provider details' : 'Add insurance provider'"
+      :busy="pending('provider')"
       @close="providerModal = false"
       ><div class="row g-3">
         <div class="col-12">
@@ -364,17 +408,27 @@ onMounted(load)
         </div>
       </div>
       <template #actions
-        ><button class="btn btn-outline-secondary" @click="providerModal = false">Cancel</button
+        ><button
+          class="btn btn-outline-secondary"
+          :disabled="pending('provider')"
+          @click="providerModal = false"
+        >Cancel</button
         ><button
           class="btn btn-primary"
-          :disabled="!providerForm.name.trim()"
-          @click="saveProvider"
+          :disabled="pending('provider') || !providerForm.name.trim()"
+          @click="run('provider', saveProvider)"
         >
-          Save provider
+          <BaseLoading v-if="pending('provider')" label="Saving provider…" /><template v-else
+            >Save provider</template
+          >
         </button></template
       ></BaseModal
     >
-    <BaseModal :open="claimModal" title="Create insurance claim" @close="claimModal = false"
+    <BaseModal
+      :open="claimModal"
+      title="Create insurance claim"
+      :busy="pending('claim')"
+      @close="claimModal = false"
       ><div class="row g-3">
         <div class="col-12">
           <label class="form-label" for="claim-policy">Policy</label
@@ -425,8 +479,20 @@ onMounted(load)
         </div>
       </div>
       <template #actions
-        ><button class="btn btn-outline-secondary" @click="claimModal = false">Cancel</button
-        ><button class="btn btn-primary" @click="createClaim">Save claim</button></template
+        ><button
+          class="btn btn-outline-secondary"
+          :disabled="pending('claim')"
+          @click="claimModal = false"
+        >Cancel</button
+        ><button
+          class="btn btn-primary"
+          :disabled="pending('claim')"
+          @click="run('claim', createClaim)"
+        >
+          <BaseLoading v-if="pending('claim')" label="Saving claim…" /><template v-else
+            >Save claim</template
+          >
+        </button></template
       ></BaseModal
     >
   </main>

@@ -1,0 +1,27 @@
+.gss-inline-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  white-space: nowrap;
+}
+
+.classic-loader {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  flex: 0 0 auto;
+  vertical-align: -0.12em;
+  animation: classic-loader-rotation 0.75s linear infinite;
+}
+
+@keyframes classic-loader-rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .classic-loader {
+    animation-duration: 1.5s;
+  }
+}

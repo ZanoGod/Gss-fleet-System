@@ -4,6 +4,7 @@ export const API_ERROR_MESSAGES = {
   database: 'Database connection unavailable. Please contact the administrator.',
   invalidCredentials: 'Incorrect username or password.',
   offline: 'Cannot connect to the server. Please try again later.',
+  timeout: 'The request timed out after 30 seconds. Please try again.',
   sessionExpired: 'Your session has expired. Please log in again.',
   csrf: 'Your session is invalid or expired. Please refresh and try again.',
   server: 'An unexpected server error occurred. Please try again later.',
@@ -25,6 +26,7 @@ type ApiErrorPayload = {
 export type ApiErrorCategory =
   | 'database'
   | 'offline'
+  | 'timeout'
   | 'session'
   | 'csrf'
   | 'validation'
@@ -62,7 +64,10 @@ export function getApiErrorCategory(
   options: { existingSession?: boolean } = {},
 ): ApiErrorCategory {
   if (!axios.isAxiosError(error)) return 'server'
-  if (!error.response) return 'offline'
+  if (!error.response) {
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return 'timeout'
+    return 'offline'
+  }
 
   const status = error.response.status
   const code = getApiErrorCode(error)
@@ -82,7 +87,11 @@ export function getApiErrorMessage(
   options: { existingSession?: boolean } = {},
 ): string {
   if (!axios.isAxiosError<ApiErrorPayload>(error)) return API_ERROR_MESSAGES.server
-  if (!error.response) return API_ERROR_MESSAGES.offline
+  if (!error.response) {
+    return getApiErrorCategory(error, options) === 'timeout'
+      ? API_ERROR_MESSAGES.timeout
+      : API_ERROR_MESSAGES.offline
+  }
 
   const category = getApiErrorCategory(error, options)
   if (category === 'validation')
@@ -91,6 +100,7 @@ export function getApiErrorMessage(
   return {
     database: API_ERROR_MESSAGES.database,
     offline: API_ERROR_MESSAGES.offline,
+    timeout: API_ERROR_MESSAGES.timeout,
     session: API_ERROR_MESSAGES.sessionExpired,
     csrf: API_ERROR_MESSAGES.csrf,
     server: API_ERROR_MESSAGES.server,

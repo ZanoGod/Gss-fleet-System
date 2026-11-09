@@ -1,13 +1,20 @@
 <script setup lang="ts">
-defineProps<{ open: boolean; title: string }>()
+withDefaults(defineProps<{ open: boolean; title: string; busy?: boolean }>(), { busy: false })
 const emit = defineEmits<{ close: [] }>()
 </script>
 <template>
-  <div v-if="open" class="gss-modal-backdrop" @click.self="emit('close')">
+  <div v-if="open" class="gss-modal-backdrop" @click.self="!busy && emit('close')">
     <section class="gss-modal card-shell" role="dialog" aria-modal="true" :aria-label="title">
       <header>
         <h2>{{ title }}</h2>
-        <button class="btn-outline-warm" aria-label="Close" @click="emit('close')">×</button>
+        <button
+          class="btn-outline-warm"
+          aria-label="Close"
+          :disabled="busy"
+          @click="emit('close')"
+        >
+          ×
+        </button>
       </header>
       <div><slot /></div>
       <footer><slot name="actions" /></footer>

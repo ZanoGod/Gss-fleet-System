@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
+import { onUnmounted, ref, watch } from 'vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import { customerApi, customerError } from '../api'
 import { currentMonth, shiftMonth, type Customer } from '../types'
+import { toast } from '@/services/toast'
 const props = defineProps<{ id: number; month?: string }>()
 const emit = defineEmits<{ deleted: []; monthChange: [month: string] }>()
 const customer = ref<Customer | null>(null),
@@ -27,14 +29,19 @@ watch(month, (value) => emit('monthChange', value))
 async function load() {
   const version = ++request
   loading.value = true
-  error.value = ''
-  customer.value = null
+  if (customer.value?.id !== props.id) customer.value = null
   confirming.value = false
   try {
     const result = await customerApi.get(props.id, month.value)
-    if (version === request) customer.value = result
+    if (version === request) {
+      customer.value = result
+      error.value = ''
+    }
   } catch (cause) {
-    if (version === request) error.value = customerError(cause)
+    if (version === request) {
+      error.value = customerError(cause)
+      toast.error(error.value)
+    }
   } finally {
     if (version === request) loading.value = false
   }
@@ -45,9 +52,11 @@ async function remove() {
   error.value = ''
   try {
     await customerApi.remove(customer.value.id)
+    toast.success('Customer deleted successfully.')
     emit('deleted')
   } catch (cause) {
     error.value = customerError(cause)
+    toast.error(error.value)
     confirming.value = false
   } finally {
     deleting.value = false
@@ -76,14 +85,12 @@ const labels: {
 ]
 </script>
 <template>
-  <div class="customer-details" :aria-busy="loading">
-    <div v-if="error" class="alert alert-danger" role="alert">
-      {{ error }}
-      <button v-if="!customer" class="btn btn-sm btn-outline-secondary ms-2" @click="load">
-        Retry
-      </button>
-    </div>
-    <BaseLoading v-if="loading" label="Loading customer details…" />
+  <div class="customer-details">
+    <button v-if="error && !customer" class="btn btn-sm btn-outline-secondary mb-3" :disabled="loading" @click="load">
+      <BaseLoading v-if="loading" label="Retrying…" /><template v-else>Retry loading customer</template>
+    </button>
+    <BaseLoading v-if="loading && customer" label="Updating customer assignments…" />
+    <PageSkeleton kind="detail" v-if="loading && !customer && !error" label="Loading customer details…" />
     <template v-if="customer">
       <div class="d-flex justify-content-between align-items-start gap-3">
         <div>
@@ -164,8 +171,10 @@ const labels: {
       <div v-if="confirming" class="alert alert-warning mt-3" role="alert">
         <p>Delete {{ customer.company_name }}? This permanently removes this customer.</p>
         <button class="btn btn-danger" :disabled="deleting" @click="remove">
-          {{ deleting ? 'Deleting…' : 'Confirm delete' }}</button
-        ><button class="btn-outline-warm ms-2" :disabled="deleting" @click="confirming = false">
+          <BaseLoading v-if="deleting" label="Deleting…" /><template v-else
+            >Confirm delete</template
+          ></button
+        ><button class="btn-outline-warm ms-2" @click="confirming = false">
           Cancel
         </button>
       </div>

@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { Classic } from '@/components/loading-ui/classic'
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
-import { getApiErrorMessage } from '@/services/apiErrors'
+// import { getApiErrorMessage } from '@/services/apiErrors'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from '@/services/toast'
 import './AppSidebar.css'
 
 const auth = useAuthStore()
@@ -122,10 +124,12 @@ async function signOut(): Promise<void> {
   try {
     logoutError.value = ''
     await auth.logout()
+    toast.success('Signed out successfully.')
     closeMobileMenu()
     await router.replace('/login')
   } catch {
     logoutError.value = 'Logout could not be confirmed by the server. Please try again.'
+    toast.error(logoutError.value)
   } finally {
     signingOut.value = false
   }
@@ -228,7 +232,10 @@ async function signOut(): Promise<void> {
           :title="collapsed ? 'Logout' : undefined"
           @click="signOut"
         >
-          <span class="nav-icon" aria-hidden="true"><i class="bi bi-box-arrow-right"></i></span>
+          <span class="nav-icon" aria-hidden="true">
+            <Classic v-if="signingOut" />
+            <i v-else class="bi bi-box-arrow-right"></i>
+          </span>
           <span class="nav-label">{{ signingOut ? 'Signing out…' : 'Logout' }}</span>
         </button>
       </div>
@@ -237,7 +244,6 @@ async function signOut(): Promise<void> {
     <div class="app-main">
       <AppHeader :mobile-open="mobileOpen" @toggle-menu="openMobileMenu" />
       <main class="shell-content">
-        <div v-if="logoutError" class="alert alert-danger" role="alert">{{ logoutError }}</div>
         <slot />
       </main>
     </div>

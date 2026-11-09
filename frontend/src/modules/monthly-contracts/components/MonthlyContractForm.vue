@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import api from '@/services/api'
+import { toast } from '@/services/toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { monthlyContractApi } from '../api'
@@ -7,7 +10,7 @@ import type { ContractCustomer, ContractInput, ContractOptions, MonthlyContract 
 const props = defineProps<{ contractId?: number; renewalFromId?: number }>(),
   router = useRouter(),
   options = ref<ContractOptions | null>(null),
-  loading = ref(false),
+  loading = ref(true),
   saving = ref(false),
   error = ref(''),
   errors = ref<Record<string, string[]>>({})
@@ -126,11 +129,13 @@ onMounted(async () => {
     }
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to load contract information.'
+    toast.error(error.value)
   } finally {
     loading.value = false
   }
 })
 async function submit() {
+  if (saving.value) return
   saving.value = true
   error.value = ''
   errors.value = {}
@@ -138,20 +143,24 @@ async function submit() {
     const saved = props.renewalFromId
       ? await monthlyContractApi.renew(props.renewalFromId, form)
       : await monthlyContractApi.save(form, props.contractId)
+    toast.success(props.renewalFromId ? 'Contract renewed successfully.' : props.contractId ? 'Contract updated successfully.' : 'Contract created successfully.')
     await router.push(`/monthly-contracts/${saved.id}`)
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to save contract.'
+    toast.error(error.value)
     errors.value = e?.response?.data?.errors || {}
   } finally {
     saving.value = false
   }
 }
+const loadingDrivers = ref(false)
 let driverRequest = 0
 watch(
   () => [form.start_date, form.end_date],
   async ([start, end]) => {
     const version = ++driverRequest
-    if (!start || !end || end < start) return
+    loadingDrivers.value = Boolean(start && end && end >= start)
+    if (!loadingDrivers.value) return
     try {
       const response = await api.get('/api/drivers/options', {
         params: {
@@ -165,14 +174,15 @@ watch(
         options.value.drivers = response.data.data.drivers
     } catch {
       /* The contract service remains authoritative if the availability lookup fails. */
+    } finally {
+      if (version === driverRequest) loadingDrivers.value = false
     }
   },
 )
 </script>
 <template>
-  <div v-if="loading" class="alert alert-light border">Loading contract form…</div>
+  <PageSkeleton v-if="loading" kind="form" label="Loading contract form…" />
   <div v-else>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
     <div v-if="renewalFromId" class="alert alert-info">
       Renewal dates and contract number are generated on the server from the previous contract
       period.
@@ -238,6 +248,7 @@ watch(
             ><select
               id="mc-driver"
               v-model="form.driver_id"
+              :disabled="loadingDrivers"
               class="form-select"
               :required="requiresDriver"
             >
@@ -256,6 +267,7 @@ watch(
                 }}{{ d.available === false ? ' · Unavailable for selected dates' : '' }})
               </option>
             </select>
+            <BaseLoading v-if="loadingDrivers" label="Checking driver availability…" />
             <div v-if="errors.driver_id" class="text-danger small">{{ errors.driver_id[0] }}</div>
           </div>
           <div class="col-md-6">
@@ -409,7 +421,7 @@ watch(
       <div class="card-footer bg-white d-flex justify-content-end gap-2">
         <RouterLink to="/monthly-contracts" class="btn btn-outline-secondary">Cancel</RouterLink
         ><button class="btn btn-primary" :disabled="saving">
-          {{ saving ? 'Saving…' : 'Save contract' }}
+          <BaseLoading v-if="saving" label="Saving…" /><template v-else>Save contract</template>
         </button>
       </div>
     </form>

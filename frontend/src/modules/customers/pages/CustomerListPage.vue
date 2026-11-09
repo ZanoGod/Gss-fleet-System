@@ -1,15 +1,18 @@
 <script setup lang="ts">
+import { usePendingAction } from '@/components/common/usePendingAction'
+import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import { customersMetrics, customerHeader } from '../overview'
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import BaseLoading from '@/components/common/BaseLoading.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseEmptyState from '@/components/common/BaseEmptyState.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import CustomerDetails from '../components/CustomerDetails.vue'
 import { customerApi, customerError } from '../api'
+import { toast } from '@/services/toast'
 import {
   assignmentTypes,
   rentalStatuses,
@@ -33,9 +36,10 @@ const filters = reactive<CustomerFilters>({
 const rows = ref<Customer[]>([]),
   summary = ref<CustomerSummary | null>(null),
   loading = ref(false),
+  initial = ref(true),
   error = ref(''),
   summaryError = ref(''),
-  summaryLoading = ref(false)
+  summaryLoading = ref(true)
 const page = ref(1),
   total = ref(0),
   selected = ref<number | null>(null),
@@ -43,15 +47,12 @@ const page = ref(1),
 const dialog = ref<HTMLDialogElement | null>(null),
   results = ref<HTMLElement | null>(null),
   fullscreen = ref(false)
-const success = ref(
-  (
-    {
-      created: 'Customer created successfully.',
-      updated: 'Customer updated successfully.',
-      deleted: 'Customer deleted successfully.',
-    } as Record<string, string>
-  )[textQuery('notice')] || '',
-)
+const noticeMessages: Record<string, string> = {
+  created: 'Customer created successfully.',
+  updated: 'Customer updated successfully.',
+  deleted: 'Customer deleted successfully.',
+}
+if (noticeMessages[textQuery('notice')]) toast.success(noticeMessages[textQuery('notice')]!)
 let request = 0,
   summaryRequest = 0
 onUnmounted(() => {
@@ -59,12 +60,11 @@ onUnmounted(() => {
   summaryRequest++
   document.removeEventListener('fullscreenchange', syncFullscreen)
 })
+const { pending, run } = usePendingAction()
 async function load(next = 1) {
   const version = ++request
   loading.value = true
-  error.value = ''
-  rows.value = []
-  total.value = 0
+  if (!pending('retry')) error.value = ''
   try {
     const data = await customerApi.list({ ...filters }, next)
     if (version !== request) return
@@ -73,25 +73,36 @@ async function load(next = 1) {
       await load(Math.max(1, data.meta.last_page))
       return
     }
+    error.value = ''
     rows.value = data.data
     total.value = data.meta.total
     page.value = data.meta.current_page
   } catch (cause) {
-    if (version === request) error.value = customerError(cause)
+    if (version === request) {
+      error.value = customerError(cause)
+      toast.error(error.value)
+    }
   } finally {
-    if (version === request) loading.value = false
+    if (version === request) {
+      loading.value = false
+      initial.value = false
+    }
   }
 }
 async function loadSummary() {
   const version = ++summaryRequest
-  summaryError.value = ''
-  summary.value = null
   summaryLoading.value = true
   try {
     const value = await customerApi.summary()
-    if (version === summaryRequest) summary.value = value
+    if (version === summaryRequest) {
+      summary.value = value
+      summaryError.value = ''
+    }
   } catch (cause) {
-    if (version === summaryRequest) summaryError.value = customerError(cause)
+    if (version === summaryRequest) {
+      summaryError.value = customerError(cause)
+      toast.warning(`Customer summary: ${summaryError.value}`)
+    }
   } finally {
     if (version === summaryRequest) summaryLoading.value = false
   }
@@ -113,7 +124,7 @@ async function view(id: number) {
 async function deleted() {
   dialog.value?.close()
   selected.value = null
-  success.value = 'Customer deleted successfully.'
+  toast.success('Customer deleted successfully.')
   await Promise.all([load(page.value), loadSummary()])
 }
 function syncFullscreen() {
@@ -123,9 +134,9 @@ async function toggleFullscreen() {
   try {
     if (document.fullscreenElement) await document.exitFullscreen()
     else if (results.value?.requestFullscreen) await results.value.requestFullscreen()
-    else error.value = 'Fullscreen is unavailable in this browser.'
+    else toast.info('Fullscreen is unavailable in this browser.')
   } catch {
-    error.value = 'Unable to enter fullscreen. You can continue using the table normally.'
+    toast.error('Unable to enter fullscreen. You can continue using the table normally.')
   }
 }
 onMounted(() => {
@@ -139,25 +150,16 @@ onMounted(() => {
     <PageHeader v-bind="customerHeader" class="d-flex flex-wrap justify-content-end">
       <RouterLink to="/customers/create" class="btn btn-primary">+ Add Customer</RouterLink>
     </PageHeader>
-    <div v-if="success" class="alert alert-success" role="status">
-      {{ success
-      }}<button
-        class="btn-close float-end"
-        aria-label="Dismiss success message"
-        @click="success = ''"
-      />
-    </div>
-    <div v-if="summaryError" class="alert alert-warning" role="alert">
-      Summary: {{ summaryError }}
-      <button class="btn-outline-warm" @click="loadSummary">Retry</button>
-    </div>
     <StatusSummary
       :items="customersMetrics(summary)"
-      :loading="summaryLoading"
+      :loading="summaryLoading && !summary"
       label="customer status summary"
     />
+    <button v-if="summaryError" class="btn-outline-warm mb-3" :disabled="summaryLoading" @click="loadSummary">
+      <BaseLoading v-if="summaryLoading" label="Retrying…" /><template v-else>Retry summary</template>
+    </button>
     <section class="card-shell p-4 mb-4" aria-label="Customer filters">
-      <form class="row g-3" @submit.prevent="apply">
+      <form class="row g-3" @submit.prevent="run('filter', apply)">
         <div class="col-lg-4">
           <label for="customer-search" class="form-label">Search</label
           ><input
@@ -200,9 +202,17 @@ onMounted(() => {
           </select>
         </div>
         <div class="col-lg-9 d-flex align-items-end gap-2 flex-wrap">
-          <button class="btn btn-primary" :disabled="loading">Filter</button
-          ><button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="reset">
-            Reset
+          <button class="btn btn-primary" :disabled="initial || pending('filter')">
+            <BaseLoading v-if="pending('filter')" label="Filtering…" /><template v-else
+              >Filter</template
+            ></button
+          ><button
+            type="button"
+            class="btn btn-outline-secondary"
+            :disabled="initial || pending('reset')"
+            @click="run('reset', reset)"
+          >
+            <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else>Reset</template>
           </button>
           <div class="d-flex gap-2 align-items-center ms-lg-auto">
             <span class="small">Contract month</span
@@ -233,12 +243,10 @@ onMounted(() => {
         </div>
       </form>
     </section>
-    <section
-      ref="results"
-      class="card-shell customer-results"
-      aria-label="Customer results"
-      :aria-busy="loading"
-    >
+    <section ref="results" class="card-shell customer-results" aria-label="Customer results">
+      <button v-if="error" class="btn-outline-warm m-3" :disabled="pending('retry')" @click="run('retry', () => load(page))">
+        <BaseLoading v-if="pending('retry')" label="Retrying…" /><template v-else>Retry loading customers</template>
+      </button>
       <div class="p-4 d-flex align-items-center justify-content-between gap-3 flex-wrap">
         <div>
           <h2 class="h5">Customer List</h2>
@@ -250,10 +258,12 @@ onMounted(() => {
           {{ fullscreen ? 'Exit Fullscreen' : 'Fullscreen Table' }}
         </button>
       </div>
-      <div v-if="error" class="alert alert-danger m-3" role="alert">
-        {{ error }} <button class="btn-outline-warm" @click="load(page)">Retry</button>
-      </div>
-      <BaseLoading v-if="loading" label="Loading customers…" />
+      <BaseLoading
+        v-if="loading && !initial"
+        class="d-block px-3 py-2"
+        label="Updating customers…"
+      />
+      <PageSkeleton v-if="initial" label="Loading customers" :columns="8" />
       <div v-else-if="rows.length" class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead>
@@ -308,8 +318,8 @@ onMounted(() => {
           :page="page"
           :per-page="10"
           :total="total"
-          :disabled="loading"
-          @update:page="load"
+          :pending-page="(target) => pending(`page:${target}`)"
+          @update:page="run(`page:${$event}`, () => load($event))"
         />
       </div>
       <dialog

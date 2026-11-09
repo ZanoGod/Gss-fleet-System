@@ -6,6 +6,9 @@ withDefaults(defineProps<{ items: StatusMetric[]; loading?: boolean; label: stri
 })
 </script>
 <template>
+  <span v-if="loading" class="visually-hidden" role="status"
+    >Loading {{ label.toLowerCase() }}</span
+  >
   <section class="status-summary mb-4" :aria-label="label" :aria-busy="loading">
     <StatusCard v-for="{ key, ...item } in items" :key="key" v-bind="item" :loading="loading" />
   </section>

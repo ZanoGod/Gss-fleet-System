@@ -12,7 +12,8 @@ withDefaults(defineProps<Omit<StatusMetric, 'key'> & { loading?: boolean }>(), {
       <h3>{{ label }}</h3>
       <span class="status-card__icon" aria-hidden="true"><i class="bi" :class="icon" /></span>
     </div>
-    <strong class="status-card__value">{{ loading ? '…' : (value ?? '—') }}</strong>
+    <span v-if="loading" class="gss-placeholder w-25" style="height: 2.125rem" aria-hidden="true" />
+    <strong v-else class="status-card__value">{{ value ?? '—' }}</strong>
   </article>
 </template>
 
