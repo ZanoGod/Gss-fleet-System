@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import BaseLoading from '@/components/common/BaseLoading.vue'
+import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { customerApi, customerError, customerFieldErrors } from '../api'
 import { offDays, type Customer, type CustomerInput } from '../types'
 import { toast } from '@/services/toast'
-const props = defineProps<{ customer?: Customer }>()
+const props = defineProps<{ customer?: Customer; loading?: boolean }>()
 const router = useRouter()
 const busy = ref(false)
 const error = ref('')
@@ -51,7 +51,7 @@ watch(
   { immediate: true },
 )
 async function submit() {
-  if (busy.value) return
+  if (props.loading || busy.value) return
   errors.value = {}
   error.value = ''
   for (const field of fields) {
@@ -67,7 +67,9 @@ async function submit() {
       ) as unknown as CustomerInput,
       props.customer?.id,
     )
-    toast.success(props.customer ? 'Customer updated successfully.' : 'Customer created successfully.')
+    toast.success(
+      props.customer ? 'Customer updated successfully.' : 'Customer created successfully.',
+    )
     await router.push({
       path: '/customers',
     })
@@ -84,13 +86,22 @@ async function submit() {
   <section class="card-shell p-4">
     <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
       <h2 class="h4 mb-0">{{ customer ? 'Edit Customer' : 'Add Customer' }}</h2>
-      <RouterLink to="/customers" class="btn-outline-warm">All Customers</RouterLink>
+      <RouterLink to="/customers" class="btn gss-button gss-button--outline gss-button--neutral"
+        >All Customers</RouterLink
+      >
     </div>
     <p class="text-muted">
       Contract assignments, vehicles, drivers, and billing stay in
       <RouterLink to="/monthly-contracts">Monthly Contracts</RouterLink>.
     </p>
-    <form class="row g-3" @submit.prevent="submit">
+    <span v-if="loading" class="visually-hidden" role="status">Loading customer…</span>
+    <form
+      class="row g-3"
+      :class="{ 'gss-form-skeleton': loading }"
+      :inert="loading"
+      :aria-hidden="loading || undefined"
+      @submit.prevent="submit"
+    >
       <fieldset class="row g-3 m-0 p-0 border-0">
         <div v-for="field in fields" :key="field.key" class="col-md-6">
           <label :for="`customer-${field.key}`" class="form-label"
@@ -160,11 +171,20 @@ async function submit() {
                 : 'New customers start Inactive. Saving an Active contract activates the linked customer.'
             }}
           </p>
-          <button class="btn-gold" type="submit" :disabled="busy">
-            <BaseLoading v-if="busy" label="Saving…" /><template v-else>{{
+          <button
+            class="btn gss-button gss-button--primary"
+            type="submit"
+            :disabled="busy"
+            :aria-busy="busy"
+          >
+            <ActionButtonLabel :pending="busy" loading-label="Saving…">{{
               customer ? 'Update Customer' : 'Save Customer'
-            }}</template></button
-          ><RouterLink to="/customers" class="btn-outline-warm ms-2">Cancel</RouterLink>
+            }}</ActionButtonLabel></button
+          ><RouterLink
+            to="/customers"
+            class="btn gss-button gss-button--outline gss-button--neutral ms-2"
+            >Cancel</RouterLink
+          >
         </div>
       </fieldset>
     </form>

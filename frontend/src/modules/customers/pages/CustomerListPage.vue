@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import { usePendingAction } from '@/components/common/usePendingAction'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -146,21 +147,37 @@ onMounted(() => {
 })
 </script>
 <template>
-  <main class="fleet-module page-content">
+  <main class="fleet-module fleet-list-page page-content">
     <PageHeader v-bind="customerHeader" class="d-flex flex-wrap justify-content-end">
-      <RouterLink to="/customers/create" class="btn btn-primary">+ Add Customer</RouterLink>
+      <RouterLink to="/customers/create" class="btn gss-button gss-button--primary"
+        >+ Add Customer</RouterLink
+      >
     </PageHeader>
     <StatusSummary
       :items="customersMetrics(summary)"
       :loading="summaryLoading && !summary"
       label="customer status summary"
     />
-    <button v-if="summaryError" class="btn-outline-warm mb-3" :disabled="summaryLoading" @click="loadSummary">
-      <BaseLoading v-if="summaryLoading" label="Retrying…" /><template v-else>Retry summary</template>
+    <button
+      v-if="summaryError"
+      class="btn gss-button gss-button--outline gss-button--neutral mb-3"
+      :disabled="summaryLoading"
+      @click="loadSummary"
+      :aria-busy="summaryLoading"
+    >
+      <ActionButtonLabel :pending="summaryLoading" loading-label="Retrying…"
+        >Retry summary</ActionButtonLabel
+      >
     </button>
-    <section class="card-shell p-4 mb-4" aria-label="Customer filters">
+    <section class="card-shell fleet-list-filter mb-4" aria-label="Customer filters">
+      <div class="fleet-list-filter-heading">
+        <div>
+          <h2 class="h5 mb-1">Filter Customers</h2>
+          <p class="small text-muted mb-0">Find customers by details or contract status.</p>
+        </div>
+      </div>
       <form class="row g-3" @submit.prevent="run('filter', apply)">
-        <div class="col-lg-4">
+        <div class="col-lg-5">
           <label for="customer-search" class="form-label">Search</label
           ><input
             id="customer-search"
@@ -186,7 +203,7 @@ onMounted(() => {
             <option v-for="type in assignmentTypes" :key="type">{{ type }}</option>
           </select>
         </div>
-        <div class="col-sm-6 col-lg-3">
+        <div class="col-sm-6 col-lg-2">
           <label for="customer-rental" class="form-label">Rental</label
           ><select id="customer-rental" v-model="filters.rental_status" class="form-select">
             <option value="">All rentals</option>
@@ -201,24 +218,33 @@ onMounted(() => {
             <option value="expired">Expired</option>
           </select>
         </div>
-        <div class="col-lg-9 d-flex align-items-end gap-2 flex-wrap">
-          <button class="btn btn-primary" :disabled="initial || pending('filter')">
-            <BaseLoading v-if="pending('filter')" label="Filtering…" /><template v-else
-              >Filter</template
+        <div class="col-12 d-flex align-items-end gap-2 flex-wrap fleet-list-filter-actions">
+          <button
+            class="btn gss-button gss-button--secondary"
+            :disabled="initial || pending('filter')"
+            :aria-busy="pending('filter')"
+          >
+            <ActionButtonLabel :pending="pending('filter')" loading-label="Filtering…"
+              >Filter</ActionButtonLabel
             ></button
           ><button
             type="button"
-            class="btn btn-outline-secondary"
+            class="btn gss-button gss-button--outline gss-button--neutral"
             :disabled="initial || pending('reset')"
             @click="run('reset', reset)"
+            :aria-busy="pending('reset')"
           >
-            <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else>Reset</template>
+            <ActionButtonLabel :pending="pending('reset')" loading-label="Resetting…"
+              >Reset</ActionButtonLabel
+            >
           </button>
-          <div class="d-flex gap-2 align-items-center ms-lg-auto">
+          <div
+            class="d-flex gap-2 align-items-center flex-wrap ms-lg-auto fleet-list-month-controls"
+          >
             <span class="small">Contract month</span
             ><button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn gss-button gss-button--outline gss-button--neutral"
               aria-label="Previous month"
               @click="month = shiftMonth(month, -1)"
             >
@@ -226,14 +252,14 @@ onMounted(() => {
             ><span>{{ month }}</span
             ><button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn gss-button gss-button--outline gss-button--neutral"
               aria-label="Next month"
               @click="month = shiftMonth(month, 1)"
             >
               ›</button
             ><button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn gss-button gss-button--outline gss-button--neutral"
               :disabled="month === currentMonth()"
               @click="month = currentMonth()"
             >
@@ -243,9 +269,20 @@ onMounted(() => {
         </div>
       </form>
     </section>
-    <section ref="results" class="card-shell customer-results" aria-label="Customer results">
-      <button v-if="error" class="btn-outline-warm m-3" :disabled="pending('retry')" @click="run('retry', () => load(page))">
-        <BaseLoading v-if="pending('retry')" label="Retrying…" /><template v-else>Retry loading customers</template>
+    <section
+      ref="results"
+      class="card-shell customer-results fleet-list-results"
+      aria-label="Customer results"
+    >
+      <button
+        v-if="error"
+        class="btn gss-button gss-button--outline gss-button--neutral m-3"
+        :disabled="pending('retry')"
+        @click="run('retry', () => load(page))"
+      >
+        <ActionButtonLabel :pending="pending('retry')" loading-label="Retrying…"
+          >Retry loading customers</ActionButtonLabel
+        >
       </button>
       <div class="p-4 d-flex align-items-center justify-content-between gap-3 flex-wrap">
         <div>
@@ -254,7 +291,10 @@ onMounted(() => {
             {{ total }} matching customers. View opens contracts for {{ month }}.
           </p>
         </div>
-        <button class="btn-outline-warm" @click="toggleFullscreen">
+        <button
+          class="btn gss-button gss-button--outline gss-button--neutral"
+          @click="toggleFullscreen"
+        >
           {{ fullscreen ? 'Exit Fullscreen' : 'Fullscreen Table' }}
         </button>
       </div>
@@ -264,8 +304,8 @@ onMounted(() => {
         label="Updating customers…"
       />
       <PageSkeleton v-if="initial" label="Loading customers" :columns="8" />
-      <div v-else-if="rows.length" class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+      <div v-else-if="rows.length" class="table-responsive fleet-list-table-wrap">
+        <table class="table table-hover align-middle mb-0 fleet-list-table">
           <thead>
             <tr>
               <th>#</th>
@@ -275,7 +315,7 @@ onMounted(() => {
               <th>Contracts</th>
               <th>Latest Expiry</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th class="fleet-list-actions-heading">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -298,11 +338,16 @@ onMounted(() => {
               </td>
               <td>{{ customer.latest_expiry || '—' }}</td>
               <td><BaseStatusBadge :status="customer.customer_status" /></td>
-              <td>
-                <button class="btn-outline-warm" @click="view(customer.id)">View</button
-                ><RouterLink :to="`/customers/${customer.id}/edit`" class="btn-outline-warm ms-2"
-                  >Edit</RouterLink
-                >
+              <td class="fleet-list-actions-cell">
+                <div class="fleet-list-row-actions">
+                  <button class="btn gss-button gss-button--secondary" @click="view(customer.id)">
+                    View</button
+                  ><RouterLink
+                    :to="`/customers/${customer.id}/edit`"
+                    class="btn gss-button gss-button--outline"
+                    >Edit</RouterLink
+                  >
+                </div>
               </td>
             </tr>
           </tbody>
@@ -337,7 +382,7 @@ onMounted(() => {
           <strong id="customer-drawer-title">Customer Details</strong
           ><button
             autofocus
-            class="btn-outline-warm"
+            class="btn gss-button gss-button--outline gss-button--neutral"
             aria-label="Close customer details"
             @click="dialog?.close()"
           >
@@ -395,11 +440,5 @@ onMounted(() => {
 .customer-drawer > header {
   border-bottom: 1px solid var(--line, var(--gss-border-default));
   padding-bottom: 1rem;
-}
-.table td:first-child {
-  min-width: auto;
-}
-.table td {
-  overflow-wrap: anywhere;
 }
 </style>

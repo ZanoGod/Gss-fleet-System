@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseLoading from '@/components/common/BaseLoading.vue'
+import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -51,7 +51,7 @@ onMounted(load)
         <RouterLink
           v-if="contract.status !== 'Renewed' && contract.status !== 'Cancelled'"
           :to="`/monthly-contracts/${contract.id}/edit`"
-          class="btn btn-outline-primary"
+          class="btn gss-button gss-button--outline"
           >Edit</RouterLink
         ><RouterLink
           v-if="
@@ -60,13 +60,22 @@ onMounted(load)
             !contract.renewals?.length
           "
           :to="`/monthly-contracts/${contract.id}/renew`"
-          class="btn btn-outline-warning"
+          class="btn gss-button gss-button--outline"
           >Renew</RouterLink
-        ><button class="btn btn-outline-danger" :disabled="deleting" @click="remove">
-          <BaseLoading v-if="deleting" label="Deleting…" /><template v-else
-            >Delete</template
+        ><button
+          class="btn gss-button gss-button--destructive"
+          :disabled="deleting"
+          @click="remove"
+          :aria-busy="deleting"
+        >
+          <ActionButtonLabel :pending="deleting" loading-label="Deleting…"
+            >Delete</ActionButtonLabel
           ></button
-        ><RouterLink to="/monthly-contracts" class="btn btn-outline-secondary">Back</RouterLink>
+        ><RouterLink
+          to="/monthly-contracts"
+          class="btn gss-button gss-button--outline gss-button--neutral"
+          >Back</RouterLink
+        >
       </div>
     </div>
     <PageSkeleton v-if="loading" kind="detail" label="Loading contract…" />

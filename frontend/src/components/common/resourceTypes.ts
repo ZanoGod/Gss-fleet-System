@@ -34,11 +34,11 @@ export interface Field {
 }
 
 export interface ResourceConfig {
-  key: string
   title: string
   singular: string
   path: string
   endpoint: string
+  summaryEndpoint: string
   icon: string
   description: string
   formHelp: string

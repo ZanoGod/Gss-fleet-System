@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import { onUnmounted, ref, watch } from 'vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
@@ -86,11 +87,23 @@ const labels: {
 </script>
 <template>
   <div class="customer-details">
-    <button v-if="error && !customer" class="btn btn-sm btn-outline-secondary mb-3" :disabled="loading" @click="load">
-      <BaseLoading v-if="loading" label="Retrying…" /><template v-else>Retry loading customer</template>
+    <button
+      v-if="error && !customer"
+      class="btn gss-button gss-button--secondary mb-3"
+      :disabled="loading"
+      @click="load"
+      :aria-busy="loading"
+    >
+      <ActionButtonLabel :pending="loading" loading-label="Retrying…"
+        >Retry loading customer</ActionButtonLabel
+      >
     </button>
     <BaseLoading v-if="loading && customer" label="Updating customer assignments…" />
-    <PageSkeleton kind="detail" v-if="loading && !customer && !error" label="Loading customer details…" />
+    <PageSkeleton
+      kind="detail"
+      v-if="loading && !customer && !error"
+      label="Loading customer details…"
+    />
     <template v-if="customer">
       <div class="d-flex justify-content-between align-items-start gap-3">
         <div>
@@ -113,20 +126,20 @@ const labels: {
         <h3 class="h5 mb-0">Monthly Contracts</h3>
         <div class="d-flex align-items-center gap-2">
           <button
-            class="btn-outline-warm"
+            class="btn gss-button gss-button--outline gss-button--neutral"
             aria-label="Previous contract month"
             @click="month = shiftMonth(month, -1)"
           >
             ‹</button
           ><span>{{ month }}</span
           ><button
-            class="btn-outline-warm"
+            class="btn gss-button gss-button--outline gss-button--neutral"
             aria-label="Next contract month"
             @click="month = shiftMonth(month, 1)"
           >
             ›</button
           ><button
-            class="btn-outline-warm"
+            class="btn gss-button gss-button--outline gss-button--neutral"
             :disabled="month === currentMonth()"
             @click="month = currentMonth()"
           >
@@ -170,19 +183,30 @@ const labels: {
       </article>
       <div v-if="confirming" class="alert alert-warning mt-3" role="alert">
         <p>Delete {{ customer.company_name }}? This permanently removes this customer.</p>
-        <button class="btn btn-danger" :disabled="deleting" @click="remove">
-          <BaseLoading v-if="deleting" label="Deleting…" /><template v-else
-            >Confirm delete</template
+        <button
+          class="btn gss-button gss-button--destructive"
+          :disabled="deleting"
+          @click="remove"
+          :aria-busy="deleting"
+        >
+          <ActionButtonLabel :pending="deleting" loading-label="Deleting…"
+            >Confirm delete</ActionButtonLabel
           ></button
-        ><button class="btn-outline-warm ms-2" @click="confirming = false">
+        ><button
+          class="btn gss-button gss-button--outline gss-button--neutral ms-2"
+          :disabled="deleting"
+          @click="confirming = false"
+        >
           Cancel
         </button>
       </div>
       <div v-else class="d-flex gap-2 flex-wrap mt-4">
-        <RouterLink :to="`/customers/${customer.id}/edit`" class="btn-gold"
+        <RouterLink
+          :to="`/customers/${customer.id}/edit`"
+          class="btn gss-button gss-button--outline"
           >Edit Customer</RouterLink
         ><button
-          class="btn btn-outline-danger"
+          class="btn gss-button gss-button--destructive"
           :disabled="!customer.can_delete"
           @click="confirming = true"
         >

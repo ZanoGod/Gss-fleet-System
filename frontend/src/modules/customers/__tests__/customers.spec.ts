@@ -122,7 +122,7 @@ describe('customer screens', () => {
       .find((button) => button.text() === 'Delete Customer')!
     await deleteButton.trigger('click')
     expect(customerApi.remove).not.toHaveBeenCalled()
-    await wrapper.get('.btn-danger').trigger('click')
+    await wrapper.get('.alert .gss-button--destructive').trigger('click')
     await flushPromises()
     expect(customerApi.remove).toHaveBeenCalledWith(1)
     expect(wrapper.emitted('deleted')).toHaveLength(1)
@@ -163,7 +163,7 @@ describe('customer screens', () => {
       .findAll('button')
       .find((button) => button.text() === 'Delete Customer')!
       .trigger('click')
-    await wrapper.get('.btn-danger').trigger('click')
+    await wrapper.get('.alert .gss-button--destructive').trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('Linked contract prevents deletion.')
     expect(wrapper.emitted('deleted')).toBeUndefined()

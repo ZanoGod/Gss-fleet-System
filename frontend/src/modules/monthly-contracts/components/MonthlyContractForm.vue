@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import api from '@/services/api'
@@ -143,7 +144,13 @@ async function submit() {
     const saved = props.renewalFromId
       ? await monthlyContractApi.renew(props.renewalFromId, form)
       : await monthlyContractApi.save(form, props.contractId)
-    toast.success(props.renewalFromId ? 'Contract renewed successfully.' : props.contractId ? 'Contract updated successfully.' : 'Contract created successfully.')
+    toast.success(
+      props.renewalFromId
+        ? 'Contract renewed successfully.'
+        : props.contractId
+          ? 'Contract updated successfully.'
+          : 'Contract created successfully.',
+    )
     await router.push(`/monthly-contracts/${saved.id}`)
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Unable to save contract.'
@@ -419,9 +426,14 @@ watch(
         </div>
       </div>
       <div class="card-footer bg-white d-flex justify-content-end gap-2">
-        <RouterLink to="/monthly-contracts" class="btn btn-outline-secondary">Cancel</RouterLink
-        ><button class="btn btn-primary" :disabled="saving">
-          <BaseLoading v-if="saving" label="Saving…" /><template v-else>Save contract</template>
+        <RouterLink
+          to="/monthly-contracts"
+          class="btn gss-button gss-button--outline gss-button--neutral"
+          >Cancel</RouterLink
+        ><button class="btn gss-button gss-button--primary" :disabled="saving" :aria-busy="saving">
+          <ActionButtonLabel :pending="saving" loading-label="Saving…"
+            >Save contract</ActionButtonLabel
+          >
         </button>
       </div>
     </form>

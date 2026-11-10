@@ -1,4 +1,7 @@
 <script setup lang="ts">
-import VehicleWorkspace from '../VehicleWorkspace.vue'
+import VehicleForm from './VehicleForm.vue'
 </script>
-<template><VehicleWorkspace /></template>
+
+<template>
+  <VehicleForm mode="edit" />
+</template>

@@ -1,10 +1,11 @@
 import type { ResourceConfig } from '@/components/common/resourceTypes'
-export const driverConfig: ResourceConfig = {
-  key: 'drivers',
+export const driverConfig: ResourceConfig & { optionsEndpoint: string } = {
   title: 'Drivers',
   singular: 'Driver',
   path: '/drivers',
   endpoint: '/api/drivers',
+  summaryEndpoint: '/api/drivers/summary',
+  optionsEndpoint: '/api/drivers/options',
   icon: 'bi-person-vcard',
   description: 'Maintain driver availability and review trip assignments.',
   formHelp:

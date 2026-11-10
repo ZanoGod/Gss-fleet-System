@@ -4,4 +4,5 @@ export interface StatusMetric {
   value: number | string | null | undefined
   icon: string
   tone: 'info' | 'success' | 'warning' | 'danger'
+  description?: string
 }

@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import { onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import CustomerForm from '../components/CustomerForm.vue'
-import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { customerApi, customerError } from '../api'
 import type { Customer } from '../types'
@@ -45,10 +45,19 @@ watch(() => route.params.id, load, { immediate: true })
 <template>
   <main class="fleet-module page-content">
     <div v-if="error" class="d-flex gap-2 mb-3">
-      <button class="btn-outline-warm" :disabled="loading" @click="load">
-        <BaseLoading v-if="loading" label="Retrying…" /><template v-else>Retry loading customer</template>
+      <button
+        class="btn gss-button gss-button--outline gss-button--neutral"
+        :disabled="loading"
+        @click="load"
+        :aria-busy="loading"
+      >
+        <ActionButtonLabel :pending="loading" loading-label="Retrying…"
+          >Retry loading customer</ActionButtonLabel
+        >
       </button>
-      <RouterLink to="/customers" class="btn-outline-warm">Back to customers</RouterLink>
+      <RouterLink to="/customers" class="btn gss-button gss-button--outline gss-button--neutral"
+        >Back to customers</RouterLink
+      >
     </div>
     <PageSkeleton v-else-if="loading" kind="form" label="Loading customer…" />
     <CustomerForm v-else-if="customer" :key="customer.id" :customer="customer" />

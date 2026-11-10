@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { pendingPage } from '@/router'
 
 defineProps<{ mobileOpen: boolean }>()
 const emit = defineEmits<{ toggleMenu: [] }>()
@@ -26,16 +25,8 @@ const description = computed(() =>
         <i class="bi bi-list" aria-hidden="true"></i><span>Menu</span>
       </button>
       <div class="eyebrow">Web-Based Fleet Management System</div>
-      <h1 v-if="pendingPage" class="gss-skeleton-title" aria-hidden="true">
-        <span class="gss-placeholder" />
-      </h1>
-      <p v-if="pendingPage" class="gss-skeleton-description" aria-hidden="true">
-        <span class="gss-placeholder" />
-      </p>
-      <template v-else>
-        <h1>{{ title }}</h1>
-        <p>{{ description }}</p>
-      </template>
+      <h1>{{ title }}</h1>
+      <p>{{ description }}</p>
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-center">
       <span class="btn-outline-warm user-chip"

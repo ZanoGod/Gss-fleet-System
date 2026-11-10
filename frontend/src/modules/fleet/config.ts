@@ -1,10 +1,10 @@
 import type { ResourceConfig } from '@/components/common/resourceTypes'
 export const fleetConfig: ResourceConfig = {
-  key: 'fleet',
-  title: 'Fleet Management',
+  title: 'Fleet List',
   singular: 'Vehicle',
   path: '/fleet',
   endpoint: '/api/cars',
+  summaryEndpoint: '/api/cars/summary',
   icon: 'bi-car-front',
   description: 'Manage company vehicles and booking assignments.',
   formHelp:

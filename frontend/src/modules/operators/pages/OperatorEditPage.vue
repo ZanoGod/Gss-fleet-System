@@ -1,4 +1,7 @@
 <script setup lang="ts">
-import OperatorWorkspace from '../OperatorWorkspace.vue'
+import OperatorForm from './OperatorForm.vue'
 </script>
-<template><OperatorWorkspace /></template>
+
+<template>
+  <OperatorForm mode="edit" />
+</template>

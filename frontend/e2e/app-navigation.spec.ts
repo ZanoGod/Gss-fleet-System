@@ -105,6 +105,49 @@ test('sidebar navigation opens the daily bookings list', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Daily Bookings' })).toBeVisible()
 })
 
+test('navigation keeps the current page until the destination can show its own skeleton', async ({
+  page,
+}) => {
+  const session = Promise.withResolvers<void>()
+  const bookings = Promise.withResolvers<void>()
+  let holdSession = false
+  await page.route('**/api/user', async (route) => {
+    if (holdSession) await session.promise
+    await route.fulfill({ json: { success: true, user: { id: 7, username: 'tester' } } })
+  })
+  await page.route('**/api/dashboard', (route) =>
+    route.fulfill({ json: { data: { recent_bookings: [] } } }),
+  )
+  await page.route('**/api/daily-bookings/options', (route) => route.fulfill({ json: { data: {} } }))
+  await page.route('**/api/daily-bookings/summary', (route) => route.fulfill({ json: { data: {} } }))
+  await page.route('**/api/daily-bookings?*', async (route) => {
+    await bookings.promise
+    await route.fulfill({ json: { data: [], current_page: 1, last_page: 1, total: 0 } })
+  })
+
+  await page.goto('/dashboard')
+  await expect(page.locator('.gss-page-skeleton')).toHaveCount(0)
+  holdSession = true
+  try {
+    const checkingSession = page.waitForRequest('**/api/user')
+    await page.getByRole('link', { name: 'Daily Bookings', exact: true }).click()
+    await checkingSession
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible()
+    await expect(page.locator('.gss-page-skeleton')).toHaveCount(0)
+
+    session.resolve()
+    await expect(page.getByRole('heading', { level: 1, name: 'Daily Bookings' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Search Bookings' })).toBeVisible()
+    await expect(page.locator('.booking-results-card .gss-page-skeleton')).toBeVisible()
+    await expect(page.locator('.gss-page-skeleton')).toHaveCount(1)
+  } finally {
+    session.resolve()
+    bookings.resolve()
+  }
+  await expect(page.getByText('No bookings match the selected filters.')).toBeVisible()
+  await expect(page.locator('.gss-page-skeleton')).toHaveCount(0)
+})
+
 test('reloading /login with a valid server session redirects to the dashboard', async ({
   page,
 }) => {

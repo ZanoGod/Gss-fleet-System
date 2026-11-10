@@ -5,10 +5,8 @@ withDefaults(
     kind?: 'table' | 'form' | 'detail'
     columns?: number
     rows?: number
-    heading?: boolean
-    cards?: number
   }>(),
-  { kind: 'table', columns: 5, rows: 5, cards: 0 },
+  { kind: 'table', columns: 5, rows: 5 },
 )
 </script>
 
@@ -16,15 +14,6 @@ withDefaults(
   <div class="gss-page-skeleton">
     <span class="visually-hidden" role="status">{{ label }}</span>
     <div aria-hidden="true">
-      <div v-if="heading" class="d-flex justify-content-end mb-3">
-        <span class="gss-placeholder" style="width: 8rem; height: 2.4rem" />
-      </div>
-      <div v-if="cards" class="gss-skeleton-cards mb-4">
-        <div v-for="card in cards" :key="card" class="card-shell p-3">
-          <span class="gss-placeholder w-75" />
-          <span class="gss-placeholder w-25 mt-3" style="height: 2rem" />
-        </div>
-      </div>
       <div class="card-shell overflow-hidden">
         <div v-if="kind === 'table'" class="table-responsive">
           <table class="table data-table mb-0">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import { usePendingAction } from '@/components/common/usePendingAction'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
@@ -35,6 +36,10 @@ async function load(next = 1) {
   } catch {
     toast.error(store.error || 'Unable to load contracts.')
   }
+}
+async function reset() {
+  for (const key of Object.keys(filters) as (keyof typeof filters)[]) filters[key] = ''
+  await load(1)
 }
 async function exportExcel() {
   try {
@@ -123,15 +128,15 @@ onMounted(async () => {
     </table>
     <p>Total contracts: {{ printRows.length }}</p>
   </main>
-  <main v-else class="fleet-module page-content contract-report">
+  <main v-else class="fleet-module fleet-list-page page-content contract-report">
     <PageHeader v-bind="contractHeader" class="d-flex flex-wrap justify-content-end">
       <div class="d-flex flex-wrap gap-2 report-actions">
         <!-- <button class="btn btn-outline-secondary" @click="printReport">
           <i class="bi bi-file-earmark-pdf me-1" /> Print / Save PDF</button
         ><button class="btn btn-outline-primary" @click="exportExcel">
           <i class="bi bi-file-earmark-spreadsheet me-1" /> Excel CSV</button> -->
-        <RouterLink to="/monthly-contracts/create" class="btn btn-primary"
-          ><i class="bi bi-plus-lg me-1" /> New contract</RouterLink
+        <RouterLink to="/monthly-contracts/create" class="btn gss-button gss-button--primary"
+          ><i class="bi bi-plus-lg" aria-hidden="true" /> New contract</RouterLink
         >
       </div>
     </PageHeader>
@@ -140,85 +145,110 @@ onMounted(async () => {
       :loading="initial"
       label="contract status summary"
     />
-    <section class="card shadow-sm">
-      <div class="card-header bg-white report-actions">
-        <form class="fleet-filter-grid" @submit.prevent="run('search', () => load())">
-          <div class="fleet-filter-field fleet-filter-field--wide">
-            <label class="form-label" for="contract-search">Search contracts</label
-            ><input
-              id="contract-search"
-              v-model="filters.search"
-              class="form-control"
-              placeholder="Contract, customer, vehicleâ€¦"
-            />
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="contract-status">Status</label
-            ><select id="contract-status" v-model="filters.status" class="form-select">
-              <option value="">All statuses</option>
-              <option v-for="s in ['Draft', 'Active', 'Expired', 'Renewed', 'Cancelled']" :key="s">
-                {{ s }}
-              </option>
-            </select>
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="contract-car">Monthly vehicle</label
-            ><select id="contract-car" v-model="filters.car_id" class="form-select">
-              <option value="">All monthly vehicles</option>
-              <option v-for="c in options?.cars || []" :key="c.id" :value="String(c.id)">
-                {{ c.plate_no }}
-              </option>
-            </select>
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="contract-driver">Monthly driver</label
-            ><select id="contract-driver" v-model="filters.driver_id" class="form-select">
-              <option value="">All monthly drivers</option>
-              <option v-for="d in options?.drivers || []" :key="d.id" :value="String(d.id)">
-                {{ d.full_name }}
-              </option>
-            </select>
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="contract-customer">Customer</label
-            ><select id="contract-customer" v-model="filters.customer_id" class="form-select">
-              <option value="">All customers</option>
-              <option v-for="c in options?.customers || []" :key="c.id" :value="String(c.id)">
-                {{ c.company_name || c.guest_name }}
-              </option>
-            </select>
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="contract-from">Start date from</label
-            ><input
-              id="contract-from"
-              v-model="filters.date_from"
-              class="form-control"
-              type="date"
-              aria-label="Contract start from"
-            />
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="contract-to">End date to</label
-            ><input
-              id="contract-to"
-              v-model="filters.date_to"
-              class="form-control"
-              type="date"
-              aria-label="Contract end to"
-            />
-          </div>
-          <div class="fleet-filter-actions">
-            <button
-              class="btn btn-outline-primary w-100 fleet-filter-submit"
-              :disabled="initial || pending('search')"
+    <section
+      class="card-shell fleet-list-filter mb-4 report-actions"
+      aria-label="Monthly contract filters"
+    >
+      <div class="fleet-list-filter-heading">
+        <div>
+          <h2 class="h5 mb-1">Search Contracts</h2>
+          <p class="small text-muted mb-0">Find contracts by customer, vehicle, status, or date.</p>
+        </div>
+      </div>
+      <form class="fleet-list-filter-grid" @submit.prevent="run('search', () => load(1))">
+        <div class="fleet-list-filter-field fleet-list-filter-field--search">
+          <label class="form-label" for="contract-search">Search contracts</label
+          ><input
+            id="contract-search"
+            v-model="filters.search"
+            class="form-control"
+            placeholder="Contract, customer, vehicleâ€¦"
+          />
+        </div>
+        <div class="fleet-list-filter-field">
+          <label class="form-label" for="contract-status">Status</label
+          ><select id="contract-status" v-model="filters.status" class="form-select">
+            <option value="">All statuses</option>
+            <option v-for="s in ['Draft', 'Active', 'Expired', 'Renewed', 'Cancelled']" :key="s">
+              {{ s }}
+            </option>
+          </select>
+        </div>
+        <div class="fleet-list-filter-field">
+          <label class="form-label" for="contract-car">Monthly vehicle</label
+          ><select id="contract-car" v-model="filters.car_id" class="form-select">
+            <option value="">All monthly vehicles</option>
+            <option v-for="c in options?.cars || []" :key="c.id" :value="String(c.id)">
+              {{ c.plate_no }}
+            </option>
+          </select>
+        </div>
+        <div class="fleet-list-filter-field">
+          <label class="form-label" for="contract-driver">Monthly driver</label
+          ><select id="contract-driver" v-model="filters.driver_id" class="form-select">
+            <option value="">All monthly drivers</option>
+            <option v-for="d in options?.drivers || []" :key="d.id" :value="String(d.id)">
+              {{ d.full_name }}
+            </option>
+          </select>
+        </div>
+        <div class="fleet-list-filter-field">
+          <label class="form-label" for="contract-customer">Customer</label
+          ><select id="contract-customer" v-model="filters.customer_id" class="form-select">
+            <option value="">All customers</option>
+            <option v-for="c in options?.customers || []" :key="c.id" :value="String(c.id)">
+              {{ c.company_name || c.guest_name }}
+            </option>
+          </select>
+        </div>
+        <div class="fleet-list-filter-field">
+          <label class="form-label" for="contract-from">Start date from</label
+          ><input
+            id="contract-from"
+            v-model="filters.date_from"
+            class="form-control"
+            type="date"
+            aria-label="Contract start from"
+          />
+        </div>
+        <div class="fleet-list-filter-field">
+          <label class="form-label" for="contract-to">End date to</label
+          ><input
+            id="contract-to"
+            v-model="filters.date_to"
+            class="form-control"
+            type="date"
+            aria-label="Contract end to"
+          />
+        </div>
+        <div class="fleet-list-filter-actions">
+          <button
+            class="btn gss-button gss-button--secondary"
+            :disabled="initial || pending('search')"
+            :aria-busy="pending('search')"
+          >
+            <ActionButtonLabel :pending="pending('search')" loading-label="Searching…"
+              >Search</ActionButtonLabel
             >
-              <BaseLoading v-if="pending('search')" label="Searching…" /><template v-else
-                >Search</template
-              >
-            </button>
-          </div>
-        </form>
+          </button>
+          <button
+            type="button"
+            class="btn gss-button gss-button--outline gss-button--neutral"
+            :disabled="initial || pending('reset')"
+            @click="run('reset', reset)"
+            :aria-busy="pending('reset')"
+          >
+            <ActionButtonLabel :pending="pending('reset')" loading-label="Resetting…"
+              >Reset</ActionButtonLabel
+            >
+          </button>
+        </div>
+      </form>
+    </section>
+    <section class="card shadow-sm fleet-list-results" aria-label="Monthly contract results">
+      <div class="card-header">
+        <h2 class="h5 mb-1">Monthly Contract List</h2>
+        <p class="small text-muted mb-0">{{ total }} matching contracts</p>
       </div>
       <BaseLoading
         v-if="!initial && store.loading"
@@ -226,8 +256,8 @@ onMounted(async () => {
         label="Updating contracts…"
       />
       <PageSkeleton v-if="initial" label="Loading contracts" :columns="9" />
-      <div v-else-if="rows.length" class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+      <div v-else-if="rows.length" class="table-responsive fleet-list-table-wrap">
+        <table class="table table-hover align-middle mb-0 fleet-list-table">
           <thead>
             <tr>
               <th>Contract number</th>
@@ -238,7 +268,7 @@ onMounted(async () => {
               <th>Period</th>
               <th>Contract amount</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th class="fleet-list-actions-heading">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -258,12 +288,14 @@ onMounted(async () => {
               </td>
               <td>{{ c.rental_currency }} {{ c.monthly_rate }}</td>
               <td><BaseStatusBadge :status="c.status" /></td>
-              <td>
-                <RouterLink
-                  :to="`/monthly-contracts/${c.id}`"
-                  class="btn btn-sm btn-outline-secondary"
-                  >View</RouterLink
-                >
+              <td class="fleet-list-actions-cell">
+                <div class="fleet-list-row-actions">
+                  <RouterLink
+                    :to="`/monthly-contracts/${c.id}`"
+                    class="btn gss-button gss-button--secondary"
+                    >View</RouterLink
+                  >
+                </div>
               </td>
             </tr>
           </tbody>

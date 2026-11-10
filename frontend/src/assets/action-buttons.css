@@ -1,0 +1,105 @@
+/* Opt in with .btn.gss-button and a variant class. */
+.btn.gss-button {
+  --gss-action-color: var(--gss-button-outline-text);
+  --gss-action-border: var(--gss-button-outline-border);
+  --gss-action-bg: transparent;
+  --gss-action-hover: var(--gss-button-outline-hover-bg);
+  --gss-action-hover-border: var(--gss-button-outline-hover-border);
+  --gss-action-press: var(--gss-button-outline-active-bg);
+  --gss-action-hover-shadow: none;
+  --gss-action-press-shadow: none;
+  --gss-action-lift: none;
+  --gss-action-duration: 160ms;
+  --bs-btn-padding-x: 0.875rem;
+  --bs-btn-padding-y: 0.5rem;
+  --bs-btn-border-radius: 0.5rem;
+  --bs-btn-font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  color: var(--gss-action-color);
+  background-color: var(--gss-action-bg);
+  border-color: var(--gss-action-border);
+  text-decoration: none;
+  touch-action: manipulation;
+  transition:
+    background-color var(--gss-action-duration) ease,
+    border-color var(--gss-action-duration) ease,
+    box-shadow var(--gss-action-duration) ease,
+    transform var(--gss-action-duration) ease;
+}
+
+.btn.gss-button--primary {
+  --gss-action-color: var(--gss-surface-card);
+  --gss-action-bg: var(--gss-button-outline-text);
+  --gss-action-border: var(--gss-action-bg);
+  --gss-action-hover: color-mix(in srgb, var(--gss-action-bg), black 18%);
+  --gss-action-hover-border: var(--gss-action-hover);
+  --gss-action-press: color-mix(in srgb, var(--gss-action-bg), black 24%);
+  --gss-action-hover-shadow: 0 3px 7px rgb(0 0 0 / 14%);
+  --gss-action-press-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  --gss-action-lift: translateY(-1px);
+}
+
+.btn.gss-button--secondary {
+  --gss-action-bg: var(--gss-surface-card-header);
+  --gss-action-press-shadow: inset 0 1px 3px rgb(0 0 0 / 12%);
+}
+
+.btn.gss-button--outline.gss-button--neutral {
+  --gss-action-color: var(--gss-text-muted);
+  --gss-action-border: color-mix(in srgb, var(--gss-action-color), transparent 30%);
+  --gss-action-hover-border: var(--gss-action-color);
+  --gss-action-hover: color-mix(in srgb, var(--gss-action-color), transparent 92%);
+  --gss-action-press: color-mix(in srgb, var(--gss-action-color), transparent 84%);
+}
+
+.btn.gss-button--destructive {
+  --gss-action-color: var(--gss-status-danger-text);
+  --gss-action-border: var(--gss-action-color);
+  --gss-action-hover-border: var(--gss-action-color);
+  --gss-action-hover: var(--gss-status-danger-background);
+  --gss-action-press: color-mix(in srgb, var(--gss-action-hover), var(--gss-action-color) 14%);
+}
+
+@media (hover: hover) {
+  .btn.gss-button:not(:disabled):hover {
+    background-color: var(--gss-action-hover);
+    border-color: var(--gss-action-hover-border);
+    box-shadow: var(--gss-action-hover-shadow);
+    transform: var(--gss-action-lift);
+  }
+}
+
+.btn.gss-button:not(:disabled):is(:active, [data-touch-pressed]) {
+  --gss-action-duration: 80ms;
+  color: var(--gss-action-color);
+  background-color: var(--gss-action-press);
+  border-color: var(--gss-action-hover-border);
+  box-shadow: var(--gss-action-press-shadow);
+  transform: none;
+}
+
+.btn.gss-button:focus-visible {
+  outline: 2px solid var(--gss-input-focus-border);
+  outline-offset: 3px;
+}
+
+.btn.gss-button:disabled {
+  opacity: 0.65;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn.gss-button {
+    --gss-action-lift: none;
+    --gss-action-hover-shadow: none;
+    --gss-action-press-shadow: none;
+    transition-property: background-color, border-color;
+  }
+
+  .gss-button .classic-loader {
+    animation: none;
+  }
+}

@@ -1,5 +1,4 @@
-import { shallowRef } from 'vue'
-import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getApiErrorCategory } from '@/services/apiErrors'
 
@@ -376,16 +375,7 @@ const router = createRouter({
   ],
 })
 
-export const pendingPage = shallowRef<RouteLocationNormalized>()
-router.afterEach((to) => {
-  if (pendingPage.value === to) pendingPage.value = undefined
-})
-router.onError((_error, to) => {
-  if (pendingPage.value === to) pendingPage.value = undefined
-})
-
-router.beforeEach(async (to, from) => {
-  pendingPage.value = !to.meta.public && to.path !== from.path ? to : undefined
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
   try {
     const wasAuthenticated = auth.isAuthenticated

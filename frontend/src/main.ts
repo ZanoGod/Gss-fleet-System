@@ -4,6 +4,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import './assets/styles/theme.css'
 import './assets/main.css'
 import './assets/fleet-modules.css'
+import './assets/action-buttons.css'
 import './assets/classic-loader.css'
 import './assets/toast.css'
 
@@ -14,7 +15,9 @@ import router from './router'
 import api from '@/services/api'
 import { getApiErrorMessage } from '@/services/apiErrors'
 import { useAuthStore } from '@/stores/auth'
+import { enableActionButtonTouchFeedback } from '@/components/common/actionButtonTouch'
 
+enableActionButtonTouchFeedback()
 const app = createApp(App)
 app.use(createPinia())
 const auth = useAuthStore()

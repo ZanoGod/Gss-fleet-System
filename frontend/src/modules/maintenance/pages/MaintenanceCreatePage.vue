@@ -1,4 +1,7 @@
 <script setup lang="ts">
-import MaintenanceWorkspace from '../MaintenanceWorkspace.vue'
+import MaintenanceForm from './MaintenanceForm.vue'
 </script>
-<template><MaintenanceWorkspace /></template>
+
+<template>
+  <MaintenanceForm mode="create" />
+</template>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
-import DriverWorkspace from '../DriverWorkspace.vue'
+import DriverForm from './DriverForm.vue'
 </script>
-<template><DriverWorkspace /></template>
+
+<template>
+  <DriverForm mode="edit" />
+</template>

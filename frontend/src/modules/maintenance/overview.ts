@@ -55,3 +55,7 @@ export function maintenanceMetrics(summary: MaintenanceDashboard | null): Status
     },
   ]
 }
+
+export function readMaintenanceDashboard(data: unknown) {
+  return (data as { dashboard: MaintenanceDashboard }).dashboard
+}

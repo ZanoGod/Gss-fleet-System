@@ -2,7 +2,7 @@
 import { usePendingAction } from '@/components/common/usePendingAction'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useDailyBookingStore } from '../stores/dailyBookings'
 import PageHeader from '@/components/common/PageHeader.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
@@ -17,16 +17,17 @@ const store = useDailyBookingStore(),
     status: '',
     date_from: '',
     date_to: '',
-    car_id: '',
   })
 const initial = ref(true)
 const summary = ref<DailyBookingSummary | null>(null)
 const summaryLoading = ref(true)
+const results = ref<HTMLElement | null>(null)
+const fullscreen = ref(false)
 const metrics = computed(() => dailyBookingMetrics(summary.value))
 const { pending, run } = usePendingAction()
 async function load(page = 1) {
   try {
-    await store.load({ ...filters, page, per_page: 15 })
+    await store.load({ ...filters, page, per_page: 10 })
   } catch {
     toast.error(store.error || 'Unable to load bookings.')
     summaryLoading.value = false
@@ -40,7 +41,32 @@ async function load(page = 1) {
     summaryLoading.value = false
   }
 }
+async function reset() {
+  filters.search = ''
+  filters.status = ''
+  filters.date_from = ''
+  filters.date_to = ''
+  await load(1)
+}
+function syncFullscreen() {
+  fullscreen.value = document.fullscreenElement === results.value
+}
+async function toggleFullscreen() {
+  const card = results.value
+  if (!card?.requestFullscreen || !document.fullscreenEnabled) {
+    toast.info('Fullscreen is unavailable in this browser.')
+    return
+  }
+  try {
+    if (document.fullscreenElement === card) await document.exitFullscreen()
+    else await card.requestFullscreen()
+  } catch {
+    toast.error('Unable to change fullscreen mode.')
+  }
+}
+onUnmounted(() => document.removeEventListener('fullscreenchange', syncFullscreen))
 onMounted(async () => {
+  document.addEventListener('fullscreenchange', syncFullscreen)
   try {
     await store.loadOptions()
   } catch (e) {
@@ -52,7 +78,7 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <main class="fleet-module page-content">
+  <main class="fleet-module booking-list-page page-content">
     <PageHeader
       title="Daily Bookings"
       description="Manage daily booking records."
@@ -63,71 +89,89 @@ onMounted(async () => {
         ><i class="bi bi-plus-lg me-1" aria-hidden="true" /> Add Booking</RouterLink
       >
     </PageHeader>
-    <StatusSummary :items="metrics" :loading="summaryLoading" label="Daily booking status summary" />
-    <section class="card shadow-sm">
-      <div class="card-header bg-white">
-        <form
-          class="fleet-filter-grid fleet-filter-grid--daily-bookings"
-          @submit.prevent="run('search', () => load())"
-        >
-          <div class="fleet-filter-field fleet-filter-field--wide">
-            <label class="form-label" for="booking-search">Search bookings</label
-            ><input
-              id="booking-search"
-              v-model="filters.search"
-              class="form-control"
-              placeholder="Guest, vehicle, driver…"
-            />
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="booking-status-filter">Status</label
-            ><select id="booking-status-filter" v-model="filters.status" class="form-select">
-              <option value="">All statuses</option>
-              <option v-for="s in ['Pending', 'Confirm', 'Completed', 'Cancelled']" :key="s">
-                {{ s }}
-              </option>
-            </select>
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="booking-car-filter">Vehicle</label
-            ><select id="booking-car-filter" v-model="filters.car_id" class="form-select">
-              <option value="">All vehicles</option>
-              <option v-for="c in store.options?.cars || []" :key="c.id" :value="String(c.id)">
-                {{ c.plate_no }}
-              </option>
-            </select>
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="booking-from">Start date from</label
-            ><input
-              id="booking-from"
-              v-model="filters.date_from"
-              type="date"
-              class="form-control"
-              aria-label="Start date from"
-            />
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="booking-to">End date to</label
-            ><input
-              id="booking-to"
-              v-model="filters.date_to"
-              type="date"
-              class="form-control"
-              aria-label="End date to"
-            />
-          </div>
-          <div class="fleet-filter-actions">
-            <button
-              class="btn btn-outline-primary w-100 fleet-filter-submit"
-              :disabled="initial || pending('search')"
+    <StatusSummary
+      :items="metrics"
+      :loading="summaryLoading"
+      label="Daily booking status summary"
+    />
+    <section class="card-shell booking-filter-card mb-4" aria-label="Booking filters">
+      <div class="booking-section-title">
+        <h2>Search Bookings</h2>
+        <p>Filter by guest, vehicle, driver, operator, status, or date.</p>
+      </div>
+      <form
+        class="fleet-filter-grid fleet-filter-grid--daily-bookings"
+        @submit.prevent="run('search', () => load())"
+      >
+        <div class="fleet-filter-field fleet-filter-field--wide">
+          <label class="form-label" for="booking-search">Search bookings</label
+          ><input
+            id="booking-search"
+            v-model="filters.search"
+            class="form-control"
+            placeholder="Guest, vehicle, driver…"
+          />
+        </div>
+        <div class="fleet-filter-field">
+          <label class="form-label" for="booking-status-filter">Status</label
+          ><select id="booking-status-filter" v-model="filters.status" class="form-select">
+            <option value="">All statuses</option>
+            <option v-for="s in ['Pending', 'Confirm', 'Completed', 'Cancelled']" :key="s">
+              {{ s }}
+            </option>
+          </select>
+        </div>
+        <div class="fleet-filter-field">
+          <label class="form-label" for="booking-from">Start date from</label
+          ><input
+            id="booking-from"
+            v-model="filters.date_from"
+            type="date"
+            class="form-control"
+            aria-label="Start date from"
+          />
+        </div>
+        <div class="fleet-filter-field">
+          <label class="form-label" for="booking-to">End date to</label
+          ><input
+            id="booking-to"
+            v-model="filters.date_to"
+            type="date"
+            class="form-control"
+            aria-label="End date to"
+          />
+        </div>
+        <div class="fleet-filter-actions fleet-filter-actions--daily-bookings">
+          <button
+            class="btn btn-outline-primary fleet-filter-submit"
+            :disabled="initial || pending('search') || pending('reset')"
+          >
+            <BaseLoading v-if="pending('search')" label="Searching…" /><template v-else
+              >Search</template
             >
-              <BaseLoading v-if="pending('search')" label="Searching…" /><template v-else
-                >Search</template
-              >
-            </button>
-          </div>
-        </form>
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary fleet-filter-submit"
+            :disabled="initial || pending('search') || pending('reset')"
+            @click="run('reset', reset)"
+          >
+            <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else
+              >Reset</template
+            >
+          </button>
+        </div>
+      </form>
+    </section>
+    <section ref="results" class="card-shell booking-results-card" aria-label="Booking results">
+      <div class="booking-section-title booking-results-title">
+        <div>
+          <h2>Booking List</h2>
+          <p>{{ store.total }} matching bookings</p>
+        </div>
+        <button type="button" class="btn btn-outline-primary" @click="toggleFullscreen">
+          {{ fullscreen ? 'Exit Fullscreen' : 'Fullscreen Table' }}
+        </button>
       </div>
       <BaseLoading
         v-if="!initial && store.loading"
@@ -135,8 +179,8 @@ onMounted(async () => {
         label="Updating bookings…"
       />
       <PageSkeleton v-if="initial" label="Loading bookings" :columns="7" />
-      <div v-else-if="store.rows.length" class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+      <div v-else-if="store.rows.length" class="table-responsive booking-table-wrap">
+        <table class="table table-hover align-middle mb-0 booking-table">
           <thead>
             <tr>
               <th>Guest / company</th>
@@ -185,10 +229,10 @@ onMounted(async () => {
         </table>
       </div>
       <div v-else class="p-4 text-center text-muted">No bookings match the selected filters.</div>
-      <div class="card-footer bg-white">
+      <div class="booking-results-footer">
         <BasePagination
           :page="store.page"
-          :per-page="15"
+          :per-page="10"
           :total="store.total"
           :pending-page="(target) => pending(`page:${target}`)"
           @update:page="run(`page:${$event}`, () => load($event))"

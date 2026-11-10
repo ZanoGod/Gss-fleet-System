@@ -1,12 +1,13 @@
 import type { ResourceConfig } from '@/components/common/resourceTypes'
 const types = ['Preventive', 'Corrective', 'Inspection', 'Other']
 const statuses = ['Scheduled', 'In Progress', 'Completed', 'Cancelled']
-export const maintenanceConfig: ResourceConfig = {
-  key: 'maintenance',
+export const maintenanceConfig: ResourceConfig & { optionsEndpoint: string } = {
   title: 'Maintenance',
   singular: 'Maintenance Record',
   path: '/maintenance',
   endpoint: '/api/maintenances',
+  summaryEndpoint: '/api/maintenances/summary',
+  optionsEndpoint: '/api/maintenances/options',
   icon: 'bi-tools',
   description: 'Plan service, track work orders, and review costs by currency.',
   formHelp:
@@ -23,7 +24,13 @@ export const maintenanceConfig: ResourceConfig = {
       default: 'Preventive',
     },
     { key: 'title', label: 'Title', required: true, max: 200 },
-    { key: 'status', label: 'Work Order Status', required: true, default: 'Scheduled' },
+    {
+      key: 'status',
+      options: statuses,
+      label: 'Work Order Status',
+      required: true,
+      default: 'Scheduled',
+    },
     { key: 'scheduled_date', label: 'Scheduled Date', type: 'date', required: true },
     { key: 'started_at', label: 'Started Date', type: 'date' },
     { key: 'completed_at', label: 'Completed Date', type: 'date' },

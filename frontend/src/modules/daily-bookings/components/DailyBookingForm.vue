@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import BaseLoading from '@/components/common/BaseLoading.vue'
-import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { dailyBookingApi } from '../api'
@@ -66,7 +65,7 @@ onMounted(async () => {
   }
 })
 async function submit() {
-  if (saving.value) return
+  if (loading.value || saving.value) return
   saving.value = true
   errors.value = {}
   error.value = ''
@@ -105,9 +104,15 @@ watch(
 )
 </script>
 <template>
-  <PageSkeleton v-if="loading" kind="form" label="Loading booking information…" />
-  <div v-else>
-    <form class="card shadow-sm" @submit.prevent="submit">
+  <div>
+    <span v-if="loading" class="visually-hidden" role="status">Loading booking information…</span>
+    <form
+      class="card shadow-sm"
+      :class="{ 'gss-form-skeleton': loading }"
+      :inert="loading"
+      :aria-hidden="loading || undefined"
+      @submit.prevent="submit"
+    >
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-6">
