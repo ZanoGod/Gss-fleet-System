@@ -15,6 +15,22 @@ use Illuminate\Support\Facades\Gate;
 
 class DailyBookingController extends Controller
 {
+    public function summary()
+    {
+        Gate::authorize('viewAny', DailyBooking::class);
+        $statuses = DailyBooking::query()
+            ->selectRaw('status, COUNT(*) AS aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        return response()->json(['data' => [
+            'total' => (int) $statuses->sum(),
+            'pending' => (int) ($statuses['Pending'] ?? 0),
+            'confirmed' => (int) ($statuses['Confirm'] ?? 0),
+            'cancelled' => (int) ($statuses['Cancelled'] ?? 0),
+        ]]);
+    }
+
     public function index(Request $request)
     {
         Gate::authorize('viewAny', DailyBooking::class);

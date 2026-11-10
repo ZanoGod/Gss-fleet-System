@@ -18,6 +18,10 @@ export const useDailyBookingStore = defineStore('dailyBookings', () => {
     try {
       const response = (await dailyBookingApi.list(params)) as Paginated<DailyBooking>
       if (version !== request) return
+      if (response.current_page > response.last_page) {
+        await load({ ...params, page: Math.max(1, response.last_page) })
+        return
+      }
       rows.value = response.data
       page.value = response.current_page
       lastPage.value = response.last_page

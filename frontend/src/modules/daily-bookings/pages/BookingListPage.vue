@@ -2,10 +2,12 @@
 import { usePendingAction } from '@/components/common/usePendingAction'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useDailyBookingStore } from '../stores/dailyBookings'
-import StatusCard from '@/components/common/StatusCard.vue'
-import { dailyBookingApi } from '../api'
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatusSummary from '@/components/common/StatusSummary.vue'
+import { dailyBookingApi, type DailyBookingSummary } from '../api'
+import { dailyBookingMetrics } from '../overview'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
 import { toast } from '@/services/toast'
@@ -16,15 +18,26 @@ const store = useDailyBookingStore(),
     date_from: '',
     date_to: '',
     car_id: '',
-    driver_id: '',
   })
 const initial = ref(true)
+const summary = ref<DailyBookingSummary | null>(null)
+const summaryLoading = ref(true)
+const metrics = computed(() => dailyBookingMetrics(summary.value))
 const { pending, run } = usePendingAction()
 async function load(page = 1) {
   try {
     await store.load({ ...filters, page, per_page: 15 })
   } catch {
     toast.error(store.error || 'Unable to load bookings.')
+    summaryLoading.value = false
+    return
+  }
+  try {
+    summary.value = await dailyBookingApi.summary()
+  } catch {
+    toast.error('Unable to load booking status summary.')
+  } finally {
+    summaryLoading.value = false
   }
 }
 onMounted(async () => {
@@ -40,14 +53,23 @@ onMounted(async () => {
 </script>
 <template>
   <main class="fleet-module page-content">
-    <div class="page-heading d-flex flex-wrap justify-content-end">
+    <PageHeader
+      title="Daily Bookings"
+      description="Manage daily booking records."
+      icon="bi-calendar-check"
+      class="d-flex flex-wrap justify-content-end"
+    >
       <RouterLink to="/daily-bookings/create" class="btn btn-primary"
         ><i class="bi bi-plus-lg me-1" aria-hidden="true" /> Add Booking</RouterLink
       >
-    </div>
+    </PageHeader>
+    <StatusSummary :items="metrics" :loading="summaryLoading" label="Daily booking status summary" />
     <section class="card shadow-sm">
       <div class="card-header bg-white">
-        <form class="fleet-filter-grid" @submit.prevent="run('search', () => load())">
+        <form
+          class="fleet-filter-grid fleet-filter-grid--daily-bookings"
+          @submit.prevent="run('search', () => load())"
+        >
           <div class="fleet-filter-field fleet-filter-field--wide">
             <label class="form-label" for="booking-search">Search bookings</label
             ><input
@@ -72,15 +94,6 @@ onMounted(async () => {
               <option value="">All vehicles</option>
               <option v-for="c in store.options?.cars || []" :key="c.id" :value="String(c.id)">
                 {{ c.plate_no }}
-              </option>
-            </select>
-          </div>
-          <div class="fleet-filter-field">
-            <label class="form-label" for="booking-driver-filter">Driver</label
-            ><select id="booking-driver-filter" v-model="filters.driver_id" class="form-select">
-              <option value="">All drivers</option>
-              <option v-for="d in store.options?.drivers || []" :key="d.id" :value="String(d.id)">
-                {{ d.full_name }}
               </option>
             </select>
           </div>

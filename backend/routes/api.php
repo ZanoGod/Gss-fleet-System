@@ -36,6 +36,7 @@ Route::middleware('auth:web')->group(function (): void {
     Route::apiResource('customers', CustomerController::class);
 
     Route::get('/daily-bookings/options', [DailyBookingController::class, 'options']);
+    Route::get('/daily-bookings/summary', [DailyBookingController::class, 'summary']);
     Route::apiResource('daily-bookings', DailyBookingController::class)->parameters(['daily-bookings' => 'dailyBooking']);
 
     Route::get('/monthly-contracts/options', [MonthlyContractController::class, 'options']);

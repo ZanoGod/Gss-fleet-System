@@ -11,14 +11,16 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ 'update:page': [page: number] }>()
 const pageCount = computed(() => Math.max(1, Math.ceil(props.total / props.perPage)))
+const currentPage = computed(() => Math.min(Math.max(props.page, 1), pageCount.value))
 const range = computed(() => {
   const totalPages = pageCount.value
+  const page = currentPage.value
   if (!props.total) return []
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1)
-  if (props.page <= 4) return [1, 2, 3, 4, 5, 'ellipsis' as const, totalPages]
-  if (props.page >= totalPages - 3)
+  if (page <= 4) return [1, 2, 3, 4, 5, 'ellipsis' as const, totalPages]
+  if (page >= totalPages - 3)
     return [1, 'ellipsis' as const, ...Array.from({ length: 5 }, (_, index) => totalPages - 4 + index)]
-  return [1, 'ellipsis' as const, props.page - 1, props.page, props.page + 1, 'ellipsis' as const, totalPages]
+  return [1, 'ellipsis' as const, page - 1, page, page + 1, 'ellipsis' as const, totalPages]
 })
 const isLoading = (target: number) => props.pendingPage?.(target) ?? false
 function goTo(target: number) {
@@ -30,17 +32,18 @@ function goTo(target: number) {
 <template>
   <nav class="gss-pagination" aria-label="Pagination">
     <span class="pagination-summary" aria-live="polite">
-      {{ total ? `${(page - 1) * perPage + 1}–${Math.min(page * perPage, total)} of ${total}` : 'No results' }}
+      {{ total ? `${(currentPage - 1) * perPage + 1}–${Math.min(currentPage * perPage, total)} of ${total}` : 'No results' }}
     </span>
     <div class="pagination-controls">
       <button
+        v-if="currentPage > 1"
         type="button"
         class="pagination-step btn-outline-warm"
-        :disabled="disabled || page <= 1 || isLoading(page - 1)"
-        :aria-busy="isLoading(page - 1)"
-        @click="goTo(page - 1)"
+        :disabled="disabled || isLoading(currentPage - 1)"
+        :aria-busy="isLoading(currentPage - 1)"
+        @click="goTo(currentPage - 1)"
       >
-        <BaseLoading v-if="isLoading(page - 1)" label="Loading previous page" :show-text="false" />
+        <BaseLoading v-if="isLoading(currentPage - 1)" label="Loading previous page" :show-text="false" />
         <span v-else>Previous</span>
       </button>
       <template v-for="(item, index) in range" :key="`${item}-${index}`">
@@ -49,10 +52,10 @@ function goTo(target: number) {
           v-else
           type="button"
           class="pagination-number btn-outline-warm"
-          :class="{ 'is-current': item === page }"
+          :class="{ 'is-current': item === currentPage }"
           :disabled="disabled || isLoading(item)"
           :aria-label="`Page ${item}`"
-          :aria-current="item === page ? 'page' : undefined"
+          :aria-current="item === currentPage ? 'page' : undefined"
           :aria-busy="isLoading(item)"
           @click="goTo(item)"
         >
@@ -61,13 +64,14 @@ function goTo(target: number) {
         </button>
       </template>
       <button
+        v-if="currentPage < pageCount"
         type="button"
         class="pagination-step btn-outline-warm"
-        :disabled="disabled || page >= pageCount || isLoading(page + 1)"
-        :aria-busy="isLoading(page + 1)"
-        @click="goTo(page + 1)"
+        :disabled="disabled || isLoading(currentPage + 1)"
+        :aria-busy="isLoading(currentPage + 1)"
+        @click="goTo(currentPage + 1)"
       >
-        <BaseLoading v-if="isLoading(page + 1)" label="Loading next page" :show-text="false" />
+        <BaseLoading v-if="isLoading(currentPage + 1)" label="Loading next page" :show-text="false" />
         <span v-else>Next</span>
       </button>
     </div>

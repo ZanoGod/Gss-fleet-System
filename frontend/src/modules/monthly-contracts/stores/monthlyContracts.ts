@@ -27,6 +27,10 @@ export const useMonthlyContractsStore = defineStore('monthlyContracts', () => {
         }),
       ])
       if (version !== request) return
+      if (result.current_page > result.last_page) {
+        await load({ ...params, page: Math.max(1, result.last_page) })
+        return
+      }
       rows.value = result.data
       page.value = result.current_page
       lastPage.value = result.last_page
