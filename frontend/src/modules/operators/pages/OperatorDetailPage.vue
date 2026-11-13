@@ -4,6 +4,7 @@ import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import DeleteRecordDialog from '@/components/common/DeleteRecordDialog.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { displayValue as text, useModuleRecord } from '@/modules/shared/moduleRequests'
 import { operatorConfig as config } from '../config'
 
@@ -27,9 +28,6 @@ const details = config.fields
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
     <div class="d-flex flex-wrap justify-content-end">
       <PageHeader :title="config.singular" :description="config.description" :icon="config.icon">
-        <RouterLink :to="link(config.path)" class="btn btn-primary">{{
-          `All ${config.title}`
-        }}</RouterLink>
       </PageHeader>
     </div>
     <button
@@ -42,6 +40,13 @@ const details = config.fields
         >Retry loading</template
       >
     </button>
+    <div v-if="record" class="record-detail-action-bar">
+      <RecordAction action="back" :label="`All ${config.title}`" :to="link(config.path)" />
+      <div class="record-detail-action-group">
+        <RecordAction action="edit" :label="`Edit ${config.singular}`" :to="link(`${config.path}/${record.id}/edit`)" />
+        <RecordAction action="delete" @click="confirmDialog?.open()" />
+      </div>
+    </div>
     <PageSkeleton
       v-if="initial"
       kind="detail"
@@ -70,11 +75,6 @@ const details = config.fields
           </div>
         </li>
       </ul>
-      <div class="d-flex gap-2 mt-4">
-        <RouterLink :to="link(`${config.path}/${record.id}/edit`)" class="btn-gold"
-          >Edit {{ config.singular }}</RouterLink
-        ><button class="btn-outline-warm" @click="confirmDialog?.open()">Delete</button>
-      </div>
     </section>
     <DeleteRecordDialog
       ref="confirmDialog"

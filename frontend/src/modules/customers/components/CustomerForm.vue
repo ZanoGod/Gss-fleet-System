@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RecordAction from '@/components/common/RecordAction.vue'
 import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -72,6 +73,7 @@ async function submit() {
     )
     await router.push({
       path: '/customers',
+      query: { notice: props.customer ? 'updated' : 'created' },
     })
   } catch (cause) {
     error.value = customerError(cause)
@@ -86,9 +88,7 @@ async function submit() {
   <section class="card-shell p-4">
     <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
       <h2 class="h4 mb-0">{{ customer ? 'Edit Customer' : 'Add Customer' }}</h2>
-      <RouterLink to="/customers" class="btn gss-button gss-button--outline gss-button--neutral"
-        >All Customers</RouterLink
-      >
+      <RecordAction action="back" label="All Customers" to="/customers" />
     </div>
     <p class="text-muted">
       Contract assignments, vehicles, drivers, and billing stay in

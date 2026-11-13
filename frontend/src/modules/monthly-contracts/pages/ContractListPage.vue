@@ -11,20 +11,18 @@ import { storeToRefs } from 'pinia'
 import { monthlyContractApi } from '../api'
 import api from '@/services/api'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { useMonthlyContractsStore } from '../stores/monthlyContracts'
 import type { MonthlyContract } from '../types'
 import { toast } from '@/services/toast'
 import BasePagination from '@/components/common/BasePagination.vue'
 const store = useMonthlyContractsStore(),
-  { rows, loading, error, page, lastPage, total, summary, options } = storeToRefs(store),
+  { rows, loading, error, page, lastPage, total, summary } = storeToRefs(store),
   filters = reactive({
     search: '',
     status: '',
     date_from: '',
     date_to: '',
-    car_id: '',
-    driver_id: '',
-    customer_id: '',
   }),
   printing = ref(false),
   printRows = ref<MonthlyContract[]>([])
@@ -82,12 +80,6 @@ async function printReport() {
   }
 }
 onMounted(async () => {
-  try {
-    await store.loadOptions()
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Unable to load filters.'
-    toast.error(error.value)
-  }
   await load()
   initial.value = false
 })
@@ -128,7 +120,7 @@ onMounted(async () => {
     </table>
     <p>Total contracts: {{ printRows.length }}</p>
   </main>
-  <main v-else class="fleet-module fleet-list-page page-content contract-report">
+  <main v-else class="fleet-module fleet-list-page page-content contract-report glass-module">
     <PageHeader v-bind="contractHeader" class="d-flex flex-wrap justify-content-end">
       <div class="d-flex flex-wrap gap-2 report-actions">
         <!-- <button class="btn btn-outline-secondary" @click="printReport">
@@ -155,7 +147,7 @@ onMounted(async () => {
           <p class="small text-muted mb-0">Find contracts by customer, vehicle, status, or date.</p>
         </div>
       </div>
-      <form class="fleet-list-filter-grid" @submit.prevent="run('search', () => load(1))">
+      <form class="fleet-list-filter-grid contract-filter-grid" @submit.prevent="run('search', () => load(1))">
         <div class="fleet-list-filter-field fleet-list-filter-field--search">
           <label class="form-label" for="contract-search">Search contracts</label
           ><input
@@ -171,33 +163,6 @@ onMounted(async () => {
             <option value="">All statuses</option>
             <option v-for="s in ['Draft', 'Active', 'Expired', 'Renewed', 'Cancelled']" :key="s">
               {{ s }}
-            </option>
-          </select>
-        </div>
-        <div class="fleet-list-filter-field">
-          <label class="form-label" for="contract-car">Monthly vehicle</label
-          ><select id="contract-car" v-model="filters.car_id" class="form-select">
-            <option value="">All monthly vehicles</option>
-            <option v-for="c in options?.cars || []" :key="c.id" :value="String(c.id)">
-              {{ c.plate_no }}
-            </option>
-          </select>
-        </div>
-        <div class="fleet-list-filter-field">
-          <label class="form-label" for="contract-driver">Monthly driver</label
-          ><select id="contract-driver" v-model="filters.driver_id" class="form-select">
-            <option value="">All monthly drivers</option>
-            <option v-for="d in options?.drivers || []" :key="d.id" :value="String(d.id)">
-              {{ d.full_name }}
-            </option>
-          </select>
-        </div>
-        <div class="fleet-list-filter-field">
-          <label class="form-label" for="contract-customer">Customer</label
-          ><select id="contract-customer" v-model="filters.customer_id" class="form-select">
-            <option value="">All customers</option>
-            <option v-for="c in options?.customers || []" :key="c.id" :value="String(c.id)">
-              {{ c.company_name || c.guest_name }}
             </option>
           </select>
         </div>
@@ -221,25 +186,26 @@ onMounted(async () => {
             aria-label="Contract end to"
           />
         </div>
-        <div class="fleet-list-filter-actions">
+        <div class="fleet-list-filter-actions module-filter-actions contract-filter-actions">
           <button
-            class="btn gss-button gss-button--secondary"
+            class="btn module-filter-apply"
             :disabled="initial || pending('search')"
             :aria-busy="pending('search')"
           >
             <ActionButtonLabel :pending="pending('search')" loading-label="Searching…"
-              >Search</ActionButtonLabel
+              ><i class="bi bi-funnel" aria-hidden="true"></i> Search</ActionButtonLabel
             >
           </button>
+          <span class="module-filter-divider" aria-hidden="true"></span>
           <button
             type="button"
-            class="btn gss-button gss-button--outline gss-button--neutral"
+            class="btn module-filter-reset"
             :disabled="initial || pending('reset')"
             @click="run('reset', reset)"
             :aria-busy="pending('reset')"
           >
             <ActionButtonLabel :pending="pending('reset')" loading-label="Resetting…"
-              >Reset</ActionButtonLabel
+              ><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</ActionButtonLabel
             >
           </button>
         </div>
@@ -289,12 +255,8 @@ onMounted(async () => {
               <td>{{ c.rental_currency }} {{ c.monthly_rate }}</td>
               <td><BaseStatusBadge :status="c.status" /></td>
               <td class="fleet-list-actions-cell">
-                <div class="fleet-list-row-actions">
-                  <RouterLink
-                    :to="`/monthly-contracts/${c.id}`"
-                    class="btn gss-button gss-button--secondary"
-                    >View</RouterLink
-                  >
+                <div class="fleet-list-row-actions record-actions">
+                  <RecordAction action="view" icon-only :aria-label="`View contract ${c.contract_no}`" :to="`/monthly-contracts/${c.id}`" />
                 </div>
               </td>
             </tr>

@@ -4,6 +4,7 @@ import { onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import CustomerForm from '../components/CustomerForm.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { customerApi, customerError } from '../api'
 import type { Customer } from '../types'
 import { toast } from '@/services/toast'
@@ -55,9 +56,7 @@ watch(() => route.params.id, load, { immediate: true })
           >Retry loading customer</ActionButtonLabel
         >
       </button>
-      <RouterLink to="/customers" class="btn gss-button gss-button--outline gss-button--neutral"
-        >Back to customers</RouterLink
-      >
+      <RecordAction action="back" label="Back to customers" to="/customers" />
     </div>
     <PageSkeleton v-else-if="loading" kind="form" label="Loading customer…" />
     <CustomerForm v-else-if="customer" :key="customer.id" :customer="customer" />

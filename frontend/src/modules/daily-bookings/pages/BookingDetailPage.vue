@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { dailyBookingApi } from '../api'
 import type { DailyBooking } from '../types'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { toast } from '@/services/toast'
 const route = useRoute(),
   router = useRouter(),
@@ -43,15 +43,11 @@ onMounted(load)
 </script>
 <template>
   <main class="fleet-module page-content">
-    <div class="page-heading">
-      <div v-if="booking" class="d-flex gap-2">
-        <RouterLink :to="`/daily-bookings/${booking.id}/edit`" class="btn btn-outline-primary"
-          >Edit booking</RouterLink
-        ><button class="btn btn-outline-danger" :disabled="deleting" @click="remove">
-          <BaseLoading v-if="deleting" label="Deleting…" /><template v-else
-            >Delete</template
-          ></button
-        ><RouterLink to="/daily-bookings" class="btn btn-outline-secondary">Back</RouterLink>
+    <div v-if="booking" class="record-detail-action-bar">
+      <RecordAction action="back" to="/daily-bookings" />
+      <div class="record-detail-action-group">
+        <RecordAction action="edit" label="Edit booking" :to="`/daily-bookings/${booking.id}/edit`" />
+        <RecordAction action="delete" :loading="deleting" @click="remove" />
       </div>
     </div>
     <PageSkeleton v-if="loading" kind="detail" label="Loading booking…" />

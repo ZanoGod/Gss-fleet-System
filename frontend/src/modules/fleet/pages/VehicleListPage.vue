@@ -1,14 +1,17 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { displayValue as text, useModuleList } from '@/modules/shared/moduleRequests'
 import { fleetConfig as config } from '../config'
 import { useVehicleScope } from '../useVehicleScope'
 import { fleetMetrics, type OverviewSummary } from '../overview'
+import { currentMonth, shiftMonth } from '@/modules/customers/types'
 
 const { scope, query, assignmentPath, statuses } = useVehicleScope()
 const {
@@ -25,14 +28,36 @@ const {
   run,
   load,
   apply,
-  reset,
 } = useModuleList(config, { query, readSummary: (data) => data as OverviewSummary })
+
+const monthValue = computed(() => filters.month || currentMonth())
+const monthLabel = computed(() => {
+  const [year, value] = monthValue.value.split('-').map(Number)
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year!, value! - 1, 1)))
+})
+
+function changeMonth(amount: number) {
+  filters.month = shiftMonth(monthValue.value, amount)
+}
+
+function resetVehicleFilters() {
+  for (const filter of config.filters) filters[filter.key] = String(filter.default ?? '')
+  return apply()
+}
 </script>
 
 <template>
-  <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <div class="d-flex flex-wrap justify-content-end">
-      <nav class="fleet-tabs d-flex gap-2 mb-4" aria-label="Vehicle resource">
+  <section class="fleet-module page-content resource-workspace glass-module" aria-label="Module management">
+    <div class="vehicle-list-toolbar">
+      <nav
+        class="glass-segments vehicle-segments mb-4"
+        aria-label="Vehicle resource"
+        :data-active-index="scope === 'monthly' ? 1 : 0"
+      >
         <RouterLink
           v-for="type in ['daily', 'monthly']"
           :key="type"
@@ -67,8 +92,38 @@ const {
       label="Cars status summary"
     />
     <section class="card-shell p-4 mb-4" aria-label="Search and filters">
-      <form class="row g-3" @submit.prevent="run('filter', apply)">
-        <div v-for="filter in config.filters" :key="filter.key" class="col-sm-6 col-lg-3">
+      <form class="vehicle-filter-grid" @submit.prevent="run('filter', apply)">
+        <div
+          v-for="filter in config.filters"
+          :key="filter.key"
+          class="vehicle-filter-field"
+          :class="{ 'vehicle-filter-field--month': filter.key === 'month' }"
+        >
+          <template v-if="filter.key === 'month'">
+            <span class="form-label d-block">{{ filter.label }}</span>
+            <div class="vehicle-month-controls">
+              <button
+                type="button"
+                class="btn btn-outline-secondary vehicle-month-arrow"
+                aria-label="Previous assignment month"
+                @click="changeMonth(-1)"
+              ><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+              <span class="vehicle-month-label" aria-live="polite">{{ monthLabel }}</span>
+              <button
+                type="button"
+                class="btn btn-outline-secondary vehicle-month-arrow"
+                aria-label="Next assignment month"
+                @click="changeMonth(1)"
+              ><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary vehicle-month-today"
+                :disabled="monthValue === currentMonth()"
+                @click="filters.month = currentMonth()"
+              >Today</button>
+            </div>
+          </template>
+          <template v-else>
           <label :for="`filter-${filter.key}`" class="form-label">{{ filter.label }}</label
           ><select
             v-if="filter.options"
@@ -92,21 +147,15 @@ const {
             :placeholder="filter.placeholder"
             maxlength="500"
           />
+          </template>
         </div>
-        <div class="col-12 d-flex flex-wrap align-items-center gap-2">
-          <button class="btn btn-primary" :disabled="initial || pending('filter')">
-            <BaseLoading v-if="pending('filter')" label="Filtering…" /><template v-else
-              >Filter</template
-            ></button
-          ><button
-            type="button"
-            class="btn btn-outline-secondary"
-            :disabled="initial || pending('reset')"
-            @click="run('reset', reset)"
-          >
-            <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else
-              >Reset</template
-            >
+        <div class="module-filter-actions vehicle-filter-actions">
+          <button class="btn module-filter-apply" :disabled="initial || pending('filter')" :aria-busy="pending('filter')">
+            <BaseLoading v-if="pending('filter')" label="Filtering…" /><template v-else><i class="bi bi-funnel" aria-hidden="true"></i> Filter</template>
+          </button>
+          <span class="module-filter-divider" aria-hidden="true"></span>
+          <button type="button" class="btn module-filter-reset" :disabled="initial || pending('reset')" :aria-busy="pending('reset')" @click="run('reset', resetVehicleFilters)">
+            <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</template>
           </button>
         </div>
       </form>
@@ -170,13 +219,10 @@ const {
                 <span v-if="!row.assignments?.length" class="text-muted">No assignments</span>
               </td>
               <td>
-                <RouterLink :to="link(`${config.path}/${row.id}`)" class="btn-outline-warm"
-                  >View</RouterLink
-                ><RouterLink
-                  :to="link(`${config.path}/${row.id}/edit`)"
-                  class="btn-outline-warm ms-2"
-                  >Edit</RouterLink
-                >
+                <div class="record-actions">
+                  <RecordAction action="view" icon-only :aria-label="`View ${config.singular.toLowerCase()} ${text(row.plate_no)}`" :to="link(`${config.path}/${row.id}`)" />
+                  <RecordAction action="edit" icon-only :aria-label="`Edit ${config.singular.toLowerCase()} ${text(row.plate_no)}`" :to="link(`${config.path}/${row.id}/edit`)" />
+                </div>
               </td>
             </tr>
           </tbody>

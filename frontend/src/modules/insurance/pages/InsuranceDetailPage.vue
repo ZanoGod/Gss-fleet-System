@@ -10,6 +10,7 @@ import type { InsuranceClaim, InsurancePolicy } from '../types'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import InsurancePolicyForm from '../components/InsurancePolicyForm.vue'
 import { toast } from '@/services/toast'
+import RecordAction from '@/components/common/RecordAction.vue'
 
 const route = useRoute()
 const policy = ref<InsurancePolicy | null>(null)
@@ -124,12 +125,12 @@ onMounted(load)
   <main class="fleet-module page-content">
     <div class="page-heading">
       <div v-if="policy" class="d-flex flex-wrap gap-2">
-        <RouterLink
+        <RecordAction
           v-if="!policy.cancelled_at && !policy.archived_at && !policy.renewal"
           :to="`/insurance/${id}/edit`"
-          class="btn btn-outline-primary"
-          >Edit policy</RouterLink
-        >
+          action="edit"
+          label="Edit policy"
+        />
         <button
           v-if="!policy.cancelled_at && !policy.archived_at && !policy.renewal"
           class="btn btn-outline-warning"
@@ -157,7 +158,7 @@ onMounted(load)
             >Archive</template
           >
         </button>
-        <RouterLink to="/insurance" class="btn btn-outline-secondary">Back to insurance</RouterLink>
+        <RecordAction action="back" label="Back to insurance" to="/insurance" />
       </div>
     </div>
     <PageSkeleton v-if="loading && !policy" kind="detail" label="Loading policy…" />

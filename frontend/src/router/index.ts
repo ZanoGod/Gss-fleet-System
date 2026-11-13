@@ -357,6 +357,12 @@ const router = createRouter({
           component: () => import('@/modules/reports/pages/ReportsPage.vue'),
           meta: { title: 'Reports', description: 'Review operational reporting.' },
         },
+        {
+          path: 'button-system',
+          name: 'buttonSystem',
+          component: () => import('@/modules/settings/pages/ButtonSystemPage.vue'),
+          meta: { title: 'Button design system', description: 'Preview shared action patterns used across fleet operations.' },
+        },
       ],
     },
     {

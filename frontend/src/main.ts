@@ -5,6 +5,8 @@ import './assets/styles/theme.css'
 import './assets/main.css'
 import './assets/fleet-modules.css'
 import './assets/action-buttons.css'
+import './assets/record-actions.css'
+import './components/common/moduleGlass.css'
 import './assets/classic-loader.css'
 import './assets/toast.css'
 

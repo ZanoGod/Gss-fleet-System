@@ -137,4 +137,36 @@ class CustomerApiTest extends TestCase
         $this->getJson('/api/customers/999999')->assertNotFound();
         $this->travelBack();
     }
+
+    public function test_assignment_and_rental_filters_remain_distinct_and_can_match_separate_contracts(): void
+    {
+        $this->signIn();
+        $driverAssignment = $this->customer(['company_name' => 'Driver assignment']);
+        $this->contract($driverAssignment, ['assignment_type' => 'Driver Only', 'rental_status' => 'Including fuel']);
+
+        $driverRental = $this->customer(['company_name' => 'Driver rental']);
+        $this->contract($driverRental, ['assignment_type' => 'Vehicle Only', 'rental_status' => 'Driver only']);
+
+        $vehicleAssignment = $this->customer(['company_name' => 'Vehicle assignment']);
+        $this->contract($vehicleAssignment, ['assignment_type' => 'Vehicle Only', 'rental_status' => 'Excluding fuel']);
+
+        $carRental = $this->customer(['company_name' => 'Car rental']);
+        $this->contract($carRental, ['assignment_type' => 'Driver Only', 'rental_status' => 'Car only']);
+
+        $splitMatch = $this->customer(['company_name' => 'Separate contract match']);
+        $this->contract($splitMatch, ['assignment_type' => 'Vehicle Only', 'rental_status' => 'Excluding fuel']);
+        $this->contract($splitMatch, ['assignment_type' => 'Driver Only', 'rental_status' => 'Car only']);
+
+        $this->getJson('/api/customers?assignment_type='.rawurlencode('Driver Only'))->assertOk()
+            ->assertJsonCount(3, 'data');
+        $this->getJson('/api/customers?rental_status='.rawurlencode('Driver only'))->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.company_name', 'Driver rental');
+        $this->getJson('/api/customers?assignment_type='.rawurlencode('Vehicle Only'))->assertOk()
+            ->assertJsonCount(3, 'data');
+        $this->getJson('/api/customers?rental_status='.rawurlencode('Car only'))->assertOk()
+            ->assertJsonCount(2, 'data');
+        $this->getJson('/api/customers?assignment_type='.rawurlencode('Vehicle Only').'&rental_status='.rawurlencode('Car only'))
+            ->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.company_name', 'Separate contract match');
+    }
 }

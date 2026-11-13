@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { monthlyContractApi } from '../api'
 import type { MonthlyContract } from '../types'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { toast } from '@/services/toast'
 const route = useRoute(),
   router = useRouter(),
@@ -48,12 +48,12 @@ onMounted(load)
   <main class="fleet-module page-content">
     <div class="page-heading">
       <div v-if="contract" class="d-flex flex-wrap gap-2">
-        <RouterLink
+        <RecordAction
           v-if="contract.status !== 'Renewed' && contract.status !== 'Cancelled'"
+          action="edit"
           :to="`/monthly-contracts/${contract.id}/edit`"
-          class="btn gss-button gss-button--outline"
-          >Edit</RouterLink
-        ><RouterLink
+        />
+        <RouterLink
           v-if="
             contract.status !== 'Renewed' &&
             contract.status !== 'Cancelled' &&
@@ -62,20 +62,8 @@ onMounted(load)
           :to="`/monthly-contracts/${contract.id}/renew`"
           class="btn gss-button gss-button--outline"
           >Renew</RouterLink
-        ><button
-          class="btn gss-button gss-button--destructive"
-          :disabled="deleting"
-          @click="remove"
-          :aria-busy="deleting"
-        >
-          <ActionButtonLabel :pending="deleting" loading-label="Deleting…"
-            >Delete</ActionButtonLabel
-          ></button
-        ><RouterLink
-          to="/monthly-contracts"
-          class="btn gss-button gss-button--outline gss-button--neutral"
-          >Back</RouterLink
-        >
+        ><RecordAction action="delete" :loading="deleting" @click="remove" />
+        <RecordAction action="back" to="/monthly-contracts" />
       </div>
     </div>
     <PageSkeleton v-if="loading" kind="detail" label="Loading contract…" />

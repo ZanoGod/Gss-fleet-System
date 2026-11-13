@@ -5,6 +5,7 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import DeleteRecordDialog from '@/components/common/DeleteRecordDialog.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { displayValue as text, useModuleRecord } from '@/modules/shared/moduleRequests'
 import { fleetConfig as config } from '../config'
 import { useVehicleScope } from '../useVehicleScope'
@@ -29,7 +30,7 @@ const details = config.fields
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
     <div class="d-flex flex-wrap justify-content-end">
-      <nav class="fleet-tabs d-flex gap-2 mb-4" aria-label="Vehicle resource">
+      <!-- <nav class="fleet-tabs d-flex gap-2 mb-4" aria-label="Vehicle resource">
         <RouterLink
           v-for="type in ['daily', 'monthly']"
           :key="type"
@@ -41,11 +42,8 @@ const details = config.fields
             type === 'daily' ? `Daily booking vehicles` : `Monthly contract vehicles`
           }}</RouterLink
         >
-      </nav>
+      </nav> -->
       <PageHeader :title="config.singular" :description="config.description" :icon="config.icon">
-        <RouterLink :to="link(config.path)" class="btn btn-primary">{{
-          `All ${config.title}`
-        }}</RouterLink>
       </PageHeader>
     </div>
     <button
@@ -58,6 +56,13 @@ const details = config.fields
         >Retry loading</template
       >
     </button>
+    <div v-if="record" class="record-detail-action-bar">
+      <RecordAction action="back" :label="`All ${config.title}`" :to="link(config.path)" />
+      <div class="record-detail-action-group">
+        <RecordAction action="edit" :label="`Edit ${config.singular}`" :to="link(`${config.path}/${record.id}/edit`)" />
+        <RecordAction action="delete" @click="confirmDialog?.open()" />
+      </div>
+    </div>
     <PageSkeleton
       v-if="initial"
       kind="detail"
@@ -108,11 +113,6 @@ const details = config.fields
           <RouterLink :to="`/insurance/${p.id}`">Policy #{{ p.id }}</RouterLink>
         </li>
       </ul>
-      <div class="d-flex gap-2 mt-4">
-        <RouterLink :to="link(`${config.path}/${record.id}/edit`)" class="btn-gold"
-          >Edit {{ config.singular }}</RouterLink
-        ><button class="btn-outline-warm" @click="confirmDialog?.open()">Delete</button>
-      </div>
     </section>
     <DeleteRecordDialog
       ref="confirmDialog"

@@ -47,7 +47,7 @@ test('daily and monthly drivers persist, display dated assignments, and protect 
     .getByRole('navigation', { name: 'Primary navigation' })
     .getByRole('link', { name: 'Drivers', exact: true })
     .click()
-  await page.getByRole('link', { name: '+ Add Driver', exact: true }).click()
+  await page.getByRole('link', { name: 'Add driver', exact: true }).click()
   await page.getByRole('textbox', { name: 'Driver Name', exact: true }).fill(name)
   await page.getByRole('textbox', { name: 'Phone Number', exact: true }).fill('0912345678')
   await page.getByRole('textbox', { name: 'Note', exact: true }).fill('Airport service')
@@ -105,7 +105,7 @@ test('daily and monthly drivers persist, display dated assignments, and protect 
   await expect(page.getByRole('alert')).toContainText('history')
 
   await page.goto('/drivers?resource_type=monthly')
-  await page.getByRole('link', { name: '+ Add Driver', exact: true }).click()
+  await page.getByRole('link', { name: 'Add driver', exact: true }).click()
   await page.getByRole('textbox', { name: 'Driver Name', exact: true }).fill(monthlyName)
   await page.getByRole('textbox', { name: 'Phone Number', exact: true }).fill('0955555555')
   await page.getByRole('button', { name: 'Save Driver', exact: true }).click()

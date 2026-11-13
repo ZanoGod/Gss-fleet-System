@@ -4,6 +4,7 @@ import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import DeleteRecordDialog from '@/components/common/DeleteRecordDialog.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { displayValue as text, useModuleRecord } from '@/modules/shared/moduleRequests'
 import { maintenanceConfig as config } from '../config'
 
@@ -81,9 +82,8 @@ const details = config.fields.filter((field) => field.key !== 'vehicle_key')
         </li>
       </ul>
       <div class="d-flex gap-2 mt-4">
-        <RouterLink :to="link(`${config.path}/${record.id}/edit`)" class="btn-gold"
-          >Edit {{ config.singular }}</RouterLink
-        ><button class="btn-outline-warm" @click="confirmDialog?.open()">Delete</button>
+        <RecordAction action="edit" :label="`Edit ${config.singular}`" :to="link(`${config.path}/${record.id}/edit`)" />
+        <RecordAction action="delete" @click="confirmDialog?.open()" />
       </div>
     </section>
     <DeleteRecordDialog

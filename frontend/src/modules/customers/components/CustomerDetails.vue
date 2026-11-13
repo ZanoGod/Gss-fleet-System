@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import { onUnmounted, ref, watch } from 'vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
@@ -7,7 +8,7 @@ import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import { customerApi, customerError } from '../api'
 import { currentMonth, shiftMonth, type Customer } from '../types'
 import { toast } from '@/services/toast'
-const props = defineProps<{ id: number; month?: string }>()
+const props = defineProps<{ id: number; month?: string; backTo?: string }>()
 const emit = defineEmits<{ deleted: []; monthChange: [month: string] }>()
 const customer = ref<Customer | null>(null),
   loading = ref(false),
@@ -99,12 +100,26 @@ const labels: {
       >
     </button>
     <BaseLoading v-if="loading && customer" label="Updating customer assignments…" />
+    <p v-if="error" class="alert alert-danger" role="alert">{{ error }}</p>
     <PageSkeleton
       kind="detail"
       v-if="loading && !customer && !error"
       label="Loading customer details…"
     />
     <template v-if="customer">
+      <div v-if="backTo" class="record-detail-action-bar">
+        <RecordAction action="back" label="Back to Customers" :to="backTo" />
+        <div class="record-detail-action-group">
+          <RecordAction action="edit" label="Edit Customer" :to="`/customers/${customer.id}/edit`" />
+          <RecordAction
+            action="delete"
+            label="Delete Customer"
+            :disabled="!customer.can_delete"
+            @click="confirming = true"
+          />
+        </div>
+      </div>
+      <section :class="backTo ? 'card-shell p-4' : ''">
       <div class="d-flex justify-content-between align-items-start gap-3">
         <div>
           <h2 class="h4">{{ customer.company_name || 'Customer' }}</h2>
@@ -183,16 +198,8 @@ const labels: {
       </article>
       <div v-if="confirming" class="alert alert-warning mt-3" role="alert">
         <p>Delete {{ customer.company_name }}? This permanently removes this customer.</p>
+        <RecordAction action="delete" label="Confirm delete" :loading="deleting" @click="remove" />
         <button
-          class="btn gss-button gss-button--destructive"
-          :disabled="deleting"
-          @click="remove"
-          :aria-busy="deleting"
-        >
-          <ActionButtonLabel :pending="deleting" loading-label="Deleting…"
-            >Confirm delete</ActionButtonLabel
-          ></button
-        ><button
           class="btn gss-button gss-button--outline gss-button--neutral ms-2"
           :disabled="deleting"
           @click="confirming = false"
@@ -200,22 +207,14 @@ const labels: {
           Cancel
         </button>
       </div>
-      <div v-else class="d-flex gap-2 flex-wrap mt-4">
-        <RouterLink
-          :to="`/customers/${customer.id}/edit`"
-          class="btn gss-button gss-button--outline"
-          >Edit Customer</RouterLink
-        ><button
-          class="btn gss-button gss-button--destructive"
-          :disabled="!customer.can_delete"
-          @click="confirming = true"
-        >
-          Delete Customer
-        </button>
+      <div v-else-if="!backTo" class="d-flex gap-2 flex-wrap mt-4">
+        <RecordAction action="edit" label="Edit Customer" :to="`/customers/${customer.id}/edit`" />
+        <RecordAction action="delete" label="Delete Customer" :disabled="!customer.can_delete" @click="confirming = true" />
       </div>
       <p v-if="!customer.can_delete" class="small text-muted mt-2">
         Customers linked to any monthly contract cannot be deleted.
       </p>
+      </section>
     </template>
   </div>
 </template>

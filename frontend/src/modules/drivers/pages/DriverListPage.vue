@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import BaseLoading from '@/components/common/BaseLoading.vue'
+import { computed } from 'vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
-import PageHeader from '@/components/common/PageHeader.vue'
+import '@/components/common/moduleGlass.css'
+import { navigateSegments } from '@/components/common/navigateSegments'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { displayValue as text, useModuleList } from '@/modules/shared/moduleRequests'
 import { driverConfig as config } from '../config'
 import { useDriverScope } from '../useDriverScope'
 import { driversMetrics, type OverviewSummary } from '../overview'
+import { currentMonth, shiftMonth as shiftMonthValue } from '@/modules/customers/types'
 
 const { scope, query, assignmentPath, statuses, prepare } = useDriverScope()
 const {
@@ -25,51 +29,57 @@ const {
   run,
   load,
   apply,
-  reset,
 } = useModuleList(config, { query, prepare, readSummary: (data) => data as OverviewSummary })
-async function shiftMonth(offset: number) {
-  const current =
-    filters.month ||
-    new Intl.DateTimeFormat('sv-SE', {
-      timeZone: 'Asia/Rangoon',
-      year: 'numeric',
-      month: '2-digit',
-    }).format(new Date())
-  const [year = 0, month = 1] = current.split('-').map(Number)
-  const date = new Date(Date.UTC(year, month - 1 + offset, 1))
-  filters.month = date.toISOString().slice(0, 7)
-  await apply()
-}
-async function currentMonth() {
-  filters.month = new Intl.DateTimeFormat('sv-SE', {
-    timeZone: 'Asia/Rangoon',
+const monthValue = computed(() => filters.month || currentMonth())
+const monthLabel = computed(() => {
+  const [year, month] = monthValue.value.split('-').map(Number)
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'long',
     year: 'numeric',
-    month: '2-digit',
-  }).format(new Date())
-  await apply()
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year!, month! - 1, 1)))
+})
+function shiftMonth(offset: number) {
+  filters.month = shiftMonthValue(monthValue.value, offset)
+}
+function setCurrentMonth() {
+  filters.month = currentMonth()
+}
+function reset() {
+  for (const filter of config.filters) filters[filter.key] = String(filter.default ?? '')
+  return apply()
 }
 </script>
 
 <template>
-  <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <div class="d-flex flex-wrap justify-content-end">
-      <nav class="fleet-tabs d-flex gap-2 mb-4" aria-label="Driver resource">
-        <RouterLink
-          v-for="type in ['daily', 'monthly']"
-          :key="type"
-          :to="{ path: config.path, query: { resource_type: type } }"
-          class="btn"
-          :class="scope === type ? 'btn-primary' : 'btn-outline-secondary'"
-          :aria-current="scope === type ? 'page' : undefined"
-          >{{ type === 'daily' ? `Daily booking drivers` : `Monthly contract drivers` }}</RouterLink
+  <section
+    class="fleet-module page-content resource-workspace glass-module"
+    aria-label="Module management"
+  >
+    <header class="module-heading driver-module-heading">
+      <div>
+        <h1>Drivers</h1>
+        <p>{{ config.description }}</p>
+      </div>
+      <div class="driver-heading-actions">
+        <nav
+          class="glass-segments driver-segments"
+          aria-label="Driver resource"
+          :data-active-index="scope === 'monthly' ? 1 : 0"
+          @keydown="navigateSegments"
         >
-      </nav>
-      <PageHeader :title="config.title" :description="config.description" :icon="config.icon">
-        <RouterLink :to="link(`${config.path}/create`)" class="btn btn-primary">{{
-          `+ Add ${config.singular}`
-        }}</RouterLink>
-      </PageHeader>
-    </div>
+          <RouterLink
+            v-for="type in ['daily', 'monthly']"
+            :key="type"
+            :to="{ path: config.path, query: { resource_type: type } }"
+            :aria-current="scope === type ? 'page' : undefined"
+          >{{ type === 'daily' ? 'Daily booking drivers' : 'Monthly contract drivers' }}</RouterLink>
+        </nav>
+        <RouterLink :to="link(`${config.path}/create`)" class="btn btn-primary">
+          <i class="bi bi-person-plus me-1" aria-hidden="true" /> Add driver
+        </RouterLink>
+      </div>
+    </header>
     <button
       v-if="error"
       class="btn-outline-warm mb-3"
@@ -86,85 +96,88 @@ async function currentMonth() {
       label="drivers status summary"
     />
     <section class="card-shell p-4 mb-4" aria-label="Search and filters">
-      <form class="row g-3" @submit.prevent="run('filter', apply)">
-        <div v-for="filter in config.filters" :key="filter.key" class="col-sm-6 col-lg-3">
-          <label :for="`filter-${filter.key}`" class="form-label">{{ filter.label }}</label
-          ><select
-            v-if="filter.options"
-            :id="`filter-${filter.key}`"
-            v-model="filters[filter.key]"
-            class="form-select"
-          >
-            <option value="">All</option>
-            <option
-              v-for="option in filter.key === 'status' ? statuses : filter.options"
-              :key="option"
+      <form class="vehicle-filter-grid" @submit.prevent="run('filter', apply)">
+        <div
+          v-for="filter in config.filters"
+          :key="filter.key"
+          class="vehicle-filter-field"
+          :class="{ 'vehicle-filter-field--month': filter.key === 'month' }"
+        >
+          <template v-if="filter.key === 'month'">
+            <span class="form-label d-block">{{ filter.label }}</span>
+            <div class="vehicle-month-controls">
+              <button
+                type="button"
+                class="btn btn-outline-secondary vehicle-month-arrow"
+                aria-label="Previous assignment month"
+                @click="shiftMonth(-1)"
+              >
+                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+              </button>
+              <span class="vehicle-month-label" aria-live="polite">{{ monthLabel }}</span>
+              <button
+                type="button"
+                class="btn btn-outline-secondary vehicle-month-arrow"
+                aria-label="Next assignment month"
+                @click="shiftMonth(1)"
+              >
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary vehicle-month-today"
+                :disabled="monthValue === currentMonth()"
+                @click="setCurrentMonth"
+              >
+                Today
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <label :for="`filter-${filter.key}`" class="form-label">{{ filter.label }}</label>
+            <select
+              v-if="filter.options"
+              :id="`filter-${filter.key}`"
+              v-model="filters[filter.key]"
+              class="form-select"
             >
-              {{ option }}
-            </option></select
-          ><input
-            v-else
-            :id="`filter-${filter.key}`"
-            v-model="filters[filter.key]"
-            :type="filter.type || 'search'"
-            class="form-control"
-            :placeholder="filter.placeholder"
-            maxlength="500"
-          />
+              <option value="">All</option>
+              <option
+                v-for="option in filter.key === 'status' ? statuses : filter.options"
+                :key="option"
+              >{{ option }}</option>
+            </select>
+            <input
+              v-else
+              :id="`filter-${filter.key}`"
+              v-model="filters[filter.key]"
+              :type="filter.type || 'search'"
+              class="form-control"
+              :placeholder="filter.placeholder"
+              maxlength="500"
+            />
+          </template>
         </div>
-        <div class="col-12 d-flex flex-wrap align-items-center gap-2">
-          <button class="btn btn-primary" :disabled="initial || pending('filter')">
-            <BaseLoading v-if="pending('filter')" label="Filtering…" /><template v-else
-              >Filter</template
-            ></button
-          ><button
+        <div class="module-filter-actions vehicle-filter-actions">
+          <button
+            class="btn module-filter-apply"
+            :disabled="initial || pending('filter')"
+            :aria-busy="pending('filter')"
+          >
+            <BaseLoading v-if="pending('filter')" label="Filtering…" />
+            <template v-else><i class="bi bi-funnel" aria-hidden="true"></i> Filter</template>
+          </button>
+          <span class="module-filter-divider" aria-hidden="true"></span>
+          <button
             type="button"
-            class="btn btn-outline-secondary"
+            class="btn module-filter-reset"
             :disabled="initial || pending('reset')"
+            :aria-busy="pending('reset')"
             @click="run('reset', reset)"
           >
-            <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else
-              >Reset</template
-            >
+            <BaseLoading v-if="pending('reset')" label="Resetting…" />
+            <template v-else><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</template>
           </button>
-          <div
-            class="resource-month-nav d-flex flex-wrap align-items-center gap-2 ms-sm-auto"
-            aria-label="Assignment month navigation"
-          >
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              aria-label="Previous assignment month"
-              :disabled="initial || pending('previousMonth')"
-              @click="run('previousMonth', () => shiftMonth(-1))"
-            >
-              <BaseLoading v-if="pending('previousMonth')" label="Loading…" /><template v-else
-                >‹ Previous month</template
-              >
-            </button>
-            <span class="numeric">{{ filters.month || 'Current month' }}</span>
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              aria-label="Next assignment month"
-              :disabled="initial || pending('nextMonth')"
-              @click="run('nextMonth', () => shiftMonth(1))"
-            >
-              <BaseLoading v-if="pending('nextMonth')" label="Loading…" /><template v-else
-                >Next month ›</template
-              >
-            </button>
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              :disabled="initial || pending('currentMonth')"
-              @click="run('currentMonth', currentMonth)"
-            >
-              <BaseLoading v-if="pending('currentMonth')" label="Refreshing…" /><template v-else
-                >Today</template
-              >
-            </button>
-          </div>
         </div>
       </form>
     </section>
@@ -227,13 +240,10 @@ async function currentMonth() {
                 <span v-if="!row.assignments?.length" class="text-muted">No assignments</span>
               </td>
               <td>
-                <RouterLink :to="link(`${config.path}/${row.id}`)" class="btn-outline-warm"
-                  >View</RouterLink
-                ><RouterLink
-                  :to="link(`${config.path}/${row.id}/edit`)"
-                  class="btn-outline-warm ms-2"
-                  >Edit</RouterLink
-                >
+                <div class="record-actions">
+                  <RecordAction action="view" icon-only :aria-label="`View driver ${text(row.full_name)}`" :to="link(`${config.path}/${row.id}`)" />
+                  <RecordAction action="edit" icon-only :aria-label="`Edit driver ${text(row.full_name)}`" :to="link(`${config.path}/${row.id}/edit`)" />
+                </div>
               </td>
             </tr>
           </tbody>

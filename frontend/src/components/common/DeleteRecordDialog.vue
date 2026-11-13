@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import BaseLoading from './BaseLoading.vue'
+import RecordAction from './RecordAction.vue'
 
 defineProps<{ singular: string; saving: boolean }>()
 const emit = defineEmits<{ confirm: [] }>()
@@ -21,9 +22,7 @@ defineExpose({
     <p>Referenced records and maintenance service history are protected.</p>
     <div class="d-flex gap-2">
       <button autofocus class="btn-outline-warm" @click="confirmDialog?.close()">Keep record</button
-      ><button class="btn-gold" :disabled="saving" @click="emit('confirm')">
-        <BaseLoading v-if="saving" label="Deleting…" /><template v-else>Delete record</template>
-      </button>
+      ><RecordAction action="delete" label="Delete record" :loading="saving" @click="emit('confirm')" />
     </div>
   </dialog>
 </template>

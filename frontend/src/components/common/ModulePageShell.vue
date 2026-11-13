@@ -4,6 +4,7 @@ import BaseEmptyState from './BaseEmptyState.vue'
 import BaseSearch from './BaseSearch.vue'
 import BaseFilter from './BaseFilter.vue'
 import BaseButton from './BaseButton.vue'
+import RecordAction from './RecordAction.vue'
 const props = defineProps<{
   title: string
   entity: string
@@ -16,9 +17,7 @@ const props = defineProps<{
     <div class="section-head d-flex flex-wrap justify-content-end ">
       <RouterLink v-if="mode === 'list'" :to="basePath + '/create'" class="btn-gold"
         ><i class="bi bi-plus-lg me-2"></i>New {{ entity }}</RouterLink
-      ><RouterLink v-else :to="basePath" class="btn btn-outline-secondary"
-        ><i class="bi bi-arrow-left me-2"></i>Back to {{ entity }} list</RouterLink
-      >
+      ><RecordAction v-else action="back" :label="`Back to ${entity} list`" :to="basePath" />
     </div>
     <div v-if="mode === 'list'" class="gss-module-tools">
       <BaseSearch

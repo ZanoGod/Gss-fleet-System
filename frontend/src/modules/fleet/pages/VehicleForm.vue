@@ -25,26 +25,32 @@ const loading = computed(() => initial.value || showingCreateSkeleton.value)
 
 <template>
   <section class="fleet-module page-content resource-workspace" aria-label="Module management">
-    <div class="d-flex flex-wrap justify-content-end">
-      <nav class="fleet-tabs d-flex gap-2 mb-4" aria-label="Vehicle resource">
-        <RouterLink
-          v-for="type in ['daily', 'monthly']"
-          :key="type"
-          :to="{ path: config.path, query: { resource_type: type } }"
-          class="btn"
-          :class="scope === type ? 'btn-primary' : 'btn-outline-secondary'"
-          :aria-current="scope === type ? 'page' : undefined"
-          >{{
-            type === 'daily' ? `Daily booking vehicles` : `Monthly contract vehicles`
-          }}</RouterLink
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div class="glass-module vehicle-form-tabs">
+        <nav
+          class="fleet-tabs mb-4"
+          aria-label="Vehicle resource"
+          :data-active-index="scope === 'monthly' ? 1 : 0"
         >
-      </nav>
+          <RouterLink
+            v-for="type in ['daily', 'monthly']"
+            :key="type"
+            :to="{ path: config.path, query: { resource_type: type } }"
+            class="btn"
+            :class="scope === type ? 'btn-primary' : 'btn-outline-secondary'"
+            :aria-current="scope === type ? 'page' : undefined"
+            >{{
+              type === 'daily' ? `Daily booking vehicles` : `Monthly contract vehicles`
+            }}</RouterLink
+          >
+        </nav>
+      </div>
       <PageHeader
         :title="`${mode === 'create' ? 'Add' : 'Edit'} ${config.singular}`"
         :description="config.description"
         :icon="config.icon"
       >
-        <RouterLink :to="link(config.path)" class="btn btn-primary">{{
+        <RouterLink :to="link(config.path)" class="btn btn-outline-secondary">{{
           `All ${config.title}`
         }}</RouterLink>
       </PageHeader>
@@ -124,3 +130,10 @@ const loading = computed(() => initial.value || showingCreateSkeleton.value)
     </section>
   </section>
 </template>
+
+<style scoped>
+.vehicle-form-tabs {
+  display: flex;
+  align-items: flex-start;
+}
+</style>

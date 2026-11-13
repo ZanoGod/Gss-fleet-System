@@ -9,6 +9,7 @@ import StatusSummary from '@/components/common/StatusSummary.vue'
 import { dailyBookingApi, type DailyBookingSummary } from '../api'
 import { dailyBookingMetrics } from '../overview'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
 import { toast } from '@/services/toast'
 const store = useDailyBookingStore(),
@@ -78,7 +79,7 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <main class="fleet-module booking-list-page page-content">
+  <main class="fleet-module booking-list-page page-content glass-module">
     <PageHeader
       title="Daily Bookings"
       description="Manage daily booking records."
@@ -141,23 +142,24 @@ onMounted(async () => {
             aria-label="End date to"
           />
         </div>
-        <div class="fleet-filter-actions fleet-filter-actions--daily-bookings">
+        <div class="fleet-filter-actions fleet-filter-actions--daily-bookings module-filter-actions">
           <button
-            class="btn btn-outline-primary fleet-filter-submit"
+            class="btn module-filter-apply fleet-filter-submit"
             :disabled="initial || pending('search') || pending('reset')"
           >
             <BaseLoading v-if="pending('search')" label="Searching…" /><template v-else
-              >Search</template
+              ><i class="bi bi-funnel" aria-hidden="true"></i> Search</template
             >
           </button>
+          <span class="module-filter-divider" aria-hidden="true"></span>
           <button
             type="button"
-            class="btn btn-outline-secondary fleet-filter-submit"
+            class="btn module-filter-reset fleet-filter-submit"
             :disabled="initial || pending('search') || pending('reset')"
             @click="run('reset', reset)"
           >
             <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else
-              >Reset</template
+              ><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</template
             >
           </button>
         </div>
@@ -212,16 +214,9 @@ onMounted(async () => {
               </td>
               <td><BaseStatusBadge :status="b.status" /></td>
               <td>
-                <div class="d-flex gap-1">
-                  <RouterLink
-                    :to="`/daily-bookings/${b.id}`"
-                    class="btn btn-sm btn-outline-secondary"
-                    >View</RouterLink
-                  ><RouterLink
-                    :to="`/daily-bookings/${b.id}/edit`"
-                    class="btn btn-sm btn-outline-primary"
-                    >Edit</RouterLink
-                  >
+                <div class="record-actions">
+                  <RecordAction action="view" icon-only :aria-label="`View booking ${b.id}`" :to="`/daily-bookings/${b.id}`" />
+                  <RecordAction action="edit" icon-only :aria-label="`Edit booking ${b.id}`" :to="`/daily-bookings/${b.id}/edit`" />
                 </div>
               </td>
             </tr>

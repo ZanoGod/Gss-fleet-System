@@ -31,15 +31,16 @@
 }
 
 .btn.gss-button--primary {
-  --gss-action-color: var(--gss-surface-card);
-  --gss-action-bg: var(--gss-button-outline-text);
-  --gss-action-border: var(--gss-action-bg);
-  --gss-action-hover: color-mix(in srgb, var(--gss-action-bg), black 18%);
-  --gss-action-hover-border: var(--gss-action-hover);
-  --gss-action-press: color-mix(in srgb, var(--gss-action-bg), black 24%);
-  --gss-action-hover-shadow: 0 3px 7px rgb(0 0 0 / 14%);
-  --gss-action-press-shadow: 0 1px 2px rgb(0 0 0 / 12%);
-  --gss-action-lift: translateY(-1px);
+  --gss-action-color: var(--gss-button-default-text);
+  --gss-action-bg: var(--gss-button-primary-bg);
+  --gss-action-border: var(--gss-button-primary-border);
+  --gss-action-hover: var(--gss-button-primary-hover-bg);
+  --gss-action-hover-border: var(--gss-button-primary-hover-border);
+  --gss-action-press: var(--gss-button-primary-active-bg);
+  --gss-action-hover-shadow: 0 5px 14px var(--gss-shadow-tint-soft);
+  --gss-action-press-shadow: inset 0 2px 4px var(--gss-shadow-tint-medium);
+  --gss-action-lift: translateY(-2px);
+  background-image: linear-gradient(150deg, rgb(255 255 255 / 30%), transparent 58%);
 }
 
 .btn.gss-button--secondary {

@@ -2,7 +2,9 @@
 import { usePendingAction } from '@/components/common/usePendingAction'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
-import PageHeader from '@/components/common/PageHeader.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
+import '@/components/common/moduleGlass.css'
+import { navigateSegments } from '@/components/common/navigateSegments'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import { insuranceMetrics, insuranceHeader } from '../overview'
 import { onMounted, ref } from 'vue'
@@ -21,6 +23,9 @@ const store = useInsuranceStore(),
   initial = ref(true),
   claimsReady = ref(false)
 let request = 0
+const loadError = ref('')
+const refreshing = ref(false)
+const appliedFilters = ref(false)
 const error = ref(''),
   providerModal = ref(false),
   providerId = ref<number | null>(null),
@@ -46,24 +51,33 @@ function providerErrorMessage(error: unknown, fallback: string) {
 const { pending, run } = usePendingAction()
 async function load() {
   const version = ++request
-  error.value = ''
+  loadError.value = ''
+  refreshing.value = true
+  claimsReady.value = false
+  const filtered = Boolean(search.value.trim() || status.value)
   try {
     await store.load({ search: search.value || undefined, status: status.value || undefined })
     if (version !== request) return
+    appliedFilters.value = filtered
     initial.value = false
     const result = await insuranceApi.claims({ per_page: 10 })
     if (version === request) claims.value = result
   } catch (e) {
     if (version === request) {
-      error.value = e instanceof Error ? e.message : 'Unable to load insurance data.'
-      toast.error(error.value)
+      loadError.value = e instanceof Error ? e.message : 'Unable to load insurance data.'
     }
   } finally {
     if (version === request) {
       initial.value = false
       claimsReady.value = true
+      refreshing.value = false
     }
   }
+}
+async function clearFilters() {
+  search.value = ''
+  status.value = ''
+  await load()
 }
 function newProvider() {
   providerId.value = null
@@ -134,24 +148,27 @@ async function createClaim() {
 onMounted(load)
 </script>
 <template>
-  <main class="fleet-module page-content">
-    <PageHeader v-bind="insuranceHeader" class="d-flex flex-wrap justify-content-end">
-      <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary" @click="newProvider">
-          <i class="bi bi-building-add me-1" aria-hidden="true" /> Add provider</button
-        ><RouterLink to="/insurance/create" class="btn btn-primary"
-          ><i class="bi bi-plus-lg me-1" aria-hidden="true" /> Add Insurance</RouterLink
-        >
+  <main class="fleet-module page-content glass-module">
+    <header class="module-heading">
+      <div>
+        <h1>Insurance Management</h1>
+        <p>{{ insuranceHeader.description }}</p>
       </div>
-    </PageHeader>
+    </header>
     <StatusSummary
       :items="insuranceMetrics(store.dashboard)"
       :loading="initial"
       label="Insurance status summary"
     />
     <PageSkeleton v-if="initial" label="Loading insurance policies" :columns="7" />
-    <template v-else-if="store.dashboard">
-      <div class="fleet-tabs d-flex gap-2 mb-3">
+    <template v-else>
+      <div
+        class="glass-segments glass-segments--three"
+        role="group"
+        aria-label="Insurance sections"
+        :data-active-index="activeTab === 'claims' ? 1 : activeTab === 'providers' ? 2 : 0"
+        @keydown="navigateSegments"
+      >
         <button
           v-for="tab in [
             { id: 'policies', label: 'Policies' },
@@ -159,29 +176,41 @@ onMounted(load)
             { id: 'providers', label: 'Providers' },
           ]"
           :key="tab.id"
-          class="btn"
+          type="button"
           :aria-pressed="activeTab === tab.id"
-          :class="activeTab === tab.id ? 'btn-primary' : 'btn-outline-secondary border-0'"
           @click="activeTab = tab.id"
         >
           {{ tab.label }}
         </button>
       </div>
+      <div v-if="loadError" class="module-feedback" role="alert">
+        <h2>Unable to load insurance records</h2>
+        <p>{{ loadError }}</p>
+        <button class="btn btn-outline-primary" :disabled="refreshing" @click="run('retry', load)">
+          <BaseLoading v-if="refreshing" label="Retrying…" /><template v-else>Retry</template>
+        </button>
+      </div>
       <section v-if="activeTab === 'policies'" class="card shadow-sm">
         <div class="card-header bg-white d-flex flex-wrap gap-2 justify-content-between">
-          <h2 class="h5 mb-0 align-self-center">Policies</h2>
-          <div class="d-flex gap-2">
+          <div class="module-section-heading">
+            <h2 class="h5 mb-0">Policies</h2>
+            <RouterLink to="/insurance/create" class="btn btn-primary"
+              ><i class="bi bi-shield-check me-1" aria-hidden="true" /> Add policy</RouterLink
+            >
+          </div>
+          <form class="policy-toolbar" @submit.prevent="!refreshing && run('search', load)">
             <input
               v-model="search"
               class="form-control"
               placeholder="Search policy or provider"
               aria-label="Search policies"
-              @keyup.enter="run('search', load)"
+              type="search"
             /><select
               v-model="status"
               class="form-select"
               aria-label="Filter by status"
-              @change="load"
+              :disabled="refreshing"
+              @change="run('search', load)"
             >
               <option value="">All statuses</option>
               <option
@@ -191,18 +220,18 @@ onMounted(load)
               >
                 {{ s }}
               </option></select
-            ><button
-              class="btn btn-outline-primary"
-              :disabled="pending('search')"
-              @click="run('search', load)"
-            >
-              <BaseLoading v-if="pending('search')" label="Searching…" /><template v-else
-                >Search</template
+            ><button class="btn module-filter-apply" :disabled="refreshing" type="submit">
+              <BaseLoading v-if="refreshing" label="Searching…" /><template v-else
+                ><i class="bi bi-funnel" aria-hidden="true"></i> Search</template
               >
             </button>
-          </div>
+          </form>
         </div>
-        <div v-if="store.policies.length" class="table-responsive">
+        <BaseLoading v-if="refreshing" class="d-block p-4" label="Loading policies…" />
+        <div v-else-if="loadError" class="p-4 text-muted">
+          Policy results are unavailable. Retry the request above.
+        </div>
+        <div v-else-if="store.policies.length" class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <thead>
               <tr>
@@ -224,10 +253,10 @@ onMounted(load)
                   <div class="text-muted small text-capitalize">{{ p.insurance_type }}</div>
                 </td>
                 <td>
-                  {{ p.vehicle?.plate_no || 'â€”' }}
+                  {{ p.vehicle?.plate_no || '—' }}
                   <div class="text-muted small text-capitalize">{{ p.vehicle?.fleet }} fleet</div>
                 </td>
-                <td>{{ p.provider?.name || 'â€”' }}</td>
+                <td>{{ p.provider?.name || '—' }}</td>
                 <td>
                   {{ p.start_date }}
                   <div class="text-muted small">to {{ p.expiration_date }}</div>
@@ -235,19 +264,28 @@ onMounted(load)
                 <td>{{ p.currency }} {{ p.premium_amount }}</td>
                 <td><BaseStatusBadge :status="p.status" /></td>
                 <td>
-                  <RouterLink
-                    :to="`/insurance/${p.id}`"
-                    class="btn btn-sm btn-outline-secondary"
-                    :aria-label="`View policy ${p.policy_number}`"
-                    >View</RouterLink
-                  >
+                  <RecordAction action="view" icon-only :aria-label="`View policy ${p.policy_number}`" :to="`/insurance/${p.id}`" />
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div v-else class="p-4 text-center text-muted">
-          No insurance policies match these filters.
+          <template v-if="appliedFilters">
+            <h3 class="h5">No matching policies</h3>
+            <p>Try a different search or status.</p>
+            <button
+              class="btn module-filter-clear"
+              :disabled="refreshing"
+              @click="run('search', clearFilters)"
+            >
+              <i class="bi bi-x-lg" aria-hidden="true"></i> Clear filters
+            </button>
+          </template>
+          <template v-else
+            ><h3 class="h5">No policies yet</h3>
+            <p class="mb-0">Use Add policy above to register your first policy.</p></template
+          >
         </div>
       </section>
       <PageSkeleton
@@ -258,12 +296,8 @@ onMounted(load)
       <section v-else-if="activeTab === 'claims'" class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between">
           <h2 class="h5 mb-0">Recent claims</h2>
-          <button
-            class="btn btn-sm btn-primary"
-            :disabled="!store.policies.length"
-            @click="newClaim"
-          >
-            New claim
+          <button class="btn btn-primary" :disabled="!store.policies.length" @click="newClaim">
+            <i class="bi bi-clipboard2-check me-1" aria-hidden="true" /> New claim
           </button>
         </div>
         <div v-if="claims.length" class="table-responsive">
@@ -286,11 +320,7 @@ onMounted(load)
                 <td>{{ c.policy?.currency }} {{ c.amount }}</td>
                 <td><BaseStatusBadge :status="c.status" /></td>
                 <td>
-                  <RouterLink
-                    :to="`/insurance/${c.policy_id}`"
-                    class="btn btn-sm btn-outline-secondary"
-                    >View policy</RouterLink
-                  >
+                  <RecordAction action="view" icon-only aria-label="View policy" :to="`/insurance/${c.policy_id}`" />
                 </td>
               </tr>
             </tbody>
@@ -301,7 +331,9 @@ onMounted(load)
       <section v-else class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between">
           <h2 class="h5 mb-0">Insurance providers</h2>
-          <button class="btn btn-sm btn-primary" @click="newProvider">Add provider</button>
+          <button class="btn btn-primary" @click="newProvider">
+            <i class="bi bi-building me-1" aria-hidden="true" /> Add provider
+          </button>
         </div>
         <div v-if="store.providers.length" class="table-responsive">
           <table class="table table-hover align-middle mb-0">
@@ -317,34 +349,26 @@ onMounted(load)
             <tbody>
               <tr v-for="p in store.providers" :key="p.id">
                 <td class="fw-semibold">{{ p.name }}</td>
-                <td>{{ p.contact_name || p.email || 'â€”' }}</td>
-                <td>{{ p.phone || 'â€”' }}</td>
-                <td>{{ p.policies_count ?? 'â€”' }}</td>
+                <td>{{ p.contact_name || p.email || '—' }}</td>
+                <td>{{ p.phone || '—' }}</td>
+                <td>{{ p.policies_count ?? '—' }}</td>
                 <td>
-                  <div class="d-flex gap-1">
-                    <button
-                      class="btn btn-sm btn-outline-primary"
+                  <div class="record-actions">
+                    <RecordAction
+                      action="edit"
+                      icon-only
+                      :aria-label="`View or edit provider ${p.name}`"
                       :disabled="pending(`edit:${p.id}`)"
+                      :loading="pending(`edit:${p.id}`)"
                       @click="run(`edit:${p.id}`, () => editProvider(p.id))"
-                    >
-                      <BaseLoading
-                        v-if="pending(`edit:${p.id}`)"
-                        label="Loading provider…"
-                      /><template v-else>Details / Edit</template></button
-                    ><button
-                      class="btn btn-sm btn-outline-danger"
+                    /><RecordAction
+                      action="delete"
+                      icon-only
+                      :aria-label="`Delete provider ${p.name}`"
                       :disabled="pending(`delete:${p.id}`) || (p.policies_count || 0) > 0"
-                      @click="
-                        run(`delete:${p.id}`, () =>
-                          deleteProvider(p.id, p.name, p.policies_count || 0),
-                        )
-                      "
-                    >
-                      <BaseLoading v-if="pending(`delete:${p.id}`)" label="Deleting…" /><template
-                        v-else
-                        >Delete</template
-                      >
-                    </button>
+                      :loading="pending(`delete:${p.id}`)"
+                      @click="run(`delete:${p.id}`, () => deleteProvider(p.id, p.name, p.policies_count || 0))"
+                    />
                   </div>
                 </td>
               </tr>
@@ -354,7 +378,6 @@ onMounted(load)
         <div v-else class="p-4 text-center text-muted">No providers yet.</div>
       </section>
     </template>
-    <div v-else class="empty-state">Insurance dashboard is not available.</div>
     <BaseModal
       :open="providerModal"
       :title="providerId ? 'Insurance provider details' : 'Add insurance provider'"
@@ -412,7 +435,8 @@ onMounted(load)
           class="btn btn-outline-secondary"
           :disabled="pending('provider')"
           @click="providerModal = false"
-        >Cancel</button
+        >
+          Cancel</button
         ><button
           class="btn btn-primary"
           :disabled="pending('provider') || !providerForm.name.trim()"
@@ -483,7 +507,8 @@ onMounted(load)
           class="btn btn-outline-secondary"
           :disabled="pending('claim')"
           @click="claimModal = false"
-        >Cancel</button
+        >
+          Cancel</button
         ><button
           class="btn btn-primary"
           :disabled="pending('claim')"

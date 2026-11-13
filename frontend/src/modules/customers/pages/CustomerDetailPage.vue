@@ -11,13 +11,12 @@ if (!valid.value) toast.error('Invalid customer ID.')
 </script>
 <template>
   <main class="fleet-module page-content">
-    <RouterLink
-      to="/customers"
-      class="btn gss-button gss-button--outline gss-button--neutral d-inline-block mb-3"
-      >← Back to Customers</RouterLink
-    >
-    <section class="card-shell p-4">
-      <CustomerDetails v-if="valid" :key="id" :id="id" @deleted="router.push('/customers')" />
-    </section>
+    <CustomerDetails
+      v-if="valid"
+      :key="id"
+      :id="id"
+      back-to="/customers"
+      @deleted="router.push('/customers')"
+    />
   </main>
 </template>

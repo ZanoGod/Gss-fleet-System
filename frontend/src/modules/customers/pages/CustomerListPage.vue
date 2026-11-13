@@ -5,18 +5,18 @@ import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import { customersMetrics, customerHeader } from '../overview'
-import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import BaseEmptyState from '@/components/common/BaseEmptyState.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import CustomerDetails from '../components/CustomerDetails.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { customerApi, customerError } from '../api'
 import { toast } from '@/services/toast'
 import {
   assignmentTypes,
-  rentalStatuses,
   currentMonth,
   shiftMonth,
   type Customer,
@@ -45,6 +45,12 @@ const page = ref(1),
   total = ref(0),
   selected = ref<number | null>(null),
   month = ref(currentMonth())
+const monthLabel = computed(() => {
+  const [year, value] = month.value.split('-').map(Number)
+  return new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(year!, value! - 1, 1)),
+  )
+})
 const dialog = ref<HTMLDialogElement | null>(null),
   results = ref<HTMLElement | null>(null),
   fullscreen = ref(false)
@@ -147,7 +153,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <main class="fleet-module fleet-list-page page-content">
+  <main class="fleet-module fleet-list-page page-content glass-module">
     <PageHeader v-bind="customerHeader" class="d-flex flex-wrap justify-content-end">
       <RouterLink to="/customers/create" class="btn gss-button gss-button--primary"
         >+ Add Customer</RouterLink
@@ -176,8 +182,8 @@ onMounted(() => {
           <p class="small text-muted mb-0">Find customers by details or contract status.</p>
         </div>
       </div>
-      <form class="row g-3" @submit.prevent="run('filter', apply)">
-        <div class="col-lg-5">
+      <form class="customer-filter-grid" @submit.prevent="run('filter', apply)">
+        <div class="customer-filter-field customer-filter-search">
           <label for="customer-search" class="form-label">Search</label
           ><input
             id="customer-search"
@@ -188,7 +194,7 @@ onMounted(() => {
             placeholder="Company, contact, phone, contract…"
           />
         </div>
-        <div class="col-sm-6 col-lg-2">
+        <div class="customer-filter-field">
           <label for="customer-status" class="form-label">Customer Status</label
           ><select id="customer-status" v-model="filters.status" class="form-select">
             <option value="">All statuses</option>
@@ -196,21 +202,14 @@ onMounted(() => {
             <option>Inactive</option>
           </select>
         </div>
-        <div class="col-sm-6 col-lg-3">
-          <label for="customer-assignment" class="form-label">Assignment</label
+        <div class="customer-filter-field">
+          <label for="customer-assignment" class="form-label">Contract assignment</label
           ><select id="customer-assignment" v-model="filters.assignment_type" class="form-select">
             <option value="">All assignments</option>
             <option v-for="type in assignmentTypes" :key="type">{{ type }}</option>
           </select>
         </div>
-        <div class="col-sm-6 col-lg-2">
-          <label for="customer-rental" class="form-label">Rental</label
-          ><select id="customer-rental" v-model="filters.rental_status" class="form-select">
-            <option value="">All rentals</option>
-            <option v-for="status in rentalStatuses" :key="status">{{ status }}</option>
-          </select>
-        </div>
-        <div class="col-sm-6 col-lg-3">
+        <div class="customer-filter-field">
           <label for="customer-expiry" class="form-label">Contract Expiry</label
           ><select id="customer-expiry" v-model="filters.expiry" class="form-select">
             <option value="">All contracts</option>
@@ -218,54 +217,51 @@ onMounted(() => {
             <option value="expired">Expired</option>
           </select>
         </div>
-        <div class="col-12 d-flex align-items-end gap-2 flex-wrap fleet-list-filter-actions">
+        <div class="customer-filter-field customer-month-field">
+          <label class="form-label">Contract month</label>
+          <div class="customer-month-controls">
+            <button
+              type="button"
+              class="btn gss-button gss-button--outline gss-button--neutral"
+              aria-label="Previous contract month"
+              @click="month = shiftMonth(month, -1)"
+            ><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+            <span class="customer-month-label" aria-live="polite">{{ monthLabel }}</span>
+            <button
+              type="button"
+              class="btn gss-button gss-button--outline gss-button--neutral"
+              aria-label="Next contract month"
+              @click="month = shiftMonth(month, 1)"
+            ><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+            <button
+              type="button"
+              class="btn gss-button gss-button--outline gss-button--neutral"
+              :disabled="month === currentMonth()"
+              @click="month = currentMonth()"
+            >Today</button>
+          </div>
+        </div>
+        <div class="fleet-list-filter-actions customer-filter-actions module-filter-actions">
           <button
-            class="btn gss-button gss-button--secondary"
+            class="btn module-filter-apply"
             :disabled="initial || pending('filter')"
             :aria-busy="pending('filter')"
           >
             <ActionButtonLabel :pending="pending('filter')" loading-label="Filtering…"
-              >Filter</ActionButtonLabel
+              ><i class="bi bi-funnel" aria-hidden="true"></i> Filter</ActionButtonLabel
             ></button
+          ><span class="module-filter-divider" aria-hidden="true"></span
           ><button
             type="button"
-            class="btn gss-button gss-button--outline gss-button--neutral"
+            class="btn module-filter-reset"
             :disabled="initial || pending('reset')"
             @click="run('reset', reset)"
             :aria-busy="pending('reset')"
           >
             <ActionButtonLabel :pending="pending('reset')" loading-label="Resetting…"
-              >Reset</ActionButtonLabel
+              ><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</ActionButtonLabel
             >
           </button>
-          <div
-            class="d-flex gap-2 align-items-center flex-wrap ms-lg-auto fleet-list-month-controls"
-          >
-            <span class="small">Contract month</span
-            ><button
-              type="button"
-              class="btn gss-button gss-button--outline gss-button--neutral"
-              aria-label="Previous month"
-              @click="month = shiftMonth(month, -1)"
-            >
-              ‹</button
-            ><span>{{ month }}</span
-            ><button
-              type="button"
-              class="btn gss-button gss-button--outline gss-button--neutral"
-              aria-label="Next month"
-              @click="month = shiftMonth(month, 1)"
-            >
-              ›</button
-            ><button
-              type="button"
-              class="btn gss-button gss-button--outline gss-button--neutral"
-              :disabled="month === currentMonth()"
-              @click="month = currentMonth()"
-            >
-              Today
-            </button>
-          </div>
         </div>
       </form>
     </section>
@@ -340,13 +336,8 @@ onMounted(() => {
               <td><BaseStatusBadge :status="customer.customer_status" /></td>
               <td class="fleet-list-actions-cell">
                 <div class="fleet-list-row-actions">
-                  <button class="btn gss-button gss-button--secondary" @click="view(customer.id)">
-                    View</button
-                  ><RouterLink
-                    :to="`/customers/${customer.id}/edit`"
-                    class="btn gss-button gss-button--outline"
-                    >Edit</RouterLink
-                  >
+                  <RecordAction action="view" icon-only :aria-label="`View customer ${customer.company_name || customer.id}`" @click="view(customer.id)" />
+                  <RecordAction action="edit" icon-only :aria-label="`Edit customer ${customer.company_name || customer.id}`" :to="`/customers/${customer.id}/edit`" />
                 </div>
               </td>
             </tr>

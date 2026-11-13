@@ -6,6 +6,7 @@ import CustomerDetails from '../components/CustomerDetails.vue'
 import CustomerListPage from '../pages/CustomerListPage.vue'
 import { customerApi } from '../api'
 import type { Customer } from '../types'
+import { shiftMonth } from '../types'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
@@ -64,6 +65,10 @@ beforeEach(() => {
 })
 
 describe('customer screens', () => {
+  it('moves assignment months across December and January', () => {
+    expect(shiftMonth('2026-12', 1)).toBe('2027-01')
+    expect(shiftMonth('2027-01', -1)).toBe('2026-12')
+  })
   it('requires company and service hour before submitting', async () => {
     const wrapper = mount(CustomerForm, { global: { plugins: [await router()] } })
     wrappers.push(wrapper)
@@ -122,7 +127,7 @@ describe('customer screens', () => {
       .find((button) => button.text() === 'Delete Customer')!
     await deleteButton.trigger('click')
     expect(customerApi.remove).not.toHaveBeenCalled()
-    await wrapper.get('.alert .gss-button--destructive').trigger('click')
+    await wrapper.get('.alert .record-action--delete').trigger('click')
     await flushPromises()
     expect(customerApi.remove).toHaveBeenCalledWith(1)
     expect(wrapper.emitted('deleted')).toHaveLength(1)
@@ -163,7 +168,7 @@ describe('customer screens', () => {
       .findAll('button')
       .find((button) => button.text() === 'Delete Customer')!
       .trigger('click')
-    await wrapper.get('.alert .gss-button--destructive').trigger('click')
+    await wrapper.get('.alert .record-action--delete').trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('Linked contract prevents deletion.')
     expect(wrapper.emitted('deleted')).toBeUndefined()
@@ -184,7 +189,7 @@ describe('customer screens', () => {
       1,
     )
     const calls = vi.mocked(customerApi.list).mock.calls.length
-    await wrapper.get('[aria-label="Next month"]').trigger('click')
+    await wrapper.get('[aria-label="Next contract month"]').trigger('click')
     expect(customerApi.list).toHaveBeenCalledTimes(calls)
     expect(customerApi.summary).toHaveBeenCalledTimes(1)
   })

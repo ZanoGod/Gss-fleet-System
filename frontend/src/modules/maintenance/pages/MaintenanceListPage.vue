@@ -5,6 +5,7 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
+import RecordAction from '@/components/common/RecordAction.vue'
 import { displayValue as text, useModuleList } from '@/modules/shared/moduleRequests'
 import { maintenanceConfig as config } from '../config'
 import { maintenanceMetrics, readMaintenanceDashboard } from '../overview'
@@ -57,8 +58,8 @@ const {
       label="Maintenance status summary"
     />
     <section class="card-shell p-4 mb-4" aria-label="Search and filters">
-      <form class="row g-3" @submit.prevent="run('filter', apply)">
-        <div v-for="filter in config.filters" :key="filter.key" class="col-sm-6 col-lg-3">
+      <form class="row g-3 maintenance-filter-grid" @submit.prevent="run('filter', apply)">
+        <div v-for="filter in config.filters" :key="filter.key" class="maintenance-filter-field">
           <label :for="`filter-${filter.key}`" class="form-label">{{ filter.label }}</label
           ><select
             v-if="filter.key === 'vehicle'"
@@ -90,19 +91,20 @@ const {
             maxlength="500"
           />
         </div>
-        <div class="col-12 d-flex flex-wrap align-items-center gap-2">
-          <button class="btn btn-primary" :disabled="initial || pending('filter')">
+        <div class="module-filter-actions maintenance-filter-actions">
+          <button class="btn module-filter-apply" :disabled="initial || pending('filter')">
             <BaseLoading v-if="pending('filter')" label="Filtering…" /><template v-else
-              >Filter</template
+              ><i class="bi bi-funnel" aria-hidden="true"></i> Filter</template
             ></button
+          ><span class="module-filter-divider" aria-hidden="true"></span
           ><button
             type="button"
-            class="btn btn-outline-secondary"
+            class="btn module-filter-reset"
             :disabled="initial || pending('reset')"
             @click="run('reset', reset)"
           >
             <BaseLoading v-if="pending('reset')" label="Resetting…" /><template v-else
-              >Reset</template
+              ><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</template
             >
           </button>
         </div>
@@ -149,13 +151,10 @@ const {
                 /><span v-else>{{ text(row[column.key]) }}</span>
               </td>
               <td>
-                <RouterLink :to="link(`${config.path}/${row.id}`)" class="btn-outline-warm"
-                  >View</RouterLink
-                ><RouterLink
-                  :to="link(`${config.path}/${row.id}/edit`)"
-                  class="btn-outline-warm ms-2"
-                  >Edit</RouterLink
-                >
+                <div class="record-actions">
+                  <RecordAction action="view" icon-only :aria-label="`View maintenance record ${row.id}`" :to="link(`${config.path}/${row.id}`)" />
+                  <RecordAction action="edit" icon-only :aria-label="`Edit maintenance record ${row.id}`" :to="link(`${config.path}/${row.id}/edit`)" />
+                </div>
               </td>
             </tr>
           </tbody>
