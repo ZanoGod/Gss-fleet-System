@@ -13,6 +13,7 @@ export interface InsuranceVehicle {
   fleet: 'daily' | 'monthly'
   plate_no: string
   model_name: string
+  car_type: string
 }
 export interface InsuranceDocument {
   id: number
@@ -43,8 +44,9 @@ export interface InsuranceClaim {
 export interface InsurancePolicy {
   id: number
   car_id: number | null
+  car_type: string
   monthly_car_id: number | null
-  vehicle: InsuranceVehicle | null
+  vehicle: InsuranceVehicle
   provider_id: number
   provider?: InsuranceProvider
   policy_number: string
@@ -83,6 +85,7 @@ export interface InsuranceDashboard {
 export interface InsurancePolicyInput {
   car_id: number | null
   monthly_car_id: number | null
+  car_type: string | null
   provider_id: number
   policy_number: string
   insurance_type: string

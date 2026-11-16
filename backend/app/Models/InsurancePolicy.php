@@ -126,8 +126,10 @@ class InsurancePolicy extends Model
         return [
             'id' => $vehicle->id,
             'fleet' => $this->car_id ? 'daily' : 'monthly',
+            'car_type' => $vehicle->car_type,
             'plate_no' => $vehicle->plate_no,
             'model_name' => $vehicle->model_name,
+            
         ];
     }
 }

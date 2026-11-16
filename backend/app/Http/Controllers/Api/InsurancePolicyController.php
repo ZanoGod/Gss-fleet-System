@@ -76,8 +76,8 @@ class InsurancePolicyController extends Controller
     {
         Gate::authorize('viewAny', InsurancePolicy::class);
         $fleet = $request->input('fleet');
-        $daily = $fleet !== 'monthly' ? Car::query()->orderBy('plate_no')->get(['id', 'plate_no', 'model_name'])->map(fn ($v) => [...$v->toArray(), 'fleet' => 'daily']) : collect();
-        $monthly = $fleet !== 'daily' ? MonthlyCar::query()->orderBy('plate_no')->get(['id', 'plate_no', 'model_name'])->map(fn ($v) => [...$v->toArray(), 'fleet' => 'monthly']) : collect();
+        $daily = $fleet !== 'monthly' ? Car::query()->orderBy('plate_no')->get(['id', 'plate_no', 'model_name','car_type'])->map(fn ($v) => [...$v->toArray(), 'fleet' => 'daily']) : collect();
+        $monthly = $fleet !== 'daily' ? MonthlyCar::query()->orderBy('plate_no')->get(['id', 'plate_no', 'model_name','car_type' ])->map(fn ($v) => [...$v->toArray(), 'fleet' => 'monthly']) : collect();
 
         return response()->json(['data' => $daily->concat($monthly)->values()]);
     }

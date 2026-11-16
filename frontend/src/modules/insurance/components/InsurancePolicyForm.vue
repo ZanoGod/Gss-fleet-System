@@ -22,6 +22,7 @@ const vehicles = ref<InsuranceVehicle[]>([]),
 const fields = reactive<InsurancePolicyInput>({
   car_id: null,
   monthly_car_id: null,
+  car_type: '',
   provider_id: 0,
   policy_number: '',
   insurance_type: '',
@@ -50,6 +51,7 @@ function assign(policy: InsurancePolicy) {
   Object.assign(fields, {
     car_id: policy.car_id,
     monthly_car_id: policy.monthly_car_id,
+    car_type: policy.car_type,
     provider_id: policy.provider_id,
     policy_number: policy.policy_number,
     insurance_type: policy.insurance_type,
@@ -132,7 +134,7 @@ async function submit() {
                   :key="`d${v.id}`"
                   :value="`daily:${v.id}`"
                 >
-                  {{ v.plate_no }} · {{ v.model_name }}
+                  {{ v.plate_no }} · {{ v.model_name }} - {{ v.car_type }}
                 </option>
               </optgroup>
               <optgroup label="Monthly fleet">
@@ -141,7 +143,7 @@ async function submit() {
                   :key="`m${v.id}`"
                   :value="`monthly:${v.id}`"
                 >
-                  {{ v.plate_no }} · {{ v.model_name }}
+                  {{ v.plate_no }} · {{ v.model_name }} - {{ v.car_type }}  
                 </option>
               </optgroup>
             </select>
@@ -159,7 +161,7 @@ async function submit() {
               required
             >
               <option :value="0">Choose provider</option>
-              <option v-for="p in providers" :key="p.id" :value="p.id">{{ p.name }}</option>
+              <option v-for="p in providers" :key="p.id" :value="p.id">{{ p.name }} | {{ p.contact_name }} </option>
             </select>
             <div v-if="errors.provider_id" class="text-danger small">
               {{ errors.provider_id[0] }}
