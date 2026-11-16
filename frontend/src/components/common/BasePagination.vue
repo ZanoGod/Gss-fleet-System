@@ -8,6 +8,7 @@ const props = defineProps<{
   total: number
   disabled?: boolean
   pendingPage?: (page: number) => boolean
+  numberedOnly?: boolean
 }>()
 const emit = defineEmits<{ 'update:page': [page: number] }>()
 const pageCount = computed(() => Math.max(1, Math.ceil(props.total / props.perPage)))
@@ -30,13 +31,13 @@ function goTo(target: number) {
 </script>
 
 <template>
-  <nav class="gss-pagination" aria-label="Pagination">
-    <span class="pagination-summary" aria-live="polite">
+  <nav class="gss-pagination" :class="{ 'numbered-only': numberedOnly }" aria-label="Pagination">
+    <span v-if="!numberedOnly" class="pagination-summary" aria-live="polite">
       {{ total ? `${(currentPage - 1) * perPage + 1}–${Math.min(currentPage * perPage, total)} of ${total}` : 'No results' }}
     </span>
     <div class="pagination-controls">
       <button
-        v-if="currentPage > 1"
+        v-if="!numberedOnly && currentPage > 1"
         type="button"
         class="pagination-step btn-outline-warm"
         :disabled="disabled || isLoading(currentPage - 1)"
@@ -64,7 +65,7 @@ function goTo(target: number) {
         </button>
       </template>
       <button
-        v-if="currentPage < pageCount"
+        v-if="!numberedOnly && currentPage < pageCount"
         type="button"
         class="pagination-step btn-outline-warm"
         :disabled="disabled || isLoading(currentPage + 1)"
@@ -90,6 +91,7 @@ function goTo(target: number) {
   color: var(--muted);
   font-size: 0.85rem;
 }
+.gss-pagination.numbered-only { justify-content: flex-end; }
 .pagination-controls { gap: 0.35rem; }
 .pagination-controls button {
   display: inline-flex;

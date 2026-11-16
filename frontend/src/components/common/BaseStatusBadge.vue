@@ -7,7 +7,7 @@ const tone = computed(() => {
     ? 'danger'
     : /active|available|completed|paid/.test(s)
       ? 'success'
-      : /pending|scheduled|upcoming/.test(s)
+    : /pending|scheduled|upcoming|expiring/.test(s)
         ? 'warning'
         : 'neutral'
 })

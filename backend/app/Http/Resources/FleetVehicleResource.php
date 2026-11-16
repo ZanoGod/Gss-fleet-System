@@ -23,7 +23,9 @@ class FleetVehicleResource extends JsonResource
         return array_merge($this->resource->only(['id', 'car_type', 'plate_no', 'model_name', 'seat_capacity', 'availability_status', 'note', 'created_at', 'updated_at']), [
             'resource_type' => $monthly ? 'monthly' : 'daily',
             'effective_status' => $this->resource->effectiveAvailability(),
-            'assignments' => $assignments->unique('id')->values()->map(fn ($a) => [
+            'assignments' => $assignments->unique('id')->sort(function ($left, $right) {
+                return [$left->start_date?->format('Y-m-d'), $left->id] <=> [$right->start_date?->format('Y-m-d'), $right->id];
+            })->values()->map(fn ($a) => [
                 'id' => $a->id, 'name' => $monthly ? $a->customer_name : $a->guest_company_name,
                 'start_date' => $a->start_date?->format('Y-m-d'), 'end_date' => $a->end_date?->format('Y-m-d'), 'status' => $a->status,
                 'driver' => $a->driver?->full_name, 'driver_id' => $a->driver_id,

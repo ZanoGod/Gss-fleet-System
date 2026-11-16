@@ -28,7 +28,7 @@ class CarController extends Controller
         $monthly = $model === MonthlyCar::class;
         $request->validate(['month' => ['nullable', 'date_format:Y-m'], 'status' => ['nullable', Rule::in($model::STATUSES)], 'search' => 'nullable|string|max:500']);
         $month = Carbon::createFromFormat('!Y-m', $request->input('month', now()->format('Y-m')));
-        $assignment = fn ($q) => $q->with('driver')->where('status', '!=', 'Cancelled')->whereDate('start_date', '<=', $month->copy()->endOfMonth())->whereDate('end_date', '>=', $month);
+        $assignment = fn ($q) => $q->with('driver')->where('status', '!=', 'Cancelled')->whereDate('start_date', '<=', $month->copy()->endOfMonth())->whereDate('end_date', '>=', $month)->orderBy('start_date')->orderBy('id');
         $relations = $monthly ? ['contracts' => $assignment] : ['bookings' => $assignment, 'secondaryBookings' => $assignment];
 
         return $model::query()->with($relations)
@@ -47,7 +47,7 @@ class CarController extends Controller
 
     public function index(Request $request)
     {
-        return FleetVehicleResource::collection($this->query($request)->orderByDesc('id')->paginate(min(100, max(1, $request->integer('per_page', 10)))));
+        return FleetVehicleResource::collection($this->query($request)->orderBy('id')->paginate(min(100, max(1, $request->integer('per_page', 10)))));
     }
 
     public function summary(Request $request)

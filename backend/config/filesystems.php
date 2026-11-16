@@ -47,6 +47,15 @@ return [
             'report' => false,
         ],
 
+        'car-licenses' => [
+            'driver' => 'local',
+            'root' => env('CAR_LICENSE_DOCUMENT_ROOT', storage_path('app/private/car-licenses')),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

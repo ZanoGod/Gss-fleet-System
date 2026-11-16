@@ -53,6 +53,23 @@ vi.mock('@/modules/insurance/api', () => ({
   },
 }))
 
+vi.mock('@/modules/car-licenses/api', () => ({
+  carLicenseApi: {
+    list: async () => ({ data: { data: [], meta: { total: 0, current_page: 1 } } }),
+    summary: async () => ({ total: 0, active: 0, expiring_soon: 0, expired: 0, alerts: [], expired_alerts: [] }),
+    options: async () => ({ vehicles: [], offices: {}, periods: [1, 2, 3] }),
+    get: async (id: number) => ({
+      id, car_id: 1, monthly_car_id: null,
+      vehicle: { id: 1, fleet: 'daily', plate_no: 'TEST-1', model_name: 'Test Vehicle' },
+      vehicle_label: 'TEST-1 · Test Vehicle (daily)', license_number: 'TEST-LICENSE', license_period: 1,
+      issue_date: '2026-01-01', expiry_date: '2027-01-01', renewal_date: null, renewal_fee: '0.00',
+      office_region: 'Yangon', office_branch: 'Yangon Region Office', remarks: null, status: 'Active',
+      days_until_expiry: 46, is_current: true, renewal_parent_id: null, documents: [], renewal_history: [],
+    }),
+    save: async () => ({ id: 1 }), renew: async () => ({ id: 1 }), upload: async () => ({}), remove: async () => undefined,
+  },
+}))
+
 import router from './index'
 
 const pagePaths = [
@@ -77,6 +94,11 @@ const pagePaths = [
   '/operators/create',
   '/operators/42',
   '/operators/42/edit',
+  '/car-licenses',
+  '/car-licenses/create',
+  '/car-licenses/42',
+  '/car-licenses/42/edit',
+  '/car-licenses/42/renew',
   '/insurance',
   '/insurance/create',
   '/insurance/42',

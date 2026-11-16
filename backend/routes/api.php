@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CarController;
+use App\Http\Controllers\Api\CarLicenseController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyBookingController;
 use App\Http\Controllers\Api\DashboardController;
@@ -26,6 +27,12 @@ Route::middleware('auth:web')->group(function (): void {
 
     Route::get('/cars/summary', [CarController::class, 'summary']);
     Route::apiResource('cars', CarController::class);
+    Route::get('/car-licenses/options', [CarLicenseController::class, 'options']);
+    Route::get('/car-licenses/summary', [CarLicenseController::class, 'summary']);
+    Route::post('/car-licenses/{car_license}/renew', [CarLicenseController::class, 'renew']);
+    Route::post('/car-licenses/{car_license}/documents', [CarLicenseController::class, 'upload']);
+    Route::get('/car-license-documents/{document}/download', [CarLicenseController::class, 'download'])->name('car-licenses.documents.download');
+    Route::apiResource('car-licenses', CarLicenseController::class);
     Route::get('/operators/summary', [OperatorController::class, 'summary']);
     Route::apiResource('operators', OperatorController::class);
     Route::get('/maintenances/options', [MaintenanceController::class, 'options']);

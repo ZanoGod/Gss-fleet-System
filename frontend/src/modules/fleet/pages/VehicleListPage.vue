@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
-import BaseStatusBadge from '@/components/common/BaseStatusBadge.vue'
 import StatusSummary from '@/components/common/StatusSummary.vue'
 import BasePagination from '@/components/common/BasePagination.vue'
 import RecordAction from '@/components/common/RecordAction.vue'
@@ -12,8 +11,11 @@ import { fleetConfig as config } from '../config'
 import { useVehicleScope } from '../useVehicleScope'
 import { fleetMetrics, type OverviewSummary } from '../overview'
 import { currentMonth, shiftMonth } from '@/modules/customers/types'
+import api from '@/services/api'
+import { getApiErrorMessage } from '@/services/apiErrors'
+import { toast } from '@/services/toast'
 
-const { scope, query, assignmentPath, statuses } = useVehicleScope()
+const { scope, query, statuses } = useVehicleScope()
 const {
   rows,
   summary,
@@ -39,6 +41,29 @@ const monthLabel = computed(() => {
     timeZone: 'UTC',
   }).format(new Date(Date.UTC(year!, value! - 1, 1)))
 })
+const deletingId = ref<number | null>(null)
+
+function assignmentDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC',
+  }).format(new Date(`${value}T00:00:00Z`))
+}
+
+async function deleteVehicle(row: Record<string, unknown>) {
+  const id = Number(row.id)
+  const plate = text(row.plate_no)
+  if (!window.confirm(`Delete vehicle ${plate}?`)) return
+  deletingId.value = id
+  try {
+    await api.delete(`${config.endpoint}/${id}`, { params: query() })
+    toast.success('Vehicle deleted.')
+    await load(page.value)
+  } catch (cause) {
+    toast.error(getApiErrorMessage(cause))
+  } finally {
+    deletingId.value = null
+  }
+}
 
 function changeMonth(amount: number) {
   filters.month = shiftMonth(monthValue.value, amount)
@@ -174,10 +199,10 @@ function resetVehicleFilters() {
       <PageSkeleton
         v-if="initial"
         :label="`Loading ${config.title.toLowerCase()}`"
-        :columns="config.columns.length + 2"
+        :columns="7"
       />
       <div v-else-if="rows.length" class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 classic-fleet-table">
           <caption class="visually-hidden">
             {{
               config.title
@@ -186,42 +211,46 @@ function resetVehicleFilters() {
           </caption>
           <thead>
             <tr>
-              <th v-for="column in config.columns" :key="column.key" scope="col">
-                {{ column.label }}
-              </th>
-              <th scope="col">Assignments in selected month</th>
-              <th scope="col">Actions</th>
+              <th scope="col">Car Type</th>
+              <th scope="col">Plate Number</th>
+              <th scope="col">Status</th>
+              <th scope="col">Start Date</th>
+              <th scope="col">End Date</th>
+              <th scope="col">Guest / Company</th>
+              <th scope="col">Action</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in rows" :key="row.id">
-              <td v-for="column in config.columns" :key="column.key">
-                <BaseStatusBadge
-                  v-if="column.key === config.statusKey || column.key === 'effective_status'"
-                  :status="text(row[column.key])"
-                /><span v-else>{{ text(row[column.key]) }}</span>
+              <td>{{ text(row.car_type) }}</td>
+              <td>{{ text(row.plate_no) }}</td>
+              <td><span class="classic-fleet-status">{{ text(row.availability_status) }}</span></td>
+              <td>
+                <div v-for="(assignment, index) in row.assignments" :key="assignment.id" class="classic-assignment-value">
+                  <span v-if="row.assignments && row.assignments.length > 1" class="classic-assignment-index">{{ index + 1 }}</span>
+                  <span>{{ assignmentDate(assignment.start_date) }}</span>
+                </div>
+                <span v-if="!row.assignments?.length" class="text-muted">—</span>
               </td>
               <td>
-                <div v-for="assignment in row.assignments" :key="assignment.id" class="mb-2">
-                  <RouterLink :to="`${assignmentPath}/${assignment.id}`">{{
-                    assignment.name
-                  }}</RouterLink>
-                  <div class="small">
-                    {{ assignment.start_date }} – {{ assignment.end_date }} ·
-                    {{ assignment.status }}
-                  </div>
-                  <div v-if="assignment.vehicle || assignment.driver" class="small text-muted">
-                    {{ assignment.vehicle
-                    }}{{ assignment.secondary_vehicle ? ` / ${assignment.secondary_vehicle}` : ''
-                    }}{{ assignment.driver ? ` · Driver: ${assignment.driver}` : '' }}
-                  </div>
+                <div v-for="(assignment, index) in row.assignments" :key="assignment.id" class="classic-assignment-value">
+                  <span v-if="row.assignments && row.assignments.length > 1" class="classic-assignment-index">{{ index + 1 }}</span>
+                  <span>{{ assignmentDate(assignment.end_date) }}</span>
                 </div>
-                <span v-if="!row.assignments?.length" class="text-muted">No assignments</span>
+                <span v-if="!row.assignments?.length" class="text-muted">—</span>
+              </td>
+              <td>
+                <div v-for="(assignment, index) in row.assignments" :key="assignment.id" class="classic-assignment-value">
+                  <span v-if="row.assignments && row.assignments.length > 1" class="classic-assignment-index">{{ index + 1 }}</span>
+                  <span class="classic-assignment-company">{{ assignment.name }}</span>
+                </div>
+                <span v-if="!row.assignments?.length" class="text-muted">—</span>
               </td>
               <td>
                 <div class="record-actions">
-                  <RecordAction action="view" icon-only :aria-label="`View ${config.singular.toLowerCase()} ${text(row.plate_no)}`" :to="link(`${config.path}/${row.id}`)" />
-                  <RecordAction action="edit" icon-only :aria-label="`Edit ${config.singular.toLowerCase()} ${text(row.plate_no)}`" :to="link(`${config.path}/${row.id}/edit`)" />
+                  <RecordAction action="view" label="View" :to="link(`${config.path}/${row.id}`)" />
+                  <RecordAction action="edit" label="Edit" :to="link(`${config.path}/${row.id}/edit`)" />
+                  <RecordAction action="delete" label="Delete" :loading="deletingId === row.id" :disabled="deletingId !== null && deletingId !== row.id" @click="deleteVehicle(row)" />
                 </div>
               </td>
             </tr>
@@ -236,6 +265,8 @@ function resetVehicleFilters() {
           :page="page"
           :per-page="10"
           :total="total"
+          :disabled="loading"
+          numbered-only
           :pending-page="(target) => pending(`page:${target}`)"
           @update:page="run(`page:${$event}`, () => load($event))"
         />
@@ -243,3 +274,99 @@ function resetVehicleFilters() {
     </section>
   </section>
 </template>
+
+<style scoped>
+.fleet-module .classic-fleet-table {
+  --bs-table-bg: #fffdfa;
+  --bs-table-color: var(--gss-text-body);
+  --bs-table-border-color: #eadfd4;
+  --bs-table-hover-bg: #fff5df;
+  min-width: 1100px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.fleet-module .classic-fleet-table thead th {
+  padding: 13px 14px;
+  border-color: #754027;
+  background: #542512;
+  color: #fff8ef;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.fleet-module .classic-fleet-table tbody td {
+  padding: 14px;
+  border-color: #eee4da;
+  color: var(--gss-text-body);
+  font-weight: 500;
+  vertical-align: top;
+}
+.fleet-module .classic-fleet-table tbody td:nth-child(4),
+.fleet-module .classic-fleet-table tbody td:nth-child(5) {
+  font-variant-numeric: tabular-nums;
+}
+.fleet-module .classic-fleet-table .text-muted {
+  color: var(--gss-table-header-text) !important;
+}
+.classic-assignment-company {
+  color: var(--gss-text-body);
+  overflow-wrap: anywhere;
+}
+.fleet-module .vehicle-filter-grid .form-control::placeholder {
+  color: var(--gss-text-muted);
+  opacity: 1;
+}
+.fleet-module .classic-fleet-table tbody tr:nth-child(even) {
+  --bs-table-bg: #fffefa;
+}
+.fleet-module .classic-fleet-table tbody tr:hover {
+  --bs-table-bg: #fff5df;
+}
+.classic-fleet-status {
+  display: inline-block;
+  padding: 0.34rem 0.82rem;
+  border-radius: 999px;
+  background: #fff0ba;
+  color: #87500c;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.classic-assignment-value {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-height: 1.72rem;
+  line-height: 1.45;
+}
+.classic-assignment-value > span:not(.classic-assignment-index) {
+  white-space: nowrap;
+}
+.classic-assignment-index {
+  display: inline-flex;
+  flex: 0 0 1.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ffedcf;
+  color: #75451d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.fleet-module .classic-fleet-table .record-actions {
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+}
+.fleet-module .classic-fleet-table .record-action {
+  padding: 0.35rem 0.62rem;
+  border-radius: 0.55rem;
+  font-size: 0.8rem;
+}
+@media (max-width: 767.98px) {
+  .fleet-module .classic-fleet-table { min-width: 1100px; }
+}
+</style>
