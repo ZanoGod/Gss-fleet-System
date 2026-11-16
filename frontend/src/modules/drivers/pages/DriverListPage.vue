@@ -211,7 +211,7 @@ function reset() {
                 {{ column.label }}
               </th>
               <th scope="col">Assignments in selected month</th>
-              <th scope="col">Actions</th>
+              <th scope="col" class="record-actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -239,10 +239,10 @@ function reset() {
                 </div>
                 <span v-if="!row.assignments?.length" class="text-muted">No assignments</span>
               </td>
-              <td>
+              <td class="record-actions-cell">
                 <div class="record-actions">
-                  <RecordAction action="view" icon-only :aria-label="`View driver ${text(row.full_name)}`" :to="link(`${config.path}/${row.id}`)" />
-                  <RecordAction action="edit" icon-only :aria-label="`Edit driver ${text(row.full_name)}`" :to="link(`${config.path}/${row.id}/edit`)" />
+                  <RecordAction action="view" label="View" :to="link(`${config.path}/${row.id}`)" />
+                  <RecordAction action="edit" label="Edit" :to="link(`${config.path}/${row.id}/edit`)" />
                 </div>
               </td>
             </tr>

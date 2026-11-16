@@ -38,6 +38,8 @@
 .record-action--icon-only { width: 38px; min-width: 38px; height: 38px; min-height: 38px; padding: 0; }
 .record-action--icon-only .record-action__icon { font-size: .95rem; }
 .record-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: .45rem; }
+.record-actions-cell { width: 1%; white-space: nowrap; text-align: left; }
+.record-actions-cell > .record-actions { justify-content: flex-start; flex-wrap: nowrap; gap: .35rem; }
 .record-detail-action-bar {
   display: flex;
   width: 100%;

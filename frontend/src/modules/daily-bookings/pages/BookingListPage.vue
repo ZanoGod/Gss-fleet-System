@@ -191,7 +191,7 @@ onMounted(async () => {
               <th>Operator</th>
               <th>Dates</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th class="record-actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -213,10 +213,10 @@ onMounted(async () => {
                 <div class="small text-muted">to {{ b.end_date }}</div>
               </td>
               <td><BaseStatusBadge :status="b.status" /></td>
-              <td>
+              <td class="record-actions-cell">
                 <div class="record-actions">
-                  <RecordAction action="view" icon-only :aria-label="`View booking ${b.id}`" :to="`/daily-bookings/${b.id}`" />
-                  <RecordAction action="edit" icon-only :aria-label="`Edit booking ${b.id}`" :to="`/daily-bookings/${b.id}/edit`" />
+                  <RecordAction action="view" label="View" :to="`/daily-bookings/${b.id}`" />
+                  <RecordAction action="edit" label="Edit" :to="`/daily-bookings/${b.id}/edit`" />
                 </div>
               </td>
             </tr>

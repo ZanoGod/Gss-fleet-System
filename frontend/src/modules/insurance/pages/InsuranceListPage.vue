@@ -220,11 +220,18 @@ onMounted(load)
               >
                 {{ s }}
               </option></select
-            ><button class="btn module-filter-apply" :disabled="refreshing" type="submit">
+            ><div class="module-filter-actions">
+              <button class="btn module-filter-apply" :disabled="refreshing" type="submit">
               <BaseLoading v-if="refreshing" label="Searching…" /><template v-else
-                ><i class="bi bi-funnel" aria-hidden="true"></i> Search</template
+                ><i class="bi bi-funnel" aria-hidden="true"></i> Filter</template
               >
-            </button>
+              </button>
+              <span class="module-filter-divider" aria-hidden="true"></span>
+              <button class="btn module-filter-reset" :disabled="refreshing" type="button" @click="run('reset', clearFilters)">
+                <BaseLoading v-if="pending('reset')" label="Resetting…" />
+                <template v-else><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</template>
+              </button>
+            </div>
           </form>
         </div>
         <BaseLoading v-if="refreshing" class="d-block p-4" label="Loading policies…" />
@@ -241,7 +248,7 @@ onMounted(load)
                 <th>Coverage dates</th>
                 <th>Premium</th>
                 <th>Status</th>
-                <th><span class="visually-hidden">Actions</span></th>
+                <th class="record-actions-cell"><span class="visually-hidden">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -263,8 +270,8 @@ onMounted(load)
                 </td>
                 <td>{{ p.currency }} {{ p.premium_amount }}</td>
                 <td><BaseStatusBadge :status="p.status" /></td>
-                <td>
-                  <RecordAction action="view" icon-only :aria-label="`View policy ${p.policy_number}`" :to="`/insurance/${p.id}`" />
+                <td class="record-actions-cell">
+                  <RecordAction action="view" label="View" :to="`/insurance/${p.id}`" />
                 </td>
               </tr>
             </tbody>
@@ -309,7 +316,7 @@ onMounted(load)
                 <th>Incident</th>
                 <th>Amount</th>
                 <th>Status</th>
-                <th />
+                <th class="record-actions-cell"><span class="visually-hidden">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -319,8 +326,8 @@ onMounted(load)
                 <td>{{ c.incident_date }}</td>
                 <td>{{ c.policy?.currency }} {{ c.amount }}</td>
                 <td><BaseStatusBadge :status="c.status" /></td>
-                <td>
-                  <RecordAction action="view" icon-only aria-label="View policy" :to="`/insurance/${c.policy_id}`" />
+                <td class="record-actions-cell">
+                  <RecordAction action="view" label="View" :to="`/insurance/${c.policy_id}`" />
                 </td>
               </tr>
             </tbody>
@@ -343,7 +350,7 @@ onMounted(load)
                 <th>Contact</th>
                 <th>Phone</th>
                 <th>Policies</th>
-                <th>Actions</th>
+                <th class="record-actions-cell">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -352,18 +359,18 @@ onMounted(load)
                 <td>{{ p.contact_name || p.email || '—' }}</td>
                 <td>{{ p.phone || '—' }}</td>
                 <td>{{ p.policies_count ?? '—' }}</td>
-                <td>
+                <td class="record-actions-cell">
                   <div class="record-actions">
                     <RecordAction
                       action="edit"
-                      icon-only
-                      :aria-label="`View or edit provider ${p.name}`"
+                      label="Edit"
+                      :aria-label="`Edit provider ${p.name}`"
                       :disabled="pending(`edit:${p.id}`)"
                       :loading="pending(`edit:${p.id}`)"
                       @click="run(`edit:${p.id}`, () => editProvider(p.id))"
                     /><RecordAction
                       action="delete"
-                      icon-only
+                      label="Delete"
                       :aria-label="`Delete provider ${p.name}`"
                       :disabled="pending(`delete:${p.id}`) || (p.policies_count || 0) > 0"
                       :loading="pending(`delete:${p.id}`)"

@@ -602,19 +602,20 @@
   border-bottom: 0;
 }
 .fleet-list-page .fleet-list-table :is(.fleet-list-actions-heading, .fleet-list-actions-cell) {
-  text-align: right;
+  width: 1%;
+  text-align: left;
   white-space: nowrap;
 }
 .fleet-list-page .fleet-list-table .fleet-list-actions-cell {
-  min-width: 145px;
+  min-width: 0;
 }
 .fleet-list-page .fleet-list-table .gss-status {
   white-space: nowrap;
 }
 .fleet-list-page .fleet-list-row-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 6px;
+  justify-content: flex-start;
+  gap: .35rem;
   flex-wrap: nowrap;
 }
 .fleet-list-page .fleet-list-month-controls span {

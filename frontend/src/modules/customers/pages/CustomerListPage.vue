@@ -311,7 +311,7 @@ onMounted(() => {
               <th>Contracts</th>
               <th>Latest Expiry</th>
               <th>Status</th>
-              <th class="fleet-list-actions-heading">Actions</th>
+              <th class="fleet-list-actions-heading record-actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -334,10 +334,10 @@ onMounted(() => {
               </td>
               <td>{{ customer.latest_expiry || '—' }}</td>
               <td><BaseStatusBadge :status="customer.customer_status" /></td>
-              <td class="fleet-list-actions-cell">
+              <td class="fleet-list-actions-cell record-actions-cell">
                 <div class="fleet-list-row-actions">
-                  <RecordAction action="view" icon-only :aria-label="`View customer ${customer.company_name || customer.id}`" @click="view(customer.id)" />
-                  <RecordAction action="edit" icon-only :aria-label="`Edit customer ${customer.company_name || customer.id}`" :to="`/customers/${customer.id}/edit`" />
+                  <RecordAction action="view" label="View" @click="view(customer.id)" />
+                  <RecordAction action="edit" label="Edit" :to="`/customers/${customer.id}/edit`" />
                 </div>
               </td>
             </tr>

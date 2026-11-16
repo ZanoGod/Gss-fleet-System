@@ -217,7 +217,7 @@ function resetVehicleFilters() {
               <th scope="col">Start Date</th>
               <th scope="col">End Date</th>
               <th scope="col">Guest / Company</th>
-              <th scope="col">Action</th>
+              <th scope="col" class="classic-fleet-actions-cell">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -246,7 +246,7 @@ function resetVehicleFilters() {
                 </div>
                 <span v-if="!row.assignments?.length" class="text-muted">—</span>
               </td>
-              <td>
+              <td class="classic-fleet-actions-cell">
                 <div class="record-actions">
                   <RecordAction action="view" label="View" :to="link(`${config.path}/${row.id}`)" />
                   <RecordAction action="edit" label="Edit" :to="link(`${config.path}/${row.id}/edit`)" />
@@ -306,6 +306,11 @@ function resetVehicleFilters() {
 .fleet-module .classic-fleet-table tbody td:nth-child(5) {
   font-variant-numeric: tabular-nums;
 }
+.fleet-module .classic-fleet-table :is(th, td).classic-fleet-actions-cell {
+  width: 1%;
+  white-space: nowrap;
+  text-align: left;
+}
 .fleet-module .classic-fleet-table .text-muted {
   color: var(--gss-table-header-text) !important;
 }
@@ -358,11 +363,12 @@ function resetVehicleFilters() {
   font-variant-numeric: tabular-nums;
 }
 .fleet-module .classic-fleet-table .record-actions {
+  justify-content: flex-start;
   flex-wrap: nowrap;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 .fleet-module .classic-fleet-table .record-action {
-  padding: 0.35rem 0.62rem;
+  padding: 0.35rem 0.55rem;
   border-radius: 0.55rem;
   font-size: 0.8rem;
 }

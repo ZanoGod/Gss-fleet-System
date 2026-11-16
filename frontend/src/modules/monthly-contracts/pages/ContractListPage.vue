@@ -234,7 +234,7 @@ onMounted(async () => {
               <th>Period</th>
               <th>Contract amount</th>
               <th>Status</th>
-              <th class="fleet-list-actions-heading">Actions</th>
+              <th class="fleet-list-actions-heading record-actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -254,9 +254,9 @@ onMounted(async () => {
               </td>
               <td>{{ c.rental_currency }} {{ c.monthly_rate }}</td>
               <td><BaseStatusBadge :status="c.status" /></td>
-              <td class="fleet-list-actions-cell">
+              <td class="fleet-list-actions-cell record-actions-cell">
                 <div class="fleet-list-row-actions record-actions">
-                  <RecordAction action="view" icon-only :aria-label="`View contract ${c.contract_no}`" :to="`/monthly-contracts/${c.id}`" />
+                  <RecordAction action="view" label="View" :to="`/monthly-contracts/${c.id}`" />
                 </div>
               </td>
             </tr>

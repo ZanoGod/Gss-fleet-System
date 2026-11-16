@@ -124,7 +124,7 @@ const {
               <th v-for="column in config.columns" :key="column.key" scope="col">
                 {{ column.label }}
               </th>
-              <th scope="col">Actions</th>
+              <th scope="col" class="record-actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -135,10 +135,10 @@ const {
                   :status="text(row[column.key])"
                 /><span v-else>{{ text(row[column.key]) }}</span>
               </td>
-              <td>
+              <td class="record-actions-cell">
                 <div class="record-actions">
-                  <RecordAction action="view" icon-only :aria-label="`View operator ${text(row.full_name)}`" :to="link(`${config.path}/${row.id}`)" />
-                  <RecordAction action="edit" icon-only :aria-label="`Edit operator ${text(row.full_name)}`" :to="link(`${config.path}/${row.id}/edit`)" />
+                  <RecordAction action="view" label="View" :to="link(`${config.path}/${row.id}`)" />
+                  <RecordAction action="edit" label="Edit" :to="link(`${config.path}/${row.id}/edit`)" />
                 </div>
               </td>
             </tr>
