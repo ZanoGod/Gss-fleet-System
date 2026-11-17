@@ -103,15 +103,15 @@ class InsurancePolicy extends Model
             return 'cancelled';
         }
 
-        $today = today()->toDateString();
-        if ($this->expiration_date < $today) {
+        $today = today();
+        if ($this->expiration_date->lt($today)) {
             return 'expired';
         }
-        if ($this->start_date > $today) {
+        if ($this->start_date->gt($today)) {
             return 'scheduled';
         }
 
-        return $this->expiration_date <= today()->addDays(config('insurance.expiring_days', 30))->toDateString()
+        return $this->expiration_date->lte($today->addDays(config('insurance.expiring_days', 30)))
             ? 'expiring'
             : 'active';
     }

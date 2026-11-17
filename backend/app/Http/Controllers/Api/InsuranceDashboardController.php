@@ -21,7 +21,9 @@ class InsuranceDashboardController extends Controller
         $soon = (clone $base)->status('expiring');
         $dailyInsured = InsurancePolicy::query()->live()->whereNotNull('car_id')->distinct()->pluck('car_id');
         $monthlyInsured = InsurancePolicy::query()->live()->whereNotNull('monthly_car_id')->distinct()->pluck('monthly_car_id');
-        $expiringPolicies = (clone $soon)->whereDoesntHave('renewal')->with('provider', 'car', 'monthlyCar')->orderBy('expiration_date')->limit(10)->get();
+        $unrenewed = (clone $base)->whereDoesntHave('renewal')->with('provider', 'car', 'monthlyCar');
+        $expiringPolicies = (clone $unrenewed)->status('expiring')->orderBy('expiration_date')->orderBy('id')->limit(10)->get();
+        $expiredPolicies = (clone $unrenewed)->status('expired')->orderByDesc('expiration_date')->orderBy('id')->limit(5)->get();
 
         return response()->json(['data' => [
             'total_policies' => (clone $base)->count(),
@@ -40,6 +42,7 @@ class InsuranceDashboardController extends Controller
                 'monthly' => MonthlyCar::query()->where('availability_status', '!=', 'Inactive')->whereNotIn('id', $monthlyInsured)->count(),
             ],
             'expiring_policies' => InsurancePolicyResource::collection($expiringPolicies),
+            'expired_policies_alerts' => InsurancePolicyResource::collection($expiredPolicies),
             'recent_claims' => InsuranceClaimResource::collection(InsuranceClaim::query()->with('policy.provider')->latest()->limit(5)->get()),
         ]]);
     }
