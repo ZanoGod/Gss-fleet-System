@@ -27,6 +27,7 @@ describe('insurance store', () => {
       claims: { total: 0, open: 0, approved: 0, paid: 0 },
       uninsured_vehicles: { daily: 0, monthly: 0 },
       expiring_policies: [],
+      expired_policies_alerts: [],
       recent_claims: [],
     })
     vi.mocked(insuranceApi.policies).mockResolvedValue([])

@@ -21,6 +21,7 @@ class InsurancePolicyResource extends JsonResource
             'coverage_details' => $this->coverage_details,
             'start_date' => $this->start_date?->format('Y-m-d'),
             'expiration_date' => $this->expiration_date?->format('Y-m-d'),
+            'days_until_expiry' => (int) today()->diffInDays($this->expiration_date, false),
             'premium_amount' => $this->premium_amount,
             'currency' => $this->currency,
             'coverage_amount' => $this->coverage_amount,

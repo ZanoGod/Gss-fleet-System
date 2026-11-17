@@ -6,8 +6,8 @@ import RecordAction from '@/components/common/RecordAction.vue'
 import '@/components/common/moduleGlass.css'
 import { navigateSegments } from '@/components/common/navigateSegments'
 import StatusSummary from '@/components/common/StatusSummary.vue'
-import { insuranceMetrics, insuranceHeader } from '../overview'
-import { onMounted, ref } from 'vue'
+import { insuranceMetrics } from '../overview'
+import { computed, onMounted, ref } from 'vue'
 import { useInsuranceStore } from '../stores/insurance'
 import { insuranceApi } from '../api'
 import type { InsuranceClaim } from '../types'
@@ -22,6 +22,17 @@ const store = useInsuranceStore(),
   claims = ref<InsuranceClaim[]>([]),
   initial = ref(true),
   claimsReady = ref(false)
+const expiryAlerts = computed(() => [
+  ...(store.dashboard?.expiring_policies ?? []),
+  ...(store.dashboard?.expired_policies_alerts ?? []),
+])
+function expiryLabel(days: number, alert = false) {
+  if (days === 0) return 'Expires today'
+  const count = Math.abs(days)
+  const duration = `${count} ${count === 1 ? 'day' : 'days'}`
+  if (days < 0) return alert ? `Expired ${duration} ago` : `${duration} overdue`
+  return `${duration} left`
+}
 let request = 0
 const loadError = ref('')
 const refreshing = ref(false)
@@ -161,7 +172,7 @@ onMounted(load)
       :loading="initial"
       label="Insurance status summary"
     />
-    <PageSkeleton v-if="initial" label="Loading insurance policies" :columns="7" />
+    <PageSkeleton v-if="initial" label="Loading insurance policies" :columns="8" />
     <template v-else>
       <div
         class="glass-segments glass-segments--three"
@@ -184,6 +195,23 @@ onMounted(load)
           {{ tab.label }}
         </button>
       </div>
+      <section
+        v-if="activeTab === 'policies' && expiryAlerts.length"
+        class="policy-alerts"
+        aria-label="Insurance expiry alerts"
+      >
+        <h2><i class="bi bi-bell" aria-hidden="true"></i> Expiry alerts</h2>
+        <RouterLink
+          v-for="policy in expiryAlerts"
+          :key="policy.id"
+          :to="`/insurance/${policy.id}`"
+          class="policy-alert"
+          :class="{ 'is-expired': policy.days_until_expiry < 0 }"
+        >
+          <span>{{ [policy.vehicle?.plate_no, policy.policy_number].filter(Boolean).join(' · ') }}</span>
+          <strong>{{ expiryLabel(policy.days_until_expiry, true) }}</strong>
+        </RouterLink>
+      </section>
       <div v-if="loadError" class="module-feedback" role="alert">
         <h2>Unable to load insurance records</h2>
         <p>{{ loadError }}</p>
@@ -247,6 +275,7 @@ onMounted(load)
                 <th>Fleet vehicle</th>
                 <th>Provider</th>
                 <th>Coverage dates</th>
+                <th>Countdown</th>
                 <th>Premium</th>
                 <th>Status</th>
                 <th class="record-actions-cell"><span class="visually-hidden">Actions</span></th>
@@ -268,6 +297,12 @@ onMounted(load)
                 <td>
                   {{ p.start_date }}
                   <div class="text-muted small">to {{ p.expiration_date }}</div>
+                </td>
+                <td
+                  class="text-nowrap"
+                  :class="{ 'text-danger fw-semibold': p.status === 'expiring' || p.status === 'expired' }"
+                >
+                  {{ p.status === 'cancelled' || p.status === 'archived' ? '—' : expiryLabel(p.days_until_expiry) }}
                 </td>
                 <td>{{ p.currency }} {{ p.premium_amount }}</td>
                 <td><BaseStatusBadge :status="p.status" /></td>
@@ -530,3 +565,42 @@ onMounted(load)
     >
   </main>
 </template>
+
+<style scoped>
+.policy-alerts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #edc76b;
+  border-radius: 14px;
+  background: color-mix(in srgb, #fff7df 78%, var(--gss-surface-card));
+}
+.policy-alerts h2 {
+  width: 100%;
+  margin: 0 0 .25rem;
+  font-size: .95rem;
+  color: var(--gss-text-strong);
+}
+.policy-alert {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .25rem 1rem;
+  min-width: min(100%, 260px);
+  padding: .55rem .75rem;
+  border-radius: 9px;
+  color: #352d20;
+  background: #fffdf6;
+  font-size: .8rem;
+  text-decoration: none;
+}
+.policy-alert:hover { text-decoration: underline; }
+.policy-alert strong { color: #805709; }
+.policy-alert.is-expired { background: #fff0ef; }
+.policy-alert.is-expired strong { color: #a52834; }
+@media (max-width: 640px) {
+  .policy-alert { width: 100%; overflow-wrap: anywhere; }
+}
+</style>

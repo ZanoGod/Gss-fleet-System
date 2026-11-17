@@ -63,6 +63,40 @@ class InsuranceApiTest extends TestCase
         $this->actingAs($this->user)->getJson('/api/insurance/policies')->assertOk();
     }
 
+    public function test_expiry_countdown_and_alerts_follow_policy_dates_and_renewals(): void
+    {
+        $this->travelTo(today()->setDate(2026, 11, 17)->addHours(15));
+        config(['insurance.expiring_days' => 30]);
+
+        $create = function (string $number, string $expiry, array $attributes = []) {
+            $policy = new InsurancePolicy($this->policyData([
+                'policy_number' => $number, 'insurance_type' => 'comprehensive', 'expiration_date' => $expiry,
+            ]));
+            $policy->forceFill($attributes + ['created_by' => $this->user->legacyAdminLink->admin_id])->save();
+
+            return $policy;
+        };
+        $due = $create('DUE-TODAY', '2026-11-17');
+        $within = $create('DUE-IN-30', '2026-12-17');
+        $create('DUE-IN-31', '2026-12-18');
+        $expired = $create('OVERDUE', '2026-11-16');
+        $renewed = $create('SUPERSEDED', '2026-11-15');
+        $create('RENEWAL', '2027-11-15', ['start_date' => '2026-11-16', 'renewal_parent_id' => $renewed->id]);
+        $create('CANCELLED', '2026-11-17', ['cancelled_at' => now()]);
+        $create('ARCHIVED', '2026-11-16', ['archived_at' => now()]);
+
+        $this->actingAs($this->user)->getJson("/api/insurance/policies/{$due->id}")
+            ->assertOk()->assertJsonPath('data.status', 'expiring')->assertJsonPath('data.days_until_expiry', 0);
+        $this->getJson('/api/insurance/dashboard')->assertOk()
+            ->assertJsonCount(2, 'data.expiring_policies')
+            ->assertJsonPath('data.expiring_policies.0.id', $due->id)
+            ->assertJsonPath('data.expiring_policies.1.id', $within->id)
+            ->assertJsonPath('data.expiring_policies.1.days_until_expiry', 30)
+            ->assertJsonCount(1, 'data.expired_policies_alerts')
+            ->assertJsonPath('data.expired_policies_alerts.0.id', $expired->id)
+            ->assertJsonPath('data.expired_policies_alerts.0.days_until_expiry', -1);
+    }
+
     public function test_policy_creation_normalizes_insurance_type_and_protects_legacy_admin_identity(): void
     {
         $response = $this->actingAs($this->user)->postJson('/api/insurance/policies', $this->policyData());

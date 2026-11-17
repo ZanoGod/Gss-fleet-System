@@ -54,6 +54,7 @@ export interface InsurancePolicy {
   coverage_details: string | null
   start_date: string
   expiration_date: string
+  days_until_expiry: number
   premium_amount: string
   currency: string
   coverage_amount: string
@@ -80,6 +81,7 @@ export interface InsuranceDashboard {
   claims: { total: number; open: number; approved: number; paid: number }
   uninsured_vehicles: { daily: number; monthly: number }
   expiring_policies: InsurancePolicy[]
+  expired_policies_alerts: InsurancePolicy[]
   recent_claims: InsuranceClaim[]
 }
 export interface InsurancePolicyInput {
