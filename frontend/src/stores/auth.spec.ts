@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from './auth'
 import * as service from '@/services/auth'
 vi.mock('@/services/auth', () => ({ getUser: vi.fn(), login: vi.fn(), logout: vi.fn() }))
-const user = { id: 1, name: 'Test', username: 'test', email: 'test@example.test' }
+const user = { id: 1, name: 'Test', username: 'test', email: 'test@example.test', is_active: true, role_id: 1 }
 beforeEach(() => {
   setActivePinia(createPinia())
   vi.resetAllMocks()
@@ -25,6 +25,28 @@ describe('cookie authentication', () => {
     const auth = useAuthStore()
     await auth.initializeAuth()
     expect(auth.isAuthenticated).toBe(false)
+  })
+  it('recognizes the system admin role slug for navigation and route permissions', () => {
+    const auth = useAuthStore()
+    auth.user = {
+      ...user,
+      role: { id: 2, name: 'Admin', slug: 'admin', is_system: true },
+      permissions: [],
+    }
+    expect(auth.hasPermission('users.view')).toBe(true)
+    auth.user = {
+      ...user,
+      role: { id: 3, name: 'Admin', slug: 'admin', is_system: false },
+      permissions: [],
+    }
+    expect(auth.hasPermission('users.view')).toBe(false)
+  })
+  it('does not grant client-side permissions to inactive or roleless accounts', () => {
+    const auth = useAuthStore()
+    auth.user = { ...user, is_active: true, role_id: null, role: null, permissions: ['dashboard.view'] }
+    expect(auth.hasPermission('dashboard.view')).toBe(false)
+    auth.user = { ...user, is_active: false, role_id: 1, role: null, permissions: ['dashboard.view'] }
+    expect(auth.hasPermission('dashboard.view')).toBe(false)
   })
   it('does not claim logout on a network failure', async () => {
     vi.mocked(service.login).mockResolvedValue(user)

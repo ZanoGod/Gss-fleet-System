@@ -10,6 +10,7 @@ const auth = vi.hoisted(() => ({
   logout: vi.fn(async () => undefined),
   initializeAuth: vi.fn(async () => undefined),
   getUser: vi.fn(async () => undefined),
+  hasPermission: vi.fn(() => true),
 }))
 
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => auth }))
@@ -120,6 +121,7 @@ describe('application routes', () => {
     auth.isAuthenticated = true
     auth.initializeAuth.mockClear()
     auth.getUser.mockClear()
+    auth.hasPermission.mockReset().mockReturnValue(true)
     await router.push('/login')
   })
 
@@ -149,6 +151,12 @@ describe('application routes', () => {
     expect(router.currentRoute.value.path).toBe('/daily-bookings')
     expect(app.find('.shell-header h1').text()).toBe('Daily Bookings')
     app.unmount()
+  })
+
+  it('allows an administrator to open Users & Access by direct URL', async () => {
+    await router.push('/users-access')
+    expect(auth.hasPermission).toHaveBeenCalledWith('users.view')
+    expect(router.currentRoute.value.path).toBe('/users-access')
   })
 
   it('redirects unauthenticated users to the public login layout without the sidebar', async () => {

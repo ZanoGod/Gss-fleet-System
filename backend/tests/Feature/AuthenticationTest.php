@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +35,7 @@ class AuthenticationTest extends TestCase
 
     public function test_cookie_login_restoration_rotation_and_logout(): void
     {
-        $user = User::factory()->create(['username' => 'session-test', 'password' => Hash::make('test-password')]);
+        $user = User::factory()->create(['username' => 'session-test', 'password' => Hash::make('test-password'), 'role_id' => Role::where('slug', 'administrator')->value('id')]);
         $token = $this->csrf();
         $oldId = session()->getId();
         $response = $this->postJson('/login', ['login' => 'session-test', 'password' => 'test-password'], ['X-CSRF-TOKEN' => $token]);
@@ -71,6 +72,7 @@ class AuthenticationTest extends TestCase
             'username' => 'fleet-login',
             'email' => 'fleet-login@example.test',
             'password' => Hash::make('test-password'),
+            'role_id' => Role::where('slug', 'administrator')->value('id'),
         ]);
 
         $usernameToken = $this->csrf();
@@ -115,7 +117,7 @@ class AuthenticationTest extends TestCase
 
     public function test_database_expiration_and_activity_renewal(): void
     {
-        $user = User::factory()->create(['password' => Hash::make('test-password')]);
+        $user = User::factory()->create(['password' => Hash::make('test-password'), 'role_id' => Role::where('slug', 'administrator')->value('id')]);
         $token = $this->csrf();
         $this->postJson('/login', ['login' => $user->email, 'password' => 'test-password'], ['X-CSRF-TOKEN' => $token])->assertOk();
         $id = session()->getId();

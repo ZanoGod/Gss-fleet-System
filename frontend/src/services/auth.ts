@@ -7,6 +7,10 @@ export interface User {
   name: string
   username?: string | null
   email: string
+  is_active?: boolean
+  role_id?: number | null
+  role?: { id: number; name: string; slug: string; is_system?: boolean } | null
+  permissions?: string[]
 }
 
 export async function login(identifier: string, password: string): Promise<User> {
@@ -23,7 +27,7 @@ export async function getUser(): Promise<User | null> {
     const response = await api.get<{ user: User }>('/api/user')
     return response.data.user
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) return null
+    if (axios.isAxiosError(error) && [401, 403].includes(error.response?.status ?? 0)) return null
     throw error
   }
 }

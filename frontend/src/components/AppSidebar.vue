@@ -32,18 +32,18 @@ const mobileCloseButton = ref<HTMLButtonElement | null>(null)
 const sidebarElement = ref<HTMLElement | null>(null)
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'bi-grid-1x2-fill' },
-  { to: '/daily-bookings', label: 'Daily Bookings', icon: 'bi-calendar-check' },
-  { to: '/monthly-contracts', label: 'Monthly Contracts', icon: 'bi-calendar3' },
-  { to: '/fleet', label: 'Cars / Vehicles', icon: 'bi-car-front-fill' },
-  { to: '/customers', label: 'Customers', icon: 'bi-people' },
-  { to: '/drivers', label: 'Drivers', icon: 'bi-person-vcard' },
-  { to: '/operators', label: 'Operators', icon: 'bi-headset' },
-  { to: '/maintenance', label: 'Maintenance', icon: 'bi-tools' },
-  { to: '/car-licenses', label: 'Car License', icon: 'bi-card-checklist' },
-  { to: '/insurance', label: 'Insurance', icon: 'bi-shield-check' },
-  { to: '/payments', label: 'Payments', icon: 'bi-credit-card' },
-  { to: '/reports', label: 'Reports', icon: 'bi-bar-chart-fill' },
+  { to: '/dashboard', label: 'Dashboard', icon: 'bi-grid-1x2-fill', permission: 'dashboard.view' },
+  { to: '/daily-bookings', label: 'Daily Bookings', icon: 'bi-calendar-check', permission: 'bookings.view' },
+  { to: '/monthly-contracts', label: 'Monthly Contracts', icon: 'bi-calendar3', permission: 'contracts.view' },
+  { to: '/fleet', label: 'Cars / Vehicles', icon: 'bi-car-front-fill', permission: 'fleet.view' },
+  { to: '/customers', label: 'Customers', icon: 'bi-people', permission: 'customers.view' },
+  { to: '/drivers', label: 'Drivers', icon: 'bi-person-vcard', permission: 'drivers.view' },
+  { to: '/operators', label: 'Operators', icon: 'bi-headset', permission: 'operators.view' },
+  { to: '/maintenance', label: 'Maintenance', icon: 'bi-tools', permission: 'maintenance.view' },
+  { to: '/car-licenses', label: 'Car License', icon: 'bi-card-checklist', permission: 'car_licenses.view' },
+  { to: '/insurance', label: 'Insurance', icon: 'bi-shield-check', permission: 'insurance.view' },
+  { to: '/payments', label: 'Payments', icon: 'bi-credit-card', permission: 'payments.view' },
+  { to: '/reports', label: 'Reports', icon: 'bi-bar-chart-fill', permission: 'reports.view' },
   // { to: '/button-system', label: 'Button system', icon: 'bi-ui-radios' },
 ]
 
@@ -210,7 +210,7 @@ async function signOut(): Promise<void> {
 
       <nav id="gss-primary-navigation" class="sidebar-nav" aria-label="Primary navigation">
         <RouterLink
-          v-for="item in navItems"
+          v-for="item in navItems.filter((entry) => entry.permission === undefined || (auth.hasPermission?.(entry.permission) ?? true))"
           :key="item.to"
           :to="item.to"
           class="nav-item"
@@ -226,6 +226,17 @@ async function signOut(): Promise<void> {
       </nav>
 
       <div class="sidebar-footer">
+        <RouterLink
+          v-if="auth.hasPermission?.('users.view') ?? true"
+          to="/users-access"
+          class="nav-item"
+          :title="collapsed ? 'Users & Access' : undefined"
+          :aria-label="collapsed ? 'Users & Access' : undefined"
+          @click="closeMobileMenu()"
+        >
+          <span class="nav-icon" aria-hidden="true"><i class="bi bi-shield-lock"></i></span>
+          <span class="nav-label">Users & Access</span>
+        </RouterLink>
         <button
           class="nav-item logout-item"
           type="button"

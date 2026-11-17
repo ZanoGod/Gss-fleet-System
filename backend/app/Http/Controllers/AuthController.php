@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -17,11 +18,15 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
+        $input['role_id'] = null;
+        $input['is_active'] = false;
         $user = User::create($input);
-        Auth::guard('web')->login($user);
-        $request->session()->regenerate();
 
-        return response()->json(['success' => true, 'user' => $user->only(['id', 'name', 'username', 'email'])], 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration successful. Your account is pending administrator approval.',
+            'user' => $this->userPayload($user),
+        ], 201);
     }
 
     public function login(Request $request)
@@ -33,24 +38,45 @@ class AuthController extends Controller
         $identifier = trim($input['login']);
         $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
-        if (! Auth::guard('web')->attempt([$field => $identifier, 'password' => $input['password']])) {
+        $guard = Auth::guard('web');
+        $candidate = $guard->getProvider()->retrieveByCredentials([$field => $identifier]);
+        if (! $candidate || ! Hash::check($input['password'], $candidate->getAuthPassword())) {
             throw ValidationException::withMessages([
                 'login' => ['Incorrect username or password.'],
             ]);
         }
 
+        if (! $candidate->is_active || $candidate->role_id === null) {
+            throw ValidationException::withMessages([
+                'login' => ['Your account is pending administrator approval. Contact an administrator.'],
+            ]);
+        }
+
+        $guard->login($candidate);
         $request->session()->regenerate();
 
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'user' => $request->user()->only(['id', 'name', 'username', 'email']),
+            'user' => $this->userPayload($request->user()),
         ]);
     }
 
     public function user(Request $request)
     {
-        return response()->json(['success' => true, 'user' => $request->user()->only(['id', 'name', 'username', 'email'])])->header('Cache-Control', 'no-store');
+        abort_unless($request->user()->is_active && $request->user()->role_id !== null, 403, 'Your account is pending administrator approval. Contact an administrator.');
+
+        return response()->json(['success' => true, 'user' => $this->userPayload($request->user())])->header('Cache-Control', 'no-store');
+    }
+
+    private function userPayload(User $user): array
+    {
+        $user->loadMissing('role');
+        return [
+            ...$user->only(['id', 'name', 'username', 'email', 'is_active', 'role_id']),
+            'role' => $user->role?->only(['id', 'name', 'slug', 'is_system']),
+            'permissions' => $user->role?->permissions ?? [],
+        ];
     }
 
     public function logout(Request $request)

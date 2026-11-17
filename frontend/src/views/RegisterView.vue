@@ -3,12 +3,11 @@ import BaseLoading from '@/components/common/BaseLoading.vue'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
-import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/services/toast'
-const router = useRouter(),
-  auth = useAuthStore(),
-  busy = ref(false),
-  error = ref('')
+const router = useRouter()
+const busy = ref(false),
+  error = ref(''),
+  success = ref('')
 const form = reactive({
   name: '',
   username: '',
@@ -20,12 +19,12 @@ async function register() {
   if (busy.value) return
   busy.value = true
   error.value = ''
+  success.value = ''
   try {
     await api.get('/sanctum/csrf-cookie')
-    await api.post('/register', form)
-    toast.success('Account created successfully.')
-    await auth.getUser()
-    await router.replace('/dashboard')
+    const response = await api.post<{ message?: string }>('/register', form)
+    success.value = response.data.message ?? 'Registration successful. Your account is pending administrator approval.'
+    await router.replace({ path: '/login', query: { registered: '1' } })
   } catch (e: any) {
     const errors = e?.response?.data?.errors
     error.value = errors
@@ -45,6 +44,8 @@ async function register() {
         <h1>Create account</h1>
         <p>Register for Fleet Management</p>
       </div>
+      <div v-if="success" class="alert alert-success" role="status">{{ success }}</div>
+      <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
       <form @submit.prevent="register">
         <div
           v-for="field in [
@@ -100,7 +101,7 @@ async function register() {
             />
           </div>
         </div>
-        <button class="btn-gold login-submit" type="submit" :disabled="busy" :aria-busy="busy">
+        <button class="btn-gold login-submit" type="submit" :disabled="busy || !!success" :aria-busy="busy">
           <BaseLoading v-if="busy" label="Registering…" /><template v-else>Register</template>
         </button>
       </form>

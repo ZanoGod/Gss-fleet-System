@@ -13,6 +13,11 @@ const username = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const submitting = ref(false)
+const registrationNotice = ref(
+  route.query.registered === '1'
+    ? 'Registration successful. Your account is pending administrator approval.'
+    : '',
+)
 const error = ref(
   route.query.reason === 'expired'
     ? API_ERROR_MESSAGES.sessionExpired
@@ -47,6 +52,9 @@ async function signIn() {
         <div class="brand-mark">GSS</div>
         <h1>Fleet Management</h1>
         <p>Sign in to the admin panel</p>
+      </div>
+      <div v-if="registrationNotice" class="alert alert-success" role="status">
+        {{ registrationNotice }}
       </div>
       <form @submit.prevent="signIn">
         <div class="mb-4">

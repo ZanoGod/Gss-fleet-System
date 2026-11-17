@@ -14,12 +14,24 @@ use App\Http\Controllers\Api\InsuranceProviderController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\MonthlyContractController;
 use App\Http\Controllers\Api\OperatorController;
+use App\Http\Controllers\Api\UserAccessController;
 use App\Http\Controllers\AuthController;
+use App\Http\Middleware\EnsureActiveUser;
 use Illuminate\Support\Facades\Route;
 
 // Only the session guard is accepted: legacy bearer tokens cannot authenticate.
-Route::middleware('auth:web')->group(function (): void {
+Route::middleware(['auth:web', EnsureActiveUser::class])->group(function (): void {
     Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/users/summary', [UserAccessController::class, 'summary']);
+    Route::get('/users/roles', [UserAccessController::class, 'roles']);
+    Route::post('/users/roles', [UserAccessController::class, 'storeRole']);
+    Route::put('/users/roles/{role}', [UserAccessController::class, 'updateRole']);
+    Route::delete('/users/roles/{role}', [UserAccessController::class, 'destroyRole']);
+    Route::get('/users', [UserAccessController::class, 'index']);
+    Route::post('/users', [UserAccessController::class, 'store']);
+    Route::put('/users/{user}', [UserAccessController::class, 'update']);
+    Route::patch('/users/{user}/access', [UserAccessController::class, 'updateAccess']);
+    Route::delete('/users/{user}', [UserAccessController::class, 'destroy']);
     Route::get('/dashboard', DashboardController::class);
     Route::get('/drivers/options', [DriverController::class, 'options']);
     Route::get('/drivers/summary', [DriverController::class, 'summary']);

@@ -10,6 +10,19 @@ export const useAuthStore = defineStore('auth', () => {
   let revision = 0
   let pending: Promise<void> | null = null
   const isAuthenticated = computed(() => user.value !== null)
+  const hasPermission = (permission: string) => {
+    const currentUser = user.value
+    if (!currentUser?.is_active || currentUser.role_id == null) return false
+    const permissions = currentUser.permissions ?? []
+    const role = currentUser.role
+    const isAdministrator =
+      role?.slug === 'administrator' || (role?.is_system === true && role.slug === 'admin')
+    if (isAdministrator || permissions.includes(permission)) return true
+    if (permission.endsWith('.view') && permissions.includes(`${permission.slice(0, -5)}.manage`)) return true
+    if (permission === 'users.view')
+      return ['users.create', 'users.update', 'users.delete', 'access.manage', 'roles.view', 'roles.manage'].some((item) => permissions.includes(item))
+    return permission === 'roles.view' && (permissions.includes('roles.manage') || permissions.includes('users.view'))
+  }
   function clearLegacy() {
     try {
       sessionStorage.removeItem('gss_token')
@@ -70,6 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
   return {
     user,
+    hasPermission,
     isAuthenticated,
     isLoading,
     isInitializing,

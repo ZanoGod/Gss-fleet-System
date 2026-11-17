@@ -226,14 +226,20 @@ const router = createRouter({
           path: 'car-licenses',
           name: 'carLicensesList',
           component: () => import('@/modules/car-licenses/pages/CarLicenseListPage.vue'),
-          meta: { title: 'Car License Management', description: 'Track RTAD registration terms, renewals, and vehicle documents.' },
+          meta: {
+            title: 'Car License',
+            description: 'Track RTAD registration terms, renewals, and vehicle documents.',
+          },
         },
         {
           path: 'car-licenses/create',
           name: 'carLicensesCreate',
           component: () => import('@/modules/car-licenses/pages/CarLicenseFormPage.vue'),
           props: { mode: 'create' },
-          meta: { title: 'Add Car License', description: 'Record a vehicle registration license.' },
+          meta: {
+            title: 'Add Car License',
+            description: 'Record a vehicle registration license.',
+          },
         },
         {
           path: 'car-licenses/:id/edit',
@@ -247,20 +253,26 @@ const router = createRouter({
           name: 'carLicensesRenew',
           component: () => import('@/modules/car-licenses/pages/CarLicenseFormPage.vue'),
           props: { mode: 'renew' },
-          meta: { title: 'Renew Car License', description: 'Record the next RTAD registration period.' },
+          meta: {
+            title: 'Renew Car License',
+            description: 'Record the next RTAD registration period.',
+          },
         },
         {
           path: 'car-licenses/:id',
           name: 'carLicensesDetail',
           component: () => import('@/modules/car-licenses/pages/CarLicenseDetailPage.vue'),
-          meta: { title: 'Car License Details', description: 'Registration details, documents, and renewal history.' },
+          meta: {
+            title: 'Car License Details',
+            description: 'Registration details, documents, and renewal history.',
+          },
         },
         {
           path: 'insurance',
           name: 'insuranceList',
           component: () => import('@/modules/insurance/pages/InsuranceListPage.vue'),
           meta: {
-            title: 'Insurance Management',
+            title: 'Insurance',
             description: 'Manage coverage, providers, and claims across both vehicle fleets.',
           },
         },
@@ -391,10 +403,23 @@ const router = createRouter({
           meta: { title: 'Reports', description: 'Review operational reporting.' },
         },
         {
+          path: 'users-access',
+          name: 'usersAccess',
+          component: () => import('@/modules/users-access/pages/UsersAccessPage.vue'),
+          meta: {
+            title: 'Users & Access',
+            description: 'Manage staff accounts, access, roles, and permissions.',
+            permission: 'users.view',
+          },
+        },
+        {
           path: 'button-system',
           name: 'buttonSystem',
           component: () => import('@/modules/settings/pages/ButtonSystemPage.vue'),
-          meta: { title: 'Button design system', description: 'Preview shared action patterns used across fleet operations.' },
+          meta: {
+            title: 'Button design system',
+            description: 'Preview shared action patterns used across fleet operations.',
+          },
         },
       ],
     },
@@ -429,6 +454,19 @@ router.beforeEach(async (to) => {
   }
   if (!to.meta.public && !auth.isAuthenticated)
     return { path: '/login', query: { redirect: to.fullPath } }
+  const firstSegment = `/${String(to.path.split('/')[1] ?? '')}`
+  const modulePermissions: Record<string, string> = {
+    '/dashboard': 'dashboard.view', '/daily-bookings': 'bookings.view',
+    '/monthly-contracts': 'contracts.view', '/fleet': 'fleet.view',
+    '/customers': 'customers.view', '/drivers': 'drivers.view', '/operators': 'operators.view',
+    '/maintenance': 'maintenance.view', '/car-licenses': 'car_licenses.view',
+    '/insurance': 'insurance.view', '/payments': 'payments.view', '/reports': 'reports.view',
+  }
+  const requiredPermission = typeof to.meta.permission === 'string'
+    ? to.meta.permission
+    : to.path.startsWith('/users-access') ? 'users.view' : modulePermissions[firstSegment]
+  if (requiredPermission && typeof auth.hasPermission === 'function' && !auth.hasPermission(requiredPermission))
+    return '/dashboard'
   if (to.path === '/login' && auth.isAuthenticated) return '/dashboard'
 })
 
