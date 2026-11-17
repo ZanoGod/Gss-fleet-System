@@ -149,13 +149,13 @@ onMounted(load)
 </script>
 <template>
   <main class="fleet-module page-content glass-module">
-    <header class="module-heading">
+    <!-- <header>
       <div>
         <div class="eyebrow">Web-Based Fleet Management System</div>
         <h1>{{ insuranceHeader.title }}</h1>
         <p>{{ insuranceHeader.description }}</p>
       </div>
-    </header>
+    </header> -->
     <StatusSummary
       :items="insuranceMetrics(store.dashboard)"
       :loading="initial"

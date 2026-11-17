@@ -56,12 +56,7 @@ function reset() {
     class="fleet-module page-content resource-workspace glass-module"
     aria-label="Module management"
   >
-    <header class="module-heading driver-module-heading">
-      <div>
-        <div class="eyebrow">Web-Based Fleet Management System</div>
-        <h1>{{ config.title }}</h1>
-        <p>{{ config.description }}</p>
-      </div>
+    <header>
       <div class="driver-heading-actions">
         <nav
           class="glass-segments driver-segments"
