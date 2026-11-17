@@ -44,7 +44,7 @@ const navItems = [
   { to: '/insurance', label: 'Insurance', icon: 'bi-shield-check' },
   { to: '/payments', label: 'Payments', icon: 'bi-credit-card' },
   { to: '/reports', label: 'Reports', icon: 'bi-bar-chart-fill' },
-  { to: '/button-system', label: 'Button system', icon: 'bi-ui-radios' },
+  // { to: '/button-system', label: 'Button system', icon: 'bi-ui-radios' },
 ]
 
 function toggleDesktopSidebar(): void {

@@ -58,7 +58,8 @@ function reset() {
   >
     <header class="module-heading driver-module-heading">
       <div>
-        <h1>Drivers</h1>
+        <div class="eyebrow">Web-Based Fleet Management System</div>
+        <h1>{{ config.title }}</h1>
         <p>{{ config.description }}</p>
       </div>
       <div class="driver-heading-actions">

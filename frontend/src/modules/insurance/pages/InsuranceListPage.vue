@@ -151,7 +151,8 @@ onMounted(load)
   <main class="fleet-module page-content glass-module">
     <header class="module-heading">
       <div>
-        <h1>Insurance Management</h1>
+        <div class="eyebrow">Web-Based Fleet Management System</div>
+        <h1>{{ insuranceHeader.title }}</h1>
         <p>{{ insuranceHeader.description }}</p>
       </div>
     </header>
@@ -461,7 +462,7 @@ onMounted(load)
       :busy="pending('claim')"
       @close="claimModal = false"
       ><div class="row g-3">
-        <div class="col-12">  
+        <div class="col-12">
           <label class="form-label" for="claim-policy">Policy</label
           ><select id="claim-policy" v-model.number="claim.policy_id" class="form-select">
             <option v-for="p in store.policies" :key="p.id" :value="p.id">

@@ -2,7 +2,7 @@ import type { StatusMetric } from '@/components/common/statusMetrics'
 import type { InsuranceDashboard } from './types'
 
 export const insuranceHeader = {
-  title: 'Fleet coverage',
+  title: 'Insurance',
   description: 'Keep policies, claims and insurance providers in one place.',
   icon: 'bi-shield-check',
 }
