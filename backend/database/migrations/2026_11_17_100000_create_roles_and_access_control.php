@@ -13,7 +13,7 @@ return new class extends Migration
         'fleet.view', 'fleet.manage', 'customers.view', 'customers.manage',
         'drivers.view', 'drivers.manage', 'operators.view', 'operators.manage',
         'maintenance.view', 'maintenance.manage', 'car_licenses.view', 'car_licenses.manage',
-        'insurance.view', 'insurance.manage', 'payments.view', 'payments.manage',
+        'insurance.view', 'insurance.manage', 'finance.view', 'finance.manage',
         'reports.view', 'reports.manage',
         'users.view', 'users.create', 'users.update', 'users.delete',
         'access.manage', 'roles.view', 'roles.manage',
@@ -22,7 +22,7 @@ return new class extends Migration
     private const STAFF_PERMISSIONS = [
         'dashboard.view', 'bookings.view', 'contracts.view', 'fleet.view', 'customers.view',
         'drivers.view', 'operators.view', 'maintenance.view', 'car_licenses.view',
-        'insurance.view', 'payments.view', 'reports.view',
+        'insurance.view', 'finance.view', 'reports.view',
     ];
 
     public function up(): void

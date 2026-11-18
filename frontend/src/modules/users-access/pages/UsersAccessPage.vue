@@ -68,7 +68,7 @@ const permissionIcons: Record<string, string> = {
   'maintenance.view': 'bi-tools',
   'car_licenses.view': 'bi-card-checklist',
   'insurance.view': 'bi-shield-check',
-  'payments.view': 'bi-credit-card',
+  'finance.view': 'bi-cash-stack',
   'reports.view': 'bi-bar-chart-fill',
   'users.view': 'bi-shield-lock',
 }
@@ -77,6 +77,9 @@ const isAdministratorRole = computed(
     selectedRole.value?.slug === 'administrator' ||
     (selectedRole.value?.is_system === true && selectedRole.value.slug === 'admin'),
 )
+function isProtectedRole(role: AccessRole | null | undefined) {
+  return role?.slug === 'administrator' || (role?.is_system === true && role.slug === 'admin')
+}
 
 async function loadUsers(nextPage = 1) {
   loading.value = true
@@ -791,7 +794,7 @@ onMounted(() => {
                 ></span
               >
               <i
-                v-if="role.is_system"
+                v-if="isProtectedRole(role)"
                 class="bi bi-lock-fill role-system-icon"
                 aria-label="System role"
               ></i>
@@ -834,9 +837,8 @@ onMounted(() => {
                 </div>
               </div>
               <div
-                v-if="selectedRole && can('roles.manage') && !selectedRole.is_system"
-                class="role-delete-action"
-              >
+                v-if="selectedRole && can('roles.manage') && !isProtectedRole(selectedRole) && (!selectedRole.is_system || selectedRole.slug === 'staff')"
+                class="role-delete-action">
                 <button
                   class="btn gss-button gss-button--destructive"
                   :disabled="!!selectedRole.users_count"

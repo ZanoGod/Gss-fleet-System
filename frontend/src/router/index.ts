@@ -388,13 +388,10 @@ const router = createRouter({
           },
         },
         {
-          path: 'payments',
-          name: 'payments',
-          component: () => import('@/modules/payments/pages/PaymentListPage.vue'),
-          meta: {
-            title: 'Payments',
-            description: 'Review payment records when the legacy workflow and API are verified.',
-          },
+          path: 'finance',
+          name: 'finance',
+          component: () => import('@/modules/finance/pages/FinancePage.vue'),
+          meta: { title: 'Finance', description: 'Track fleet income, expenses, invoices, and payments.' },
         },
         {
           path: 'reports',
@@ -423,6 +420,8 @@ const router = createRouter({
         },
       ],
     },
+    { path: '/payments/:pathMatch(.*)*', redirect: '/finance' },
+    { path: '/payments', redirect: '/finance' },
     {
       path: '/bookings/:pathMatch(.*)*',
       redirect: (to) =>
@@ -460,7 +459,7 @@ router.beforeEach(async (to) => {
     '/monthly-contracts': 'contracts.view', '/fleet': 'fleet.view',
     '/customers': 'customers.view', '/drivers': 'drivers.view', '/operators': 'operators.view',
     '/maintenance': 'maintenance.view', '/car-licenses': 'car_licenses.view',
-    '/insurance': 'insurance.view', '/payments': 'payments.view', '/reports': 'reports.view',
+    '/insurance': 'insurance.view', '/finance': 'finance.view', '/payments': 'finance.view', '/reports': 'reports.view',
   }
   const requiredPermission = typeof to.meta.permission === 'string'
     ? to.meta.permission

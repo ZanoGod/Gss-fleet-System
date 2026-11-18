@@ -112,7 +112,7 @@ const pagePaths = [
   '/monthly-contracts/create',
   '/monthly-contracts/42',
   '/monthly-contracts/42/edit',
-  '/payments',
+  '/finance',
   '/reports',
 ]
 

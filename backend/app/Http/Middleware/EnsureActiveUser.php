@@ -33,7 +33,7 @@ class EnsureActiveUser
             'operators' => 'operators',
             'maintenances' => 'maintenance',
             'insurance' => 'insurance',
-            'payments' => 'payments',
+            'finance' => 'finance',
             'reports' => 'reports',
             default => null,
         };

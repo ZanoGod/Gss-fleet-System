@@ -42,7 +42,7 @@ const navItems = [
   { to: '/maintenance', label: 'Maintenance', icon: 'bi-tools', permission: 'maintenance.view' },
   { to: '/car-licenses', label: 'Car License', icon: 'bi-card-checklist', permission: 'car_licenses.view' },
   { to: '/insurance', label: 'Insurance', icon: 'bi-shield-check', permission: 'insurance.view' },
-  { to: '/payments', label: 'Payments', icon: 'bi-credit-card', permission: 'payments.view' },
+  { to: '/finance', label: 'Finance', icon: 'bi-cash-stack', permission: 'finance.view' },
   { to: '/reports', label: 'Reports', icon: 'bi-bar-chart-fill', permission: 'reports.view' },
   // { to: '/button-system', label: 'Button system', icon: 'bi-ui-radios' },
 ]

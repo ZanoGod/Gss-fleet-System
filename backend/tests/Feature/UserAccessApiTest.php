@@ -149,7 +149,15 @@ class UserAccessApiTest extends TestCase
 
         $this->putJson('/api/users/roles/'.Role::where('slug', 'administrator')->value('id'), ['name' => 'Administrator', 'permissions' => ['users.view']])
             ->assertUnprocessable()->assertJsonValidationErrors('permissions');
-        $this->deleteJson('/api/users/roles/'.Role::where('slug', 'staff')->value('id'))->assertUnprocessable();
+        $staffRole = Role::where('slug', 'staff')->firstOrFail();
+        $staffMember = User::factory()->create(['role_id' => $staffRole->id]);
+        $this->deleteJson('/api/users/roles/'.$staffRole->id)->assertUnprocessable()->assertJsonValidationErrors('role');
+        $staffMember->delete();
+        $this->deleteJson('/api/users/roles/'.$staffRole->id)->assertNoContent();
+        $this->assertDatabaseMissing('roles', ['id' => $staffRole->id]);
+
+        $this->deleteJson('/api/users/roles/'.Role::where('slug', 'administrator')->value('id'))
+            ->assertUnprocessable()->assertJsonValidationErrors('role');
     }
 
     public function test_inactive_authenticated_accounts_are_blocked_from_api_requests(): void

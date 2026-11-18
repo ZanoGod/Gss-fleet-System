@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyBookingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DriverController;
+use App\Http\Controllers\Api\FinanceController;
 use App\Http\Controllers\Api\InsuranceClaimController;
 use App\Http\Controllers\Api\InsuranceDashboardController;
 use App\Http\Controllers\Api\InsuranceDocumentController;
@@ -50,6 +51,25 @@ Route::middleware(['auth:web', EnsureActiveUser::class])->group(function (): voi
     Route::get('/maintenances/options', [MaintenanceController::class, 'options']);
     Route::get('/maintenances/summary', [MaintenanceController::class, 'summary']);
     Route::apiResource('maintenances', MaintenanceController::class);
+
+    Route::prefix('finance')->group(function (): void {
+        Route::get('/dashboard', [FinanceController::class, 'dashboard']);
+        Route::get('/options', [FinanceController::class, 'options']);
+        Route::get('/report', [FinanceController::class, 'report']);
+        Route::get('/export.csv', [FinanceController::class, 'export']);
+        Route::get('/entries', [FinanceController::class, 'entries']);
+        Route::post('/entries', [FinanceController::class, 'storeEntry']);
+        Route::put('/entries/{entry}', [FinanceController::class, 'updateEntry']);
+        Route::delete('/entries/{entry}', [FinanceController::class, 'destroyEntry']);
+        Route::get('/invoices', [FinanceController::class, 'invoices']);
+        Route::post('/invoices', [FinanceController::class, 'storeInvoice']);
+        Route::put('/invoices/{invoice}', [FinanceController::class, 'updateInvoice']);
+        Route::delete('/invoices/{invoice}', [FinanceController::class, 'destroyInvoice']);
+        Route::get('/invoices/{invoice}/payments', [FinanceController::class, 'payments']);
+        Route::post('/invoices/{invoice}/payments', [FinanceController::class, 'storePayment']);
+        Route::put('/invoices/{invoice}/payments/{payment}', [FinanceController::class, 'updatePayment']);
+        Route::delete('/invoices/{invoice}/payments/{payment}', [FinanceController::class, 'destroyPayment']);
+    });
 
     Route::get('/customers/summary', [CustomerController::class, 'summary']);
     Route::apiResource('customers', CustomerController::class);

@@ -3,7 +3,7 @@ import { computed } from 'vue'
 const props = defineProps<{ status: string }>()
 const tone = computed(() => {
   const s = props.status.toLowerCase()
-  return /cancel|expired|inactive|failed/.test(s)
+  return /cancel|expired|inactive|failed|overdue/.test(s)
     ? 'danger'
     : /active|available|completed|paid/.test(s)
       ? 'success'

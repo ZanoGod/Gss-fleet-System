@@ -123,6 +123,19 @@ describe('Users & Access workflows', () => {
     wrapper.unmount()
   })
 
+  it('offers delete for an unused built-in Staff role while protecting Administrator', async () => {
+    mocks.roles.mockResolvedValueOnce({
+      data: [{ ...role, users_count: 0 }],
+      permissions: { 'users.view': 'Users & Access' },
+    })
+    const wrapper = page()
+    await flushPromises()
+    await clickText(wrapper, 'Roles & Permissions')
+    expect(wrapper.get('.role-delete-action button').text()).toContain('Delete role')
+    expect((wrapper.get('.role-delete-action button').element as HTMLButtonElement).disabled).toBe(false)
+    wrapper.unmount()
+  })
+
   it('shows one view-only permission toggle for each module', async () => {
     const wrapper = page()
     await flushPromises()
@@ -149,7 +162,7 @@ describe('Users & Access workflows', () => {
       'maintenance.view': 'bi-tools',
       'car_licenses.view': 'bi-card-checklist',
       'insurance.view': 'bi-shield-check',
-      'payments.view': 'bi-credit-card',
+      'finance.view': 'bi-cash-stack',
       'reports.view': 'bi-bar-chart-fill',
       'users.view': 'bi-shield-lock',
     }

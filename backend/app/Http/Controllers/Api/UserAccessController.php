@@ -26,7 +26,7 @@ class UserAccessController extends Controller
         'maintenance.view' => 'View maintenance', 'maintenance.manage' => 'Manage maintenance',
         'car_licenses.view' => 'View car licenses', 'car_licenses.manage' => 'Manage car licenses',
         'insurance.view' => 'View insurance', 'insurance.manage' => 'Manage insurance',
-        'payments.view' => 'View payments', 'payments.manage' => 'Manage payments',
+        'finance.view' => 'View finance', 'finance.manage' => 'Manage finance',
         'reports.view' => 'View reports', 'reports.manage' => 'Manage reports',
         'users.view' => 'View staff users',
         'users.create' => 'Add staff users',
@@ -48,7 +48,7 @@ class UserAccessController extends Controller
         'maintenance.view' => 'Maintenance',
         'car_licenses.view' => 'Car License',
         'insurance.view' => 'Insurance',
-        'payments.view' => 'Payments',
+        'finance.view' => 'Finance',
         'reports.view' => 'Reports',
         'users.view' => 'Users & Access',
     ];
@@ -168,7 +168,12 @@ class UserAccessController extends Controller
     public function destroyRole(Role $role)
     {
         Gate::authorize('roles.manage');
-        if ($role->is_system) throw ValidationException::withMessages(['role' => 'System roles cannot be removed.']);
+        $isProtectedAdministrator = $role->slug === 'administrator'
+            || ($role->is_system && $role->slug === 'admin');
+        $isDeletableBuiltInRole = $role->is_system && $role->slug === 'staff';
+        if ($isProtectedAdministrator || ($role->is_system && ! $isDeletableBuiltInRole)) {
+            throw ValidationException::withMessages(['role' => 'Administrator roles and protected system roles cannot be removed.']);
+        }
         if ($role->users()->exists()) throw ValidationException::withMessages(['role' => 'Move users to another role before removing this role.']);
         $role->delete();
         return response()->noContent();

@@ -131,6 +131,9 @@
 .glass-module .glass-segments--three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.glass-module .glass-segments--five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
 .glass-module :is(.glass-segments, .fleet-tabs)::before {
   position: absolute;
   z-index: 0;
@@ -154,11 +157,23 @@
 .glass-module .glass-segments--three::before {
   width: calc((100% - 18px) / 3);
 }
+.glass-module .glass-segments--five::before {
+  width: calc((100% - 26px) / 5);
+}
 .glass-module :is(.glass-segments, .fleet-tabs)[data-active-index='1']::before {
   transform: translateX(calc(100% + 4px));
 }
 .glass-module .glass-segments--three[data-active-index='2']::before {
   transform: translateX(calc(200% + 8px));
+}
+.glass-module .glass-segments--five[data-active-index='2']::before {
+  transform: translateX(calc(200% + 8px));
+}
+.glass-module .glass-segments--five[data-active-index='3']::before {
+  transform: translateX(calc(300% + 12px));
+}
+.glass-module .glass-segments--five[data-active-index='4']::before {
+  transform: translateX(calc(400% + 16px));
 }
 .glass-module .fleet-tabs .btn {
   min-height: 44px;
