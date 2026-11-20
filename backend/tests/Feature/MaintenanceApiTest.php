@@ -69,6 +69,28 @@ class MaintenanceApiTest extends TestCase
         $this->postJson('/api/maintenances', $this->data(['car_id' => null, 'monthly_car_id' => $monthly->id, 'status' => 'In Progress']))->assertUnprocessable();
     }
 
+    public function test_completed_service_history_can_be_created_with_work_dates(): void
+    {
+        $this->actingAs($this->user);
+        $start = now()->subDays(2)->toDateString();
+        $completed = now()->toDateString();
+
+        $this->postJson('/api/maintenances', $this->data([
+            'status' => 'Completed',
+            'started_at' => $start,
+            'completed_at' => $completed,
+            'actual_cost' => '250.00',
+        ]))
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'Completed')
+            ->assertJsonPath('data.started_at', $start)
+            ->assertJsonPath('data.completed_at', $completed);
+
+        $this->postJson('/api/maintenances', $this->data(['status' => 'Cancelled']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+    }
+
     public function test_active_maintenance_blocks_booking_and_monthly_service_assignments(): void
     {
         $this->actingAs($this->user);

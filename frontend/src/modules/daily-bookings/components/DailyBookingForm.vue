@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import BaseLoading from '@/components/common/BaseLoading.vue'
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { dailyBookingApi } from '../api'
 import api from '@/services/api'
 import type { DailyBooking, DailyBookingInput, DailyOptions } from '../types'
 import { toast } from '@/services/toast'
+import SearchableVehicleSelect from '@/components/common/SearchableVehicleSelect.vue'
 const props = defineProps<{ bookingId?: number }>(),
   router = useRouter()
 const options = ref<DailyOptions | null>(null),
@@ -27,6 +28,22 @@ const form = reactive<DailyBookingInput>({
   status: 'Confirm',
   remark: '',
 })
+const primaryVehicleOptions = computed(() =>
+  (options.value?.cars || []).map((car) => ({
+    value: car.id,
+    label: car.plate_no,
+    description: `${car.model_name} · ${car.availability_status}`,
+    disabled: car.availability_status === 'Maintenance',
+  })),
+)
+const secondaryVehicleOptions = computed(() =>
+  (options.value?.cars || []).map((car) => ({
+    value: car.id,
+    label: car.plate_no,
+    description: `${car.model_name} · ${car.availability_status}`,
+    disabled: car.availability_status === 'Maintenance' || car.id === form.car_id,
+  })),
+)
 function assign(b: DailyBooking) {
   if (
     b.operator_id &&
@@ -145,18 +162,15 @@ watch(
             </div>
           </div>
           <div class="col-md-6">
-            <label for="booking-car" class="form-label">Primary vehicle</label
-            ><select id="booking-car" v-model="form.car_id" class="form-select">
-              <option :value="null">No registered vehicle</option>
-              <option
-                v-for="c in options?.cars || []"
-                :key="c.id"
-                :value="c.id"
-                :disabled="c.availability_status === 'Maintenance'"
-              >
-                {{ c.plate_no }} · {{ c.model_name }} ({{ c.availability_status }})
-              </option>
-            </select>
+            <label for="booking-car" class="form-label">Primary vehicle</label>
+            <SearchableVehicleSelect
+              id="booking-car"
+              v-model="form.car_id"
+              :options="primaryVehicleOptions"
+              placeholder="Search by plate number"
+              empty-option-label="No registered vehicle"
+              :invalid="!!errors.car_id"
+            />
             <div v-if="errors.car_id" class="text-danger small">{{ errors.car_id[0] }}</div>
           </div>
           <div class="col-md-6">
@@ -164,18 +178,15 @@ watch(
             ><input id="booking-car-custom" v-model="form.custom_car_name" class="form-control" />
           </div>
           <div class="col-md-6">
-            <label for="booking-car-second" class="form-label">Second vehicle</label
-            ><select id="booking-car-second" v-model="form.secondary_car_id" class="form-select">
-              <option :value="null">None</option>
-              <option
-                v-for="c in options?.cars || []"
-                :key="c.id"
-                :value="c.id"
-                :disabled="c.availability_status === 'Maintenance' || c.id === form.car_id"
-              >
-                {{ c.plate_no }} · {{ c.model_name }}
-              </option>
-            </select>
+            <label for="booking-car-second" class="form-label">Second vehicle</label>
+            <SearchableVehicleSelect
+              id="booking-car-second"
+              v-model="form.secondary_car_id"
+              :options="secondaryVehicleOptions"
+              placeholder="Search by plate number"
+              empty-option-label="None"
+              :invalid="!!errors.secondary_car_id"
+            />
             <div v-if="errors.secondary_car_id" class="text-danger small">
               {{ errors.secondary_car_id[0] }}
             </div>

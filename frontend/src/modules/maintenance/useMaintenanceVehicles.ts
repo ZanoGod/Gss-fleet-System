@@ -6,14 +6,15 @@ import { maintenanceConfig } from './config'
 
 export function useMaintenanceVehicles() {
   const route = useRoute()
-  const options = ref<{ value: string; label: string }[]>([])
+  const options = ref<{ value: string; label: string; description?: string }[]>([])
 
   async function loadVehicles(isCurrent: () => boolean) {
     const response = await api.get(maintenanceConfig.optionsEndpoint)
     if (!isCurrent()) return
     options.value = response.data.data.vehicles.map((vehicle: ResourceRow) => ({
       value: `${vehicle.resource_type}:${vehicle.id}`,
-      label: `${vehicle.plate_no} · ${vehicle.model_name} (${vehicle.resource_type})`,
+      label: vehicle.plate_no,
+      description: `${vehicle.model_name} · ${vehicle.resource_type} fleet`,
     }))
   }
 

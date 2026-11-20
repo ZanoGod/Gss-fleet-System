@@ -304,7 +304,7 @@ onMounted(load)
                 >
                   {{ p.status === 'cancelled' || p.status === 'archived' ? '—' : expiryLabel(p.days_until_expiry) }}
                 </td>
-                <td>{{ p.currency }} {{ p.premium_amount }}</td>
+                <td>{{ p.currency }} {{ Number(p.premium_amount).toLocaleString('en-US', { maximumFractionDigits: 2 }) }}</td>
                 <td><BaseStatusBadge :status="p.status" /></td>
                 <td class="record-actions-cell">
                   <RecordAction action="view" label="View" :to="`/insurance/${p.id}`" />
@@ -506,7 +506,7 @@ onMounted(load)
           </select>
         </div>
         <div class="col-md-6">
-          <label class="form-label" for="claim-ref">Reference</label
+          <label class="form-label" for="claim-ref">Driver Name (Reference)</label
           ><input id="claim-ref" v-model="claim.reference_number" class="form-control" required />
         </div>
         <div class="col-md-6">

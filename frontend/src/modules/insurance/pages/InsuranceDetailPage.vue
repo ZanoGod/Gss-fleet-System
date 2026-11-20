@@ -20,6 +20,7 @@ const showRenewal = ref(false)
 const uploading = ref(false)
 const file = ref<File | null>(null)
 const id = computed(() => Number(route.params.id))
+const money = (value: string) => Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })
 
 const { pending, run } = usePendingAction()
 let request = 0
@@ -187,12 +188,16 @@ onMounted(load)
                 <dd class="col-sm-8 text-capitalize">{{ policy.insurance_type }}</dd>
                 <dt class="col-sm-4">Coverage dates</dt>
                 <dd class="col-sm-8">{{ policy.start_date }} to {{ policy.expiration_date }}</dd>
-                <dt class="col-sm-4">Premium</dt>
-                <dd class="col-sm-8">{{ policy.currency }} {{ policy.premium_amount }}</dd>
-                <dt class="col-sm-4">Coverage amount</dt>
-                <dd class="col-sm-8">{{ policy.currency }} {{ policy.coverage_amount }}</dd>
-                <dt class="col-sm-4">Coverage details</dt>
-                <dd class="col-sm-8">{{ policy.coverage_details || '—' }}</dd>
+                <dt class="col-sm-4">Total Premium</dt>
+                <dd class="col-sm-8">{{ policy.currency }} {{ money(policy.premium_amount) }}</dd>
+                <dt class="col-sm-4">Sum Insured</dt>
+                <dd class="col-sm-8">{{ policy.currency }} {{ money(policy.coverage_amount) }}</dd>
+                <dt class="col-sm-4">Windscreen</dt>
+                <dd class="col-sm-8">{{ policy.currency }} {{ money(policy.windscreen_amount) }}</dd>
+                <dt class="col-sm-4">No Claim Bonus</dt>
+                <dd class="col-sm-8">{{ policy.currency }} {{ money(policy.no_claim_bonus) }}</dd>
+                <dt class="col-sm-4">Betterment Cover</dt>
+                <dd class="col-sm-8">{{ policy.betterment_cover ? 'Yes' : 'No' }}</dd>
                 <dt class="col-sm-4">Notes</dt>
                 <dd class="col-sm-8">{{ policy.notes || '—' }}</dd>
               </dl>

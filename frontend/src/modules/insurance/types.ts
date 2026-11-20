@@ -58,6 +58,9 @@ export interface InsurancePolicy {
   premium_amount: string
   currency: string
   coverage_amount: string
+  windscreen_amount: string
+  no_claim_bonus: string
+  betterment_cover: boolean
   notes: string | null
   status: string
   renewal_parent_id: number | null
@@ -85,9 +88,7 @@ export interface InsuranceDashboard {
   recent_claims: InsuranceClaim[]
 }
 export interface InsurancePolicyInput {
-  car_id: number | null
-  monthly_car_id: number | null
-  car_type: string | null
+  vehicle_plate_no: string
   provider_id: number
   policy_number: string
   insurance_type: string
@@ -97,5 +98,8 @@ export interface InsurancePolicyInput {
   premium_amount: string
   currency: 'MMK' | 'USD'
   coverage_amount: string
+  windscreen_amount: string
+  no_claim_bonus: string
+  betterment_cover: boolean
   notes: string
 }

@@ -2,7 +2,9 @@
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
+import SearchableVehicleSelect from '@/components/common/SearchableVehicleSelect.vue'
 import { useModuleRecord } from '@/modules/shared/moduleRequests'
+import type { Field } from '@/components/common/resourceTypes'
 import { maintenanceConfig as config } from '../config'
 import {
   useMaintenanceVehicles,
@@ -13,6 +15,10 @@ import {
 const { mode } = defineProps<{ mode: 'create' | 'edit' }>()
 const { options, initializeForm } = useMaintenanceVehicles()
 const fields = config.fields
+const optionsForField = (field: Field) =>
+  field.key === 'status' && mode === 'create'
+    ? (field.options || []).filter((status) => status !== 'Cancelled')
+    : field.options || []
 const { record, initial, form, errors, saving, save, link } = useModuleRecord(config, () => mode, {
   initializeForm,
   serialize: serializeVehicle,
@@ -45,8 +51,17 @@ const { record, initial, form, errors, saving, save, link } = useModuleRecord(co
           >
             <label :for="`field-${field.key}`" class="form-label"
               >{{ field.label }}<span v-if="field.required" aria-hidden="true"> *</span></label
-            ><select
-              v-if="field.options || field.key === 'vehicle_key'"
+            ><SearchableVehicleSelect
+              v-if="field.key === 'vehicle_key'"
+              :id="`field-${field.key}`"
+              :model-value="String(form[field.key] || '')"
+              :options="options"
+              :placeholder="`Type ${field.label.toLowerCase()} to search`"
+              :required="field.required"
+              :invalid="!!errors[field.key]"
+              @update:model-value="form[field.key] = String($event ?? '')"
+            /><select
+              v-else-if="field.options"
               :id="`field-${field.key}`"
               v-model="form[field.key]"
               class="form-select"
@@ -56,15 +71,9 @@ const { record, initial, form, errors, saving, save, link } = useModuleRecord(co
               :aria-describedby="`error-${field.key}`"
             >
               <option value="">Select {{ field.label.toLowerCase() }}</option>
-              <template v-if="field.key === 'vehicle_key'"
-                ><option v-for="option in options" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option></template
-              ><template v-else
-                ><option v-for="option in field.options" :key="option">
-                  {{ option }}
-                </option></template
-              ></select
+              <option v-for="option in optionsForField(field)" :key="option">
+                {{ option }}
+              </option></select
             ><textarea
               v-else-if="field.type === 'textarea'"
               :id="`field-${field.key}`"

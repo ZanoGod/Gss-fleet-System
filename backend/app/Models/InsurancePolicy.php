@@ -19,7 +19,7 @@ class InsurancePolicy extends Model
     protected $fillable = [
         'car_id', 'monthly_car_id', 'provider_id', 'policy_number', 'insurance_type',
         'coverage_details', 'start_date', 'expiration_date', 'premium_amount', 'currency',
-        'coverage_amount', 'notes',
+        'coverage_amount', 'windscreen_amount', 'no_claim_bonus', 'betterment_cover', 'notes',
     ];
 
     protected function casts(): array
@@ -29,6 +29,9 @@ class InsurancePolicy extends Model
             'expiration_date' => 'date:Y-m-d',
             'premium_amount' => 'decimal:2',
             'coverage_amount' => 'decimal:2',
+            'windscreen_amount' => 'decimal:2',
+            'no_claim_bonus' => 'decimal:2',
+            'betterment_cover' => 'boolean',
             'cancelled_at' => 'datetime',
             'archived_at' => 'datetime',
         ];

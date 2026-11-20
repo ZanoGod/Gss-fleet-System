@@ -2,6 +2,7 @@
 import ActionButtonLabel from '@/components/common/ActionButtonLabel.vue'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import SearchableVehicleSelect from '@/components/common/SearchableVehicleSelect.vue'
 import api from '@/services/api'
 import { toast } from '@/services/toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
@@ -48,6 +49,14 @@ const form = reactive<ContractInput>({
 })
 const selectedCustomer = computed(() =>
   options.value?.customers.find((c) => c.id === form.customer_id),
+)
+const vehicleOptions = computed(() =>
+  (options.value?.cars || []).map((car) => ({
+    value: car.id,
+    label: car.plate_no,
+    description: `${car.model_name} · ${car.availability_status}`,
+    disabled: ['Maintenance', 'Inactive'].includes(car.availability_status),
+  })),
 )
 const showCar = computed(() => form.assignment_type !== 'Driver Only'),
   showDriver = computed(
@@ -236,18 +245,15 @@ watch(
             </select>
           </div>
           <div v-if="showCar" class="col-md-6">
-            <label class="form-label" for="mc-car">Monthly fleet vehicle</label
-            ><select id="mc-car" v-model="form.car_id" class="form-select" :required="showCar">
-              <option :value="null">Choose vehicle</option>
-              <option
-                v-for="v in options?.cars || []"
-                :key="v.id"
-                :value="v.id"
-                :disabled="['Maintenance', 'Inactive'].includes(v.availability_status)"
-              >
-                {{ v.plate_no }} · {{ v.model_name }} ({{ v.availability_status }})
-              </option>
-            </select>
+            <label class="form-label" for="mc-car">Monthly fleet vehicle</label>
+            <SearchableVehicleSelect
+              id="mc-car"
+              v-model="form.car_id"
+              :options="vehicleOptions"
+              placeholder="Search by plate number"
+              :required="showCar"
+              :invalid="!!errors.car_id"
+            />
             <div v-if="errors.car_id" class="text-danger small">{{ errors.car_id[0] }}</div>
           </div>
           <div v-if="showDriver" class="col-md-6">

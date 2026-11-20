@@ -14,7 +14,7 @@ export interface LicenseDocument {
 }
 export interface LicenseHistory {
   id: number
-  license_number: string
+  license_number: string | null
   issue_date: string
   expiry_date: string
   renewal_date: string | null
@@ -27,7 +27,7 @@ export interface CarLicense {
   monthly_car_id: number | null
   vehicle: LicenseVehicle | null
   vehicle_label: string | null
-  license_number: string
+  license_number: string | null
   license_period: number
   issue_date: string
   expiry_date: string

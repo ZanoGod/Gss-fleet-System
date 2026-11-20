@@ -200,7 +200,7 @@ onMounted(() => void load())
                   >{{ license.vehicle?.fleet }} fleet · {{ license.vehicle?.model_name }}</small
                 >
               </td>
-              <td>{{ license.license_number }}</td>
+              <td>{{ license.license_number || '—' }}</td>
               <td>{{ license.license_period }} year{{ license.license_period > 1 ? 's' : '' }}</td>
               <td>{{ date(license.issue_date) }}</td>
               <td>{{ date(license.expiry_date) }}</td>

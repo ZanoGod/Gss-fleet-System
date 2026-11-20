@@ -4,6 +4,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
+import SearchableVehicleSelect from '@/components/common/SearchableVehicleSelect.vue'
 import { carLicenseApi } from '../api'
 import type { CarLicense, LicenseVehicleOption } from '../types'
 import { toast } from '@/services/toast'
@@ -24,12 +25,9 @@ const now = new Date(),
   today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 const form = reactive({
   vehicle_key: '',
-  license_number: '',
   license_period: 1,
   issue_date: today,
   expiry_date: '',
-  renewal_date: '',
-  renewal_fee: '0',
   office_region: '',
   office_branch: '',
   remarks: '',
@@ -42,6 +40,19 @@ const title = computed(() =>
       : 'Edit Car License',
 )
 const sourceLicense = ref<CarLicense | null>(null)
+const searchableVehicleOptions = computed(() =>
+  vehicleOptions.value.map((vehicle) => ({
+    value: vehicle.value,
+    label: vehicle.plate_no,
+    description: `${vehicle.model_name} · ${vehicle.fleet} fleet`,
+  })),
+)
+function setVehicleKey(value: string | number | null) {
+  form.vehicle_key = typeof value === 'string' ? value : ''
+  delete errors.value.vehicle
+  delete errors.value.car_id
+  delete errors.value.monthly_car_id
+}
 watch(
   () => [form.issue_date, form.license_period],
   () => {
@@ -68,15 +79,12 @@ async function initialize() {
     if (record) {
       sourceLicense.value = record
       form.vehicle_key = `${record.vehicle?.fleet || (record.car_id ? 'daily' : 'monthly')}:${record.vehicle?.id || record.car_id || record.monthly_car_id}`
-      form.license_number = record.license_number
       form.license_period = record.license_period
       form.issue_date = props.mode === 'renew' ? today : record.issue_date
       form.expiry_date =
         props.mode === 'renew'
           ? suggestedExpiryDate(today, record.license_period)
           : record.expiry_date
-      form.renewal_date = props.mode === 'renew' ? today : record.renewal_date || ''
-      form.renewal_fee = '0'
       form.office_region = record.office_region
       form.office_branch = record.office_branch
       form.remarks = record.remarks || ''
@@ -109,16 +117,17 @@ function requestErrors(error: unknown) {
       : 'Unable to save car license.'
 }
 async function save() {
-  saving.value = true
   errors.value = {}
+  if (props.mode !== 'renew' && !form.vehicle_key) {
+    errors.value.vehicle = ['Choose a registered vehicle from the matching plates.']
+    return
+  }
+  saving.value = true
   const [fleet, id] = form.vehicle_key.split(':')
   const payload: Record<string, string | number | null> = {
-    license_number: form.license_number.trim(),
     license_period: Number(form.license_period),
     issue_date: form.issue_date,
     expiry_date: form.expiry_date,
-    renewal_date: props.mode === 'renew' ? form.renewal_date || today : form.renewal_date || null,
-    renewal_fee: form.renewal_fee,
     office_region: form.office_region,
     office_branch: form.office_branch,
     remarks: form.remarks || null,
@@ -185,22 +194,20 @@ onMounted(() => void initialize())
           issued by RTAD; passenger-car periods vary by current office and vehicle record.
         </p>
         <div v-if="mode !== 'renew'" class="col-md-6">
-          <label for="license-vehicle" class="form-label">Vehicle / Plate Number *</label
-          ><select
+          <label for="license-vehicle" class="form-label">Vehicle / Plate Number *</label>
+          <SearchableVehicleSelect
             id="license-vehicle"
-            v-model="form.vehicle_key"
-            class="form-select"
+            :model-value="form.vehicle_key"
+            :options="searchableVehicleOptions"
+            placeholder="Type a plate number, e.g. 3K/4384(YGN)"
             required
-            :class="{ 'is-invalid': errors.car_id || errors.monthly_car_id || errors.vehicle }"
-          >
-            <option value="">Select vehicle</option>
-            <option v-for="vehicle in vehicleOptions" :key="vehicle.value" :value="vehicle.value">
-              {{ vehicle.plate_no }} · {{ vehicle.model_name }} ({{ vehicle.fleet }} fleet)
-            </option>
-          </select>
-          <div class="invalid-feedback">
+            :invalid="!!(errors.car_id || errors.monthly_car_id || errors.vehicle)"
+            @update:model-value="setVehicleKey"
+          />
+          <div v-if="errors.vehicle || errors.car_id || errors.monthly_car_id" class="invalid-feedback d-block">
             {{ errors.vehicle?.[0] || errors.car_id?.[0] || errors.monthly_car_id?.[0] }}
           </div>
+          <div v-else class="form-text">Type part of a plate number to search registered fleet vehicles.</div>
         </div>
         <div v-else class="col-md-6">
           <label class="form-label">Vehicle / Plate Number</label>
@@ -209,18 +216,6 @@ onMounted(() => void initialize())
           </p>
         </div>
         <div class="col-md-6">
-          <label for="license-number" class="form-label">License Number *</label
-          ><input
-            id="license-number"
-            v-model="form.license_number"
-            class="form-control"
-            maxlength="100"
-            required
-            :class="{ 'is-invalid': errors.license_number }"
-          />
-          <div class="invalid-feedback">{{ errors.license_number?.join(' ') }}</div>
-        </div>
-        <div class="col-md-4">
           <label for="license-period" class="form-label">License Period *</label
           ><select
             id="license-period"
@@ -233,7 +228,7 @@ onMounted(() => void initialize())
             <option :value="3">3 years</option>
           </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label for="license-issued" class="form-label">Issue Date *</label
           ><input
             id="license-issued"
@@ -245,7 +240,7 @@ onMounted(() => void initialize())
           />
           <div class="invalid-feedback">{{ errors.issue_date?.join(' ') }}</div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label for="license-expiry" class="form-label">Expiry Date *</label
           ><input
             id="license-expiry"
@@ -261,34 +256,7 @@ onMounted(() => void initialize())
           </div>
           <div class="invalid-feedback">{{ errors.expiry_date?.join(' ') }}</div>
         </div>
-        <div class="col-md-4">
-          <label for="license-renewal-date" class="form-label"
-            >Renewal Date{{ mode === 'renew' ? ' *' : '' }}</label
-          ><input
-            id="license-renewal-date"
-            v-model="form.renewal_date"
-            class="form-control"
-            type="date"
-            :required="mode === 'renew'"
-            :class="{ 'is-invalid': errors.renewal_date }"
-          />
-          <div class="invalid-feedback">{{ errors.renewal_date?.join(' ') }}</div>
-        </div>
-        <div class="col-md-4">
-          <label for="license-fee" class="form-label">Renewal Fee (MMK) *</label
-          ><input
-            id="license-fee"
-            v-model="form.renewal_fee"
-            class="form-control"
-            type="number"
-            min="0"
-            step="0.01"
-            required
-            :class="{ 'is-invalid': errors.renewal_fee }"
-          />
-          <div class="invalid-feedback">{{ errors.renewal_fee?.join(' ') }}</div>
-        </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label for="license-region" class="form-label">License Office Region *</label
           ><select
             id="license-region"
@@ -318,7 +286,7 @@ onMounted(() => void initialize())
           </select>
           <div class="invalid-feedback">{{ errors.office_branch?.join(' ') }}</div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-12">
           <label for="license-documents" class="form-label">Documents</label
           ><input
             id="license-documents"

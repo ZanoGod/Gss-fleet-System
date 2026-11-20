@@ -15,6 +15,20 @@ class InsurancePolicyService
     {
         return DB::transaction(function () use ($data, $user, $existing, $parent): InsurancePolicy {
 
+            $plate = trim($data['vehicle_plate_no'] ?? '');
+            $dailyMatches = Car::query()->where('plate_no', $plate)->lockForUpdate()->get(['id']);
+            $monthlyMatches = MonthlyCar::query()->where('plate_no', $plate)->lockForUpdate()->get(['id']);
+            if ($dailyMatches->count() + $monthlyMatches->count() !== 1) {
+                throw ValidationException::withMessages([
+                    'vehicle_plate_no' => $dailyMatches->isEmpty() && $monthlyMatches->isEmpty()
+                        ? 'Enter a car number that matches a registered fleet vehicle.'
+                        : 'This car number matches more than one fleet vehicle. Contact an administrator.',
+                ]);
+            }
+            $data['car_id'] = $dailyMatches->first()?->id;
+            $data['monthly_car_id'] = $monthlyMatches->first()?->id;
+            unset($data['vehicle_plate_no']);
+
             if ($existing) {
                 $existing = InsurancePolicy::query()->lockForUpdate()->findOrFail($existing->id);
 

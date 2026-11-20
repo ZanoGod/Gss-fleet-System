@@ -32,7 +32,7 @@ class MaintenanceService
             $vehicle = $carId ? Car::query()->lockForUpdate()->findOrFail($carId) : MonthlyCar::query()->lockForUpdate()->findOrFail($monthlyId);
             $status = $data['status'];
             $allowed = ['Scheduled' => ['Scheduled', 'In Progress', 'Cancelled'], 'In Progress' => ['In Progress', 'Completed', 'Cancelled'], 'Completed' => ['Completed'], 'Cancelled' => ['Cancelled']];
-            if ((! $record->exists && ! in_array($status, ['Scheduled', 'In Progress'], true)) || ($record->exists && ! in_array($status, $allowed[$record->status], true))) {
+            if ((! $record->exists && ! in_array($status, ['Scheduled', 'In Progress', 'Completed'], true)) || ($record->exists && ! in_array($status, $allowed[$record->status], true))) {
                 throw ValidationException::withMessages(['status' => 'Invalid maintenance transition. Start scheduled work before completing it. Closed work cannot be reopened.']);
             }
             if ($record->exists && ($record->started_at || in_array($record->status, ['Completed', 'Cancelled'], true)) && ((int) $record->car_id !== (int) $carId || (int) $record->monthly_car_id !== (int) $monthlyId)) {
@@ -61,7 +61,7 @@ class MaintenanceService
                 }
             }
             if ($status === 'Completed') {
-                $data['started_at'] = $record->started_at?->format('Y-m-d');
+                $data['started_at'] = $record->started_at?->format('Y-m-d') ?? ($data['started_at'] ?? now()->toDateString());
                 $data['completed_at'] = $data['completed_at'] ?? $record->completed_at?->format('Y-m-d') ?? now()->toDateString();
                 if ($data['completed_at'] < $data['started_at']) {
                     throw ValidationException::withMessages(['completed_at' => 'Completion cannot precede the start date.']);

@@ -13,7 +13,7 @@ const route = useRoute(), router = useRouter(), license = ref<CarLicense | null>
 const date = (value: string | null) => value ? new Date(`${value}T00:00:00`).toLocaleDateString() : '—'
 async function load() { try { license.value = await carLicenseApi.get(Number(route.params.id)) } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Unable to load license details.' } finally { loading.value = false } }
 async function remove() {
-  if (!license.value || !window.confirm(`Delete license ${license.value.license_number}?`)) return
+  if (!license.value || !window.confirm(`Delete license record for ${license.value.vehicle?.plate_no || 'this vehicle'}?`)) return
   deleting.value = true
   try { await carLicenseApi.remove(license.value.id); toast.success('Car license deleted.'); await router.push('/car-licenses') }
   catch (cause) { toast.error(cause instanceof Error ? cause.message : 'Unable to delete this license.') }
@@ -29,7 +29,7 @@ onMounted(load)
     <div v-else-if="error" class="alert alert-warning" role="alert">{{ error }}</div>
     <template v-else-if="license">
       <section class="card-shell p-4 mb-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4"><div><p class="text-muted mb-1">{{ license.vehicle?.fleet }} fleet vehicle</p><h2 class="h3 mb-1">{{ license.vehicle?.plate_no }} · {{ license.vehicle?.model_name }}</h2><div class="text-muted">License {{ license.license_number }}</div></div><BaseStatusBadge :status="license.status" /></div>
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4"><div><p class="text-muted mb-1">{{ license.vehicle?.fleet }} fleet vehicle</p><h2 class="h3 mb-1">{{ license.vehicle?.plate_no }} · {{ license.vehicle?.model_name }}</h2><div v-if="license.license_number" class="text-muted">License {{ license.license_number }}</div></div><BaseStatusBadge :status="license.status" /></div>
         <dl class="license-facts"><div><dt>License period</dt><dd>{{ license.license_period }} year{{ license.license_period > 1 ? 's' : '' }}</dd></div><div><dt>Issue date</dt><dd>{{ date(license.issue_date) }}</dd></div><div><dt>Expiry date</dt><dd>{{ date(license.expiry_date) }}</dd></div><div><dt>Expiry countdown</dt><dd :class="license.days_until_expiry <= 30 ? 'text-danger fw-semibold' : ''">{{ license.days_until_expiry < 0 ? `${Math.abs(license.days_until_expiry)} days overdue` : `${license.days_until_expiry} days remaining` }}</dd></div><div><dt>Last renewal date</dt><dd>{{ date(license.renewal_date) }}</dd></div><div><dt>Renewal fee</dt><dd>MMK {{ Number(license.renewal_fee).toLocaleString() }}</dd></div><div><dt>License office</dt><dd>{{ license.office_region }} · {{ license.office_branch }}</dd></div><div><dt>Remarks</dt><dd>{{ license.remarks || '—' }}</dd></div></dl>
         <div class="d-flex flex-wrap gap-2 mt-3"><RouterLink v-if="license.is_current" :to="`/car-licenses/${license.id}/edit`" class="btn btn-outline-secondary">Edit</RouterLink><RouterLink v-if="license.is_current" :to="`/car-licenses/${license.id}/renew`" class="btn btn-primary"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i> Renew License</RouterLink><button v-if="!license.renewal_history?.length || license.renewal_history.length === 1" class="btn btn-outline-danger" :disabled="deleting" @click="remove"><BaseLoading v-if="deleting" label="Deleting…" /><template v-else>Delete</template></button></div>
       </section>
